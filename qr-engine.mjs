@@ -101,7 +101,7 @@ const DEFAULT_FLOW_NODES = [
         position: { x: 320, y: 180 },
         label: '🎙️ Áudio de Boas-Vindas (Voz Humanizada)',
         config: {
-            audioUrl: 'https://exemplo.com/audios/apresentacao.mp3',
+            audioUrl: 'https://carol-chatbot.guilhermealita.workers.dev/apresentacao.ogg',
             simulateRecording: true,
             recordingDurationSeconds: 4,
             fallbackText: 'Oi! Tudo bem? Que alegria ter você aqui! Preparei o seu material completo com todo carinho.',
@@ -114,7 +114,8 @@ const DEFAULT_FLOW_NODES = [
         label: '📦 Entrega do Material (PDF / Acesso)',
         config: {
             mediaType: 'DOCUMENT',
-            mediaUrl: 'https://exemplo.com/arquivos/material_exclusivo.pdf',
+            mediaUrl: 'https://carol-chatbot.guilhermealita.workers.dev/Material_Exclusivo_Carol.pdf',
+            filename: 'Material_Exclusivo_Carol.pdf',
             caption: 'Aqui está seu acesso exclusivo! Dá uma olhada no conteúdo com carinho.',
         },
     },
@@ -655,9 +656,9 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
             } catch {}
             await new Promise((r) => setTimeout(r, durationSec * 1000));
 
-            const audioUrl = config.audioUrl || '';
+            const audioUrl = config.audioUrl || 'https://carol-chatbot.guilhermealita.workers.dev/apresentacao.ogg';
             let sentAudio = false;
-            if (audioUrl && !audioUrl.includes('exemplo.com')) {
+            if (audioUrl) {
                 try {
                     const res = await axios.get(audioUrl, { responseType: 'arraybuffer', timeout: 15000 });
                     await sock.sendMessage(remoteJid, {
@@ -666,7 +667,10 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
                         ptt: true,
                     });
                     sentAudio = true;
-                } catch {}
+                    logConversation(botId, session.userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio de Boas-Vindas enviado]');
+                } catch (err) {
+                    console.error('[Audio Send Error]:', err?.message);
+                }
             }
             if (!sentAudio) {
                 const text =
@@ -682,25 +686,28 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
         }
 
         case 'MEDIA': {
-            const mediaUrl = config.mediaUrl || '';
-            const caption = config.caption || '📦 Aqui está o seu material exclusivo!';
+            const mediaUrl = config.mediaUrl || 'https://carol-chatbot.guilhermealita.workers.dev/Material_Exclusivo_Carol.pdf';
+            const caption = config.caption || '📦 Aqui está seu acesso exclusivo! Dá uma olhada no conteúdo com carinho.';
             try {
                 await sock.sendPresenceUpdate('composing', remoteJid);
             } catch {}
             await new Promise((r) => setTimeout(r, 1500));
 
             let sentMedia = false;
-            if (mediaUrl && !mediaUrl.includes('exemplo.com')) {
+            if (mediaUrl) {
                 try {
                     const res = await axios.get(mediaUrl, { responseType: 'arraybuffer', timeout: 15000 });
                     await sock.sendMessage(remoteJid, {
                         document: Buffer.from(res.data),
                         mimetype: 'application/pdf',
-                        fileName: config.filename || 'Material_Exclusivo.pdf',
+                        fileName: config.filename || 'Material_Exclusivo_Carol.pdf',
                         caption,
                     });
                     sentMedia = true;
-                } catch {}
+                    logConversation(botId, session.userPhone, 'BOT', 'DOCUMENT', `📦 [Documento PDF Enviado]: Material_Exclusivo_Carol.pdf`);
+                } catch (err) {
+                    console.error('[Media Send Error]:', err?.message);
+                }
             }
             if (!sentMedia) {
                 await sock.sendMessage(remoteJid, { text: `📦 ${caption}` });
