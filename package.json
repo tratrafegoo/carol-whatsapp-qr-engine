@@ -1,0 +1,20 @@
+{
+  "name": "carol-whatsapp-qr-cloud-engine",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "qr-engine.mjs",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "start": "node qr-engine.mjs"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.18",
+    "axios": "^1.7.9",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "pino": "^9.6.0",
+    "qrcode": "^1.5.4"
+  }
+}

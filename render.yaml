@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: carol-whatsapp-qr-engine
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node qr-engine.mjs
+    healthCheckPath: /api/health
+    envVars:
+      - key: CLOUD_WORKER_URL
+        value: https://carol-chatbot.guilhermealita.workers.dev
+      - key: NODE_VERSION
+        value: 20.18.0
