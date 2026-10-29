@@ -6,11 +6,12 @@ import pino from 'pino';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import makeWASocket, {
-    useMultiFileAuthState,
-    DisconnectReason,
-    fetchLatestBaileysVersion,
-} from '@whiskeysockets/baileys';
+import * as baileysPkg from '@whiskeysockets/baileys';
+
+const makeWASocket = baileysPkg.default?.default || baileysPkg.default || baileysPkg.makeWASocket;
+const useMultiFileAuthState = baileysPkg.useMultiFileAuthState || baileysPkg.default?.useMultiFileAuthState;
+const DisconnectReason = baileysPkg.DisconnectReason || baileysPkg.default?.DisconnectReason;
+const fetchLatestBaileysVersion = baileysPkg.fetchLatestBaileysVersion || baileysPkg.default?.fetchLatestBaileysVersion;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
