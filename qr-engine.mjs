@@ -1026,16 +1026,23 @@ async function handleIncomingMessage(botId, sock, msg) {
     let session = store.userSessions[sessionKey];
 
     const normalizedText = textContent.trim().toLowerCase();
-    const isRestartKeyword = ['teste', 'test', '#teste', '!teste', '/teste', 'recomeçar', 'recomecar', 'reiniciar', 'reset', 'menu', 'inicio', 'início'].some(k => normalizedText.startsWith(k) || normalizedText === k);
+    const isTestTrigger = ['teste', 'test', '#teste', '!teste', '/teste'].some(k => normalizedText === k || normalizedText.startsWith(k + ' ') || normalizedText.startsWith(k));
 
-    // Se enviou comando de teste ou reinício, limpa a sessão e inicia a Fase 1 do Funil das Parábolas
-    if (isRestartKeyword) {
-        console.log(`[Funil X1] 🚀 Reiniciando funil para ${pushName} (${userPhone})`);
+    // GATILHO RESTRITO A TESTE: Só inicia o funil se a mensagem for explicitamente "teste"
+    if (isTestTrigger) {
+        console.log(`[Funil X1] 🚀 Gatilho de TESTE recebido de ${pushName} (${userPhone}). Reiniciando e disparando Fase 1...`);
         cancelParabolasReminder(botId, userPhone);
         session = null;
         delete store.userSessions[sessionKey];
         saveStore(store);
         await sendParabolasPhase1(botId, sock, remoteJid, userPhone, pushName);
+        return;
+    }
+
+    // Se NÃO tem sessão ativa ou NÃO está aguardando ação do funil, IGNORA
+    // Isso protege o WhatsApp contra respostas automáticas para contatos pessoais/outras mensagens
+    if (!session || !session.waitingFor) {
+        console.log(`[Funil X1] ℹ️ Mensagem ignorada de ${pushName} (${userPhone}): "${textContent}". O funil está configurado para disparar APENAS com a palavra "teste".`);
         return;
     }
 
@@ -1136,8 +1143,8 @@ async function handleIncomingMessage(botId, sock, msg) {
         }
     }
 
-    // Se NÃO tem sessão ativa e o lead mandou uma mensagem (anúncio do Meta, oi, etc.):
-    await sendParabolasPhase1(botId, sock, remoteJid, userPhone, pushName);
+    // Mensagem não mapeada ou usuário fora de fluxo (ignora para não disparar sem a palavra 'teste')
+    console.log(`[Funil X1] ℹ️ Fim de processamento sem ação para ${pushName} (${userPhone}): "${textContent}"`);
 }
 
 async function resolveMediaBuffer(targetUrl, defaultFilename) {
