@@ -121,10 +121,11 @@ async function auditPixReceiptWithGemini(mediaBuffer, mimeType, expectedAmount =
         }
 
         if (typeof parsed.valor === 'number') {
-            if (parsed.valor < expectedAmount * 0.95 || parsed.valor > expectedAmount * 2.0) {
+            const minAllowed = expectedAmount <= 25 ? 9.50 : expectedAmount * 0.95;
+            if (parsed.valor < minAllowed) {
                 return {
                     isValid: false,
-                    reason: `O valor do comprovante (R$ ${parsed.valor.toFixed(2).replace('.', ',')}) é diferente do valor do material (R$ ${expectedAmount.toFixed(2).replace('.', ',')}).`,
+                    reason: `O valor do comprovante (R$ ${parsed.valor.toFixed(2).replace('.', ',')}) é inferior à contribuição mínima aceita.`,
                     details: parsed,
                 };
             }
@@ -134,7 +135,15 @@ async function auditPixReceiptWithGemini(mediaBuffer, mimeType, expectedAmount =
             const destLower = parsed.destinatario.toLowerCase();
             const benLower = (beneficiary || 'carol').toLowerCase();
             const isKnownUtility = ['celesc', 'enel', 'sabesp', 'copel', 'cemig', 'cpfl', 'claro', 'vivo', 'tim'].some(u => destLower.includes(u));
-            if (isKnownUtility || (!destLower.includes(benLower) && !destLower.includes('carol') && !destLower.includes('pagamento') && !destLower.includes('infoproduto'))) {
+            const isValidBeneficiary =
+                destLower.includes(benLower) ||
+                destLower.includes('gps') ||
+                destLower.includes('ebooks') ||
+                destLower.includes('digitais') ||
+                destLower.includes('67039217') ||
+                destLower.includes('carol') ||
+                destLower.includes('pagamento');
+            if (isKnownUtility || !isValidBeneficiary) {
                 return {
                     isValid: false,
                     reason: `O destinatário do comprovante (${parsed.destinatario}) não corresponde ao pagamento correto (${beneficiary}).`,
@@ -653,6 +662,331 @@ async function disconnectQrSession(botId = 'bot_whatsapp_principal', wipeCreds =
     });
 }
 
+// ─── Lembrete de 15 Minutos do Funil 1 (Parábolas de Jesus) ───
+const parabolasReminderTimers = new Map();
+
+function scheduleParabolasReminder(botId, remoteJid, userPhone) {
+    const key = `${botId}:${userPhone}`;
+    if (parabolasReminderTimers.has(key)) {
+        clearTimeout(parabolasReminderTimers.get(key));
+    }
+    const timer = setTimeout(async () => {
+        try {
+            const currentStore = loadStore();
+            const sess = currentStore.userSessions[key];
+            if (sess && sess.waitingFor === 'PIX_RECEIPT') {
+                const sock = activeSockets.get(botId);
+                if (sock) {
+                    await sock.sendMessage(remoteJid, {
+                        text: 'Todo seu material foi enviado!\nFico no seu aguardo!'
+                    });
+                    logConversation(botId, userPhone, 'BOT', 'REMINDER', 'Todo seu material foi enviado!\nFico no seu aguardo!');
+                    console.log(`[Funil Parabolas] ⏰ Lembrete de 15min enviado para ${userPhone}`);
+                }
+            }
+        } catch (err) {
+            console.error('[Reminder Timer Error]:', err?.message);
+        } finally {
+            parabolasReminderTimers.delete(key);
+        }
+    }, 15 * 60 * 1000); // 15 minutos
+
+    parabolasReminderTimers.set(key, timer);
+}
+
+function cancelParabolasReminder(botId, userPhone) {
+    const key = `${botId}:${userPhone}`;
+    if (parabolasReminderTimers.has(key)) {
+        clearTimeout(parabolasReminderTimers.get(key));
+        parabolasReminderTimers.delete(key);
+    }
+}
+
+// ─── FASE 1: Apresentação da Oferta (Print 1 & 2) ───
+async function sendParabolasPhase1(botId, sock, remoteJid, userPhone, pushName) {
+    console.log(`[Funil Parabolas] 🚀 Iniciando Fase 1 para ${pushName} (${userPhone})`);
+
+    // 1. Mensagem de Saudação
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'A Paz do Senhor!');
+    await new Promise((r) => setTimeout(r, 800));
+
+    // 2. Áudio de 22 segundos gravado na hora (PTT)
+    try {
+        await sock.sendPresenceUpdate('recording', remoteJid);
+    } catch {}
+    await new Promise((r) => setTimeout(r, 3500));
+
+    try {
+        const audioPath = path.join(__dirname, 'public', 'parabolas', 'audio_parabolas.ogg');
+        if (fs.existsSync(audioPath)) {
+            const audioBuffer = fs.readFileSync(audioPath);
+            await sock.sendMessage(remoteJid, {
+                audio: audioBuffer,
+                mimetype: 'audio/ogg; codecs=opus',
+                ptt: true,
+            });
+            logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio de 22s enviado]');
+        }
+    } catch (audioErr) {
+        console.error('[Parabolas Audio Error]:', audioErr?.message);
+    }
+    try {
+        await sock.sendPresenceUpdate('paused', remoteJid);
+    } catch {}
+
+    await new Promise((r) => setTimeout(r, 1200));
+
+    // 3. Texto da Oferta
+    const offerText = `📘 As 40 Parábolas de Jesus (Explicadas e Ilustradas)\n\nDe 59,00 por: *R$25,00*\nContexto histórico, explicação clara, embasamento bíblico e ilustrações exclusivas.\n\n🎁 *Bônus após o pagamento* 🎁\n🎁 Curiosidades da Bíblia, Escatologia Estudo e muito mais!`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, offerText);
+    await new Promise((r) => setTimeout(r, 1200));
+
+    // 4. Imagem da Capa da Coleção Completa
+    try {
+        const imgPath = path.join(__dirname, 'public', 'parabolas', 'capa_parabolas.jpeg');
+        if (fs.existsSync(imgPath)) {
+            const imgBuffer = fs.readFileSync(imgPath);
+            await sock.sendMessage(remoteJid, {
+                image: imgBuffer,
+                mimetype: 'image/jpeg',
+            });
+            logConversation(botId, userPhone, 'BOT', 'IMAGE', '🖼️ [Capa Coleção Completa enviada]');
+        }
+    } catch (imgErr) {
+        console.error('[Parabolas Image Error]:', imgErr?.message);
+    }
+
+    await new Promise((r) => setTimeout(r, 1200));
+
+    // 5. Garantia de Acesso
+    await sendRealisticText(
+        botId,
+        sock,
+        remoteJid,
+        userPhone,
+        'O acesso ao conteúdo é vitalicio! Você pode imprimir ou ler pelo celular'
+    );
+    await new Promise((r) => setTimeout(r, 1000));
+
+    // 6. Quebra de Objeção / Contribuição Voluntária
+    const valuePropText = `O valor sugerido é R$25,00\nVc só paga depois de receber tudo!\n\nPorém, a contribuição é voluntaria e pode ser até menos, seja 10, 15 ou 20 reais..`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, valuePropText);
+    await new Promise((r) => setTimeout(r, 800));
+
+    // 7. Chamada para Ação
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Posso enviar agora?');
+
+    // Atualiza sessão para aguardar o "Sim"
+    const sessionKey = `${botId}:${userPhone}`;
+    store.userSessions[sessionKey] = {
+        botId,
+        userJid: remoteJid,
+        userPhone,
+        userName: pushName,
+        funnel: 'parabolas',
+        waitingFor: 'CONFIRM_SEND_PARABOLAS',
+        updatedAt: new Date().toISOString(),
+    };
+    store.funnelStats.startedCount = (store.funnelStats.startedCount || 0) + 1;
+    saveStore(store);
+}
+
+// ─── FASE 2: Entrega dos 5 PDFs, Drive Link e Chave PIX (Print 2, 3 & 4) ───
+async function sendParabolasPhase2(botId, sock, remoteJid, userPhone, pushName) {
+    console.log(`[Funil Parabolas] 📦 Iniciando Fase 2 (Entrega de Materiais e PIX) para ${pushName} (${userPhone})`);
+
+    // 1. Mensagem de Confiança
+    await sendRealisticText(
+        botId,
+        sock,
+        remoteJid,
+        userPhone,
+        'Estarei enviando e confiando em você..\nFique avontade para abrir o material'
+    );
+    await new Promise((r) => setTimeout(r, 1200));
+
+    // 2. Envio sequencial dos 5 PDFs reais da coleção
+    const pdfs = [
+        {
+            file: '01_Parabolas_do_Reino_Dos_Ceus.pdf',
+            name: 'As Parábolas de Jesus - 01 Parábolas do Reino Dos Céus .pdf',
+        },
+        {
+            file: '02_Parabolas_da_Graca_Misericordia_Perdao.pdf',
+            name: '2- As Parabolas de Jesus da Graça Misericórdia e Perdão .pdf',
+        },
+        {
+            file: '03_Parabolas_Vigilancia_e_Juizo.pdf',
+            name: '3 - As Parabolas de Jesus- Vigilância e do Juízo .pdf',
+        },
+        {
+            file: '04_Parabolas_Vigilancia_e_Juizo.pdf',
+            name: '4- As Parabolas de Jesus- Vigilância e do Juízo .pdf',
+        },
+        {
+            file: 'Simplificado_PDF_As_Parabolas_de_Jesus.pdf',
+            name: 'Simplificado PDF As_Parabolas de Jesus.pdf',
+        },
+    ];
+
+    for (const pdf of pdfs) {
+        try {
+            const pdfPath = path.join(__dirname, 'public', 'parabolas', pdf.file);
+            if (fs.existsSync(pdfPath)) {
+                const pdfBuffer = fs.readFileSync(pdfPath);
+                await sock.sendMessage(remoteJid, {
+                    document: pdfBuffer,
+                    mimetype: 'application/pdf',
+                    fileName: pdf.name,
+                });
+                logConversation(botId, userPhone, 'BOT', 'DOCUMENT', `📦 [PDF]: ${pdf.name}`);
+                await new Promise((r) => setTimeout(r, 1200));
+            }
+        } catch (pdfErr) {
+            console.error('[PDF Send Error]:', pdf.name, pdfErr?.message);
+        }
+    }
+
+    // 3. Link do Google Drive
+    const driveText = `Caso não consiga abrir PDF ou quer abrir no computador\nLink Google Drive: https://drive.google.com/drive/folders/1VQ2kDbxKha7_CxeKaGlg0rptQp-ZEY1UO?usp=sharing`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, driveText);
+    await new Promise((r) => setTimeout(r, 1200));
+
+    // 4. Ancoragem de Valores
+    const anchorText = `Valor sugerido: R$25,00\n\n⭐ Gostei muito: R$30,00\n⭐⭐ Quero compartilhar e abençoar ainda mais: R$50,00\n\nIsso ajuda a continuarmos esse propósito!\n\nCaso não possa contribuir com o valor integral, fique a vontade para enviar o valor que puder!`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, anchorText);
+    await new Promise((r) => setTimeout(r, 1000));
+
+    // 5. Chave PIX CNPJ
+    const pixInfoText = `Chave Pix CNPJ\nNome da Chave :GPS EBOOKS DIGITAIS LTDA\n👇 Só copiar e colar CNPJ 👇`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, pixInfoText);
+    await new Promise((r) => setTimeout(r, 600));
+
+    const pixKey = '67.039.217/0001-86';
+    const beneficiaryName = 'GPS EBOOKS DIGITAIS LTDA';
+
+    // 6. Botão Nativo cta_copy com estrofe <biz>
+    try {
+        if (generateWAMessageFromContent && proto) {
+            const buttonParams = {
+                display_text: 'Copiar chave Pix',
+                id: 'copy_pix_cnpj',
+                copy_code: pixKey,
+            };
+
+            const interactiveMessage = proto.Message?.InteractiveMessage?.create
+                ? proto.Message.InteractiveMessage.create({
+                      body: proto.Message.InteractiveMessage.Body?.create
+                          ? proto.Message.InteractiveMessage.Body.create({ text: 'Valor sugerido: R$ 25,00' })
+                          : { text: 'Valor sugerido: R$ 25,00' },
+                      footer: proto.Message.InteractiveMessage.Footer?.create
+                          ? proto.Message.InteractiveMessage.Footer.create({ text: 'Toque no botão abaixo para copiar' })
+                          : { text: 'Toque no botão abaixo para copiar' },
+                      header: proto.Message.InteractiveMessage.Header?.create
+                          ? proto.Message.InteractiveMessage.Header.create({
+                                title: beneficiaryName,
+                                subtitle: `CNPJ: ${pixKey}`,
+                                hasMediaAttachment: false,
+                            })
+                          : {
+                                title: beneficiaryName,
+                                subtitle: `CNPJ: ${pixKey}`,
+                                hasMediaAttachment: false,
+                            },
+                      nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage?.create
+                          ? proto.Message.InteractiveMessage.NativeFlowMessage.create({
+                                buttons: [{ name: 'cta_copy', buttonParamsJson: JSON.stringify(buttonParams) }],
+                            })
+                          : {
+                                buttons: [{ name: 'cta_copy', buttonParamsJson: JSON.stringify(buttonParams) }],
+                            },
+                  })
+                : {
+                      body: { text: 'Valor sugerido: R$ 25,00' },
+                      footer: { text: 'Toque no botão abaixo para copiar' },
+                      header: {
+                          title: beneficiaryName,
+                          subtitle: `CNPJ: ${pixKey}`,
+                          hasMediaAttachment: false,
+                      },
+                      nativeFlowMessage: {
+                          buttons: [{ name: 'cta_copy', buttonParamsJson: JSON.stringify(buttonParams) }],
+                      },
+                  };
+
+            const waMessage = generateWAMessageFromContent(
+                remoteJid,
+                {
+                    messageContextInfo: {
+                        deviceListMetadata: {},
+                        deviceListMetadataVersion: 2,
+                        messageSecret: crypto.randomBytes(32),
+                    },
+                    interactiveMessage,
+                },
+                {}
+            );
+
+            await sock.relayMessage(remoteJid, waMessage.message, {
+                messageId: waMessage.key.id,
+                additionalNodes: [
+                    {
+                        tag: 'biz',
+                        attrs: {
+                            actual_actors: '2',
+                            host_storage: '2',
+                            privacy_mode_ts: String(Math.floor(Date.now() / 1000)),
+                        },
+                        content: [
+                            {
+                                tag: 'interactive',
+                                attrs: { type: 'native_flow', v: '1' },
+                                content: [{ tag: 'native_flow', attrs: { v: '9', name: 'mixed' } }],
+                            },
+                        ],
+                    },
+                ],
+            });
+            logConversation(botId, userPhone, 'BOT', 'PIX', `[Botão Nativo PIX cta_copy]: ${pixKey}`);
+        }
+    } catch (btnErr) {
+        console.error('[Parabolas Button Error]:', btnErr?.message);
+    }
+
+    // 7. Texto Limpo com a Chave CNPJ
+    await new Promise((r) => setTimeout(r, 600));
+    await sock.sendMessage(remoteJid, { text: pixKey });
+    logConversation(botId, userPhone, 'BOT', 'PIX', `Chave PIX: ${pixKey}`);
+
+    await new Promise((r) => setTimeout(r, 700));
+
+    // 8. Honestidade
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Conto com sua honestidade');
+    await new Promise((r) => setTimeout(r, 800));
+
+    // 9. Promessa de Bônus
+    const bonusText = `Quando fizer o pagamento, me envia o comprovante aqui que eu libero seu bônus\n\n🎁 Curiosidades da Biblia\n🎁 Material extra: Escatologia — Estudo sobre os Tempos Finais`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, bonusText);
+
+    // 10. Atualiza Sessão para aguardar comprovante
+    const sessionKey = `${botId}:${userPhone}`;
+    store.userSessions[sessionKey] = {
+        botId,
+        userJid: remoteJid,
+        userPhone,
+        userName: pushName,
+        funnel: 'parabolas',
+        waitingFor: 'PIX_RECEIPT',
+        updatedAt: new Date().toISOString(),
+    };
+    store.funnelStats.materialDeliveredCount = (store.funnelStats.materialDeliveredCount || 0) + 1;
+    store.funnelStats.pixSentCount = (store.funnelStats.pixSentCount || 0) + 1;
+    saveStore(store);
+
+    // 11. Agenda lembrete de follow-up para 15 minutos (Print 5)
+    scheduleParabolasReminder(botId, remoteJid, userPhone);
+}
+
 async function handleIncomingMessage(botId, sock, msg) {
     if (!msg.message || msg.key.fromMe) return;
 
@@ -688,52 +1022,58 @@ async function handleIncomingMessage(botId, sock, msg) {
         pushName
     );
 
-    const botFlows = store.flows[botId] || store.flows['bot_whatsapp_principal'] || [];
-    const mainFlow = botFlows.find((f) => f.isMainFlow) || botFlows[0];
-    const flowData = mainFlow?.draftVersion?.flowData || mainFlow?.flowData || {
-        nodes: DEFAULT_FLOW_NODES,
-        edges: DEFAULT_FLOW_EDGES,
-    };
-    const nodes = flowData.nodes || DEFAULT_FLOW_NODES;
-    const edges = flowData.edges || DEFAULT_FLOW_EDGES;
-
     const sessionKey = `${botId}:${userPhone}`;
     let session = store.userSessions[sessionKey];
 
     const normalizedText = textContent.trim().toLowerCase();
-    const isRestartKeyword = ['oi', 'olá', 'ola', 'hi', 'hello', 'começar', 'comecar', 'recomeçar', 'menu', 'inicio', 'início'].includes(normalizedText);
+    const isRestartKeyword = ['teste', 'test', '#teste', '!teste', '/teste', 'recomeçar', 'recomecar', 'reiniciar', 'reset', 'menu', 'inicio', 'início'].some(k => normalizedText.startsWith(k) || normalizedText === k);
 
-    // GATILHO DE TESTE: Só dispara o funil se o usuário enviar explicitamente a palavra "teste"
-    const isTestTrigger = ['teste', 'test', '#teste', '!teste', '/teste'].includes(normalizedText) || normalizedText.startsWith('teste');
-
-    // Se o lead enviou "teste", reseta qualquer sessão anterior para reiniciar o funil limpo
-    if (isTestTrigger) {
-        console.log(`[Funil X1] 🚀 Gatilho de TESTE ativado por ${pushName} (${userPhone}) com mensagem: "${textContent}". Iniciando funil de teste...`);
+    // Se enviou comando de teste ou reinício, limpa a sessão e inicia a Fase 1 do Funil das Parábolas
+    if (isRestartKeyword) {
+        console.log(`[Funil X1] 🚀 Reiniciando funil para ${pushName} (${userPhone})`);
+        cancelParabolasReminder(botId, userPhone);
         session = null;
         delete store.userSessions[sessionKey];
         saveStore(store);
-    } else if (!session || session.waitingFor !== 'PIX_RECEIPT') {
-        // Se NÃO enviou "teste" e NÃO está no meio da auditoria de comprovante PIX: IGNORA
-        // Isso impede que o bot responda conversas pessoais e outros assuntos no mesmo número
-        console.log(`[Funil X1] ℹ️ Mensagem ignorada de ${pushName} (${userPhone}): "${textContent}". O funil está configurado para disparar APENAS com a palavra "teste".`);
+        await sendParabolasPhase1(botId, sock, remoteJid, userPhone, pushName);
         return;
     }
 
-    if (session && session.waitingFor === 'PIX_RECEIPT' && !isRestartKeyword) {
-        const verifierNode = nodes.find((n) => n.nodeId === session.currentNodeId) || nodes.find((n) => n.nodeType === 'PIX_VERIFIER');
+    // Se estiver aguardando confirmação para enviar materiais ("Posso enviar agora?")
+    if (session && session.waitingFor === 'CONFIRM_SEND_PARABOLAS') {
+        const isNegative = ['não', 'nao', 'agora não', 'agora nao', 'depois', 'nop', 'cancelar'].includes(normalizedText);
+        if (isNegative) {
+            await sendRealisticText(
+                botId,
+                sock,
+                remoteJid,
+                userPhone,
+                'Sem problemas! Se desejar receber depois, é só me mandar uma mensagem por aqui. Fique na Paz do Senhor! 🙏'
+            );
+            session.waitingFor = null;
+            saveStore(store);
+            return;
+        }
 
+        // Qualquer resposta afirmativa ("sim", "pode", "manda", "ok", etc.) dispara a entrega
+        await sendParabolasPhase2(botId, sock, remoteJid, userPhone, pushName);
+        return;
+    }
+
+    // Se estiver aguardando comprovante do PIX
+    if (session && session.waitingFor === 'PIX_RECEIPT') {
         if (!hasMediaReceipt) {
             await sendRealisticText(
                 botId,
                 sock,
                 remoteJid,
                 userPhone,
-                'Por favor, me envie a *foto ou o PDF do comprovante PIX* aqui na conversa para eu liberar o seu acesso! 👇'
+                'Por favor, me envie a *foto ou o PDF do comprovante do PIX* aqui na conversa para eu liberar o seu bônus! 👇'
             );
             return;
         }
 
-        store.funnelStats.receiptReceivedCount += 1;
+        store.funnelStats.receiptReceivedCount = (store.funnelStats.receiptReceivedCount || 0) + 1;
         saveStore(store);
 
         await sendRealisticText(
@@ -741,11 +1081,8 @@ async function handleIncomingMessage(botId, sock, msg) {
             sock,
             remoteJid,
             userPhone,
-            '⏳ Recebi o seu comprovante! Estou auditando o pagamento com a nossa IA, só um instante...'
+            '⏳ Recebi o seu comprovante! Estou validando com a nossa IA, só um instante...'
         );
-
-        const expectedAmount = parseFloat(verifierNode?.config?.expectedAmount || '19.90');
-        const beneficiaryName = verifierNode?.config?.beneficiaryName || 'Carol';
 
         const mimeType = msg.message?.imageMessage?.mimetype || msg.message?.documentMessage?.mimetype || 'image/jpeg';
         let mediaBuffer = null;
@@ -755,84 +1092,61 @@ async function handleIncomingMessage(botId, sock, msg) {
             console.error('[Baileys Media Error]:', downloadErr);
         }
 
-        let auditResult = { isValid: false, reason: 'Não foi possível baixar a imagem do comprovante.' };
+        let auditResult = { isValid: false, reason: 'Não foi possível baixar o arquivo do comprovante.' };
         if (mediaBuffer) {
-            auditResult = await auditPixReceiptWithGemini(mediaBuffer, mimeType, expectedAmount, beneficiaryName);
+            auditResult = await auditPixReceiptWithGemini(mediaBuffer, mimeType, 25.00, 'GPS EBOOKS DIGITAIS LTDA');
         }
 
         if (auditResult.isValid) {
-            store.funnelStats.convertedCount += 1;
-            store.funnelStats.totalRevenue = Number((store.funnelStats.totalRevenue + (auditResult.details?.valor || expectedAmount)).toFixed(2));
+            cancelParabolasReminder(botId, userPhone);
+
+            const paidValue = auditResult.details?.valor || 25.00;
+            store.funnelStats.convertedCount = (store.funnelStats.convertedCount || 0) + 1;
+            store.funnelStats.totalRevenue = Number(((store.funnelStats.totalRevenue || 0) + paidValue).toFixed(2));
             store.funnelStats.recentConversions.unshift({
                 userPhoneNumber: userPhone,
-                paidAmount: auditResult.details?.valor || expectedAmount,
+                paidAmount: paidValue,
                 updatedAt: new Date().toISOString(),
-                ctwaClid: session.ctwaClid,
+                funnel: 'As Parábolas de Jesus',
             });
             session.waitingFor = null;
             saveStore(store);
 
-            const approvedEdge = edges.find(
-                (e) => (e.source || e.sourceNodeId) === verifierNode?.nodeId && (!e.sourceHandle || e.sourceHandle === 'approved')
+            await sendRealisticText(
+                botId,
+                sock,
+                remoteJid,
+                userPhone,
+                `Glória a Deus! 🙌 Pagamento de R$ ${paidValue.toFixed(2).replace('.', ',')} confirmado com sucesso! Muito obrigado pela sua contribuição voluntária e honestidade. Que Deus abençoe grandemente você e sua família! ✨`
             );
-            if (approvedEdge) {
-                await executeFromNode(botId, sock, remoteJid, session, approvedEdge.target || approvedEdge.targetNodeId, nodes, edges);
-            } else {
-                await sendRealisticText(
-                    botId,
-                    sock,
-                    remoteJid,
-                    userPhone,
-                    `🎉 *Pagamento de R$ ${(auditResult.details?.valor || expectedAmount).toFixed(2).replace('.', ',')} confirmado com sucesso!*\n\nMuito obrigada pela confiança, ${session.userName}! Seu acesso completo já está 100% liberado!`
-                );
-            }
+            await new Promise((r) => setTimeout(r, 1200));
+
+            const bonusDeliveryText = `🎁 *Aqui estão os seus bônus exclusivos conforme prometido:*\n\n1. Curiosidades da Bíblia\n2. Material Extra: Escatologia — Estudo sobre os Tempos Finais\n\nVocê pode acessar todo o material diretamente na pasta do Google Drive:\nhttps://drive.google.com/drive/folders/1VQ2kDbxKha7_CxeKaGlg0rptQp-ZEY1UO?usp=sharing`;
+            await sendRealisticText(botId, sock, remoteJid, userPhone, bonusDeliveryText);
+            return;
         } else {
-            // Reprovado pela IA: Mantém session.waitingFor = 'PIX_RECEIPT' para o lead mandar o certo
-            const deniedEdge = edges.find(
-                (e) => (e.source || e.sourceNodeId) === verifierNode?.nodeId && e.sourceHandle === 'denied'
+            await sendRealisticText(
+                botId,
+                sock,
+                remoteJid,
+                userPhone,
+                `⚠️ Oi! Analisei o arquivo enviado, mas ${auditResult.reason}\n\nPor favor, envie o comprovante definitivo do PIX aqui na conversa para eu liberar o seu bônus completo!`
             );
-            if (deniedEdge) {
-                const deniedNode = nodes.find((n) => n.nodeId === (deniedEdge.target || deniedEdge.targetNodeId));
-                const deniedText = deniedNode?.config?.text || deniedNode?.config?.messageText ||
-                    `⚠️ Oi! Analisei o arquivo enviado, mas ${auditResult.reason}\n\nPor favor, me envie o comprovante definitivo do PIX de R$ 19,90 aqui para liberar seu acesso!`;
-                await sendRealisticText(botId, sock, remoteJid, userPhone, deniedText);
-            } else {
-                await sendRealisticText(
-                    botId,
-                    sock,
-                    remoteJid,
-                    userPhone,
-                    `⚠️ Oi! Analisei o arquivo enviado, mas ${auditResult.reason}\n\nPor favor, envie o comprovante do PIX de R$ 19,90 aqui na conversa para liberar o seu acesso completo!`
-                );
-            }
+            return;
         }
-        return;
     }
 
-    const startNode = nodes.find((n) => n.nodeType === 'START') || nodes[0];
-    if (!startNode) return;
-
-    session = {
-        botId,
-        userJid: remoteJid,
-        userPhone,
-        userName: pushName,
-        currentNodeId: startNode.nodeId,
-        waitingFor: null,
-        variables: { nome: pushName, telefone: userPhone },
-        updatedAt: new Date().toISOString(),
-    };
-    store.userSessions[sessionKey] = session;
-    store.funnelStats.startedCount += 1;
-    saveStore(store);
-
-    const firstEdge = edges.find((e) => (e.source || e.sourceNodeId) === startNode.nodeId);
-    if (firstEdge) {
-        await executeFromNode(botId, sock, remoteJid, session, firstEdge.target || firstEdge.targetNodeId, nodes, edges);
-    }
+    // Se NÃO tem sessão ativa e o lead mandou uma mensagem (anúncio do Meta, oi, etc.):
+    await sendParabolasPhase1(botId, sock, remoteJid, userPhone, pushName);
 }
 
 async function resolveMediaBuffer(targetUrl, defaultFilename) {
+    if (targetUrl) {
+        const directLocalPath = path.join(__dirname, 'public', targetUrl);
+        if (fs.existsSync(directLocalPath)) {
+            return { buffer: fs.readFileSync(directLocalPath), filename: defaultFilename || path.basename(targetUrl) };
+        }
+    }
     const filename = defaultFilename || (targetUrl ? path.basename(targetUrl.split('?')[0]) : null);
     if (filename) {
         const localPath = path.join(__dirname, 'public', filename);
