@@ -703,6 +703,22 @@ async function handleIncomingMessage(botId, sock, msg) {
     const normalizedText = textContent.trim().toLowerCase();
     const isRestartKeyword = ['oi', 'olá', 'ola', 'hi', 'hello', 'começar', 'comecar', 'recomeçar', 'menu', 'inicio', 'início'].includes(normalizedText);
 
+    // GATILHO DE TESTE: Só dispara o funil se o usuário enviar explicitamente a palavra "teste"
+    const isTestTrigger = ['teste', 'test', '#teste', '!teste', '/teste'].includes(normalizedText) || normalizedText.startsWith('teste');
+
+    // Se o lead enviou "teste", reseta qualquer sessão anterior para reiniciar o funil limpo
+    if (isTestTrigger) {
+        console.log(`[Funil X1] 🚀 Gatilho de TESTE ativado por ${pushName} (${userPhone}) com mensagem: "${textContent}". Iniciando funil de teste...`);
+        session = null;
+        delete store.userSessions[sessionKey];
+        saveStore(store);
+    } else if (!session || session.waitingFor !== 'PIX_RECEIPT') {
+        // Se NÃO enviou "teste" e NÃO está no meio da auditoria de comprovante PIX: IGNORA
+        // Isso impede que o bot responda conversas pessoais e outros assuntos no mesmo número
+        console.log(`[Funil X1] ℹ️ Mensagem ignorada de ${pushName} (${userPhone}): "${textContent}". O funil está configurado para disparar APENAS com a palavra "teste".`);
+        return;
+    }
+
     if (session && session.waitingFor === 'PIX_RECEIPT' && !isRestartKeyword) {
         const verifierNode = nodes.find((n) => n.nodeId === session.currentNodeId) || nodes.find((n) => n.nodeType === 'PIX_VERIFIER');
 
