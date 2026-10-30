@@ -5,6 +5,7 @@ import * as QRCode from 'qrcode';
 import pino from 'pino';
 import path from 'path';
 import fs from 'fs';
+import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 import * as baileysPkg from '@whiskeysockets/baileys';
 
@@ -859,13 +860,25 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
                 const media = await resolveMediaBuffer(audioUrl, 'audio.mp3');
                 if (media && media.buffer) {
                     const isMp3 = media.filename.toLowerCase().endsWith('.mp3');
-                    await sock.sendMessage(remoteJid, {
-                        audio: media.buffer,
-                        mimetype: isMp3 ? 'audio/mpeg' : 'audio/ogg; codecs=opus',
-                        ptt: true,
-                    });
-                    sentAudio = true;
-                    logConversation(botId, session.userPhone, 'BOT', 'AUDIO', `🎙️ [Áudio enviado: ${media.filename}]`);
+                    const sendAudioMsg = async () => {
+                        await sock.sendMessage(remoteJid, {
+                            audio: media.buffer,
+                            mimetype: isMp3 ? 'audio/mpeg' : 'audio/ogg; codecs=opus',
+                            ptt: true,
+                        });
+                    };
+                    try {
+                        await sendAudioMsg();
+                        sentAudio = true;
+                    } catch (firstErr) {
+                        console.warn('[Audio Send Retry]:', firstErr?.message);
+                        await new Promise((r) => setTimeout(r, 1000));
+                        await sendAudioMsg();
+                        sentAudio = true;
+                    }
+                    if (sentAudio) {
+                        logConversation(botId, session.userPhone, 'BOT', 'AUDIO', `🎙️ [Áudio enviado: ${media.filename}]`);
+                    }
                 }
             } catch (err) {
                 console.error('[Audio Send Error]:', err?.message);
@@ -933,7 +946,7 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
             );
             await new Promise((r) => setTimeout(r, 600));
 
-            let sentInteractive = false;
+            // Tenta enviar o cartão com botão nativo "Copiar chave Pix" (cta_copy)
             try {
                 if (generateWAMessageFromContent && proto) {
                     const buttonParams = {
@@ -992,34 +1005,53 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
                     const waMessage = generateWAMessageFromContent(
                         remoteJid,
                         {
-                            viewOnceMessage: {
-                                message: {
-                                    messageContextInfo: {
-                                        deviceListMetadata: {},
-                                        deviceListMetadataVersion: 2
-                                    },
-                                    interactiveMessage
-                                }
-                            }
+                            messageContextInfo: {
+                                deviceListMetadata: {},
+                                deviceListMetadataVersion: 2,
+                                messageSecret: crypto.randomBytes(32)
+                            },
+                            interactiveMessage
                         },
                         {}
                     );
 
                     await sock.relayMessage(remoteJid, waMessage.message, {
-                        messageId: waMessage.key.id
+                        messageId: waMessage.key.id,
+                        additionalNodes: [
+                            {
+                                tag: 'biz',
+                                attrs: {
+                                    actual_actors: '2',
+                                    host_storage: '2',
+                                    privacy_mode_ts: String(Math.floor(Date.now() / 1000))
+                                },
+                                content: [
+                                    {
+                                        tag: 'interactive',
+                                        attrs: { type: 'native_flow', v: '1' },
+                                        content: [
+                                            {
+                                                tag: 'native_flow',
+                                                attrs: { v: '9', name: 'mixed' }
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
                     });
-                    sentInteractive = true;
                     logConversation(botId, session.userPhone, 'BOT', 'PIX', `[Botão Nativo PIX cta_copy]: ${pixKey}`);
                 }
             } catch (interactiveErr) {
                 console.error('[PIX Native Button Error]:', interactiveErr?.message);
             }
 
-            // Fallback para texto simples se o botão nativo não tiver sido enviado
-            if (!sentInteractive) {
-                await sock.sendMessage(remoteJid, { text: pixKey });
-                logConversation(botId, session.userPhone, 'BOT', 'PIX', `Chave PIX (Texto Puro): ${pixKey}`);
-            }
+            // Envia SEMPRE a chave PIX avulsa em texto logo em seguida.
+            // Garante 100% de conversão em qualquer versão do WhatsApp (iPhone, Android ou Web)
+            // sem nunca deixar espaço em branco!
+            await new Promise((r) => setTimeout(r, 600));
+            await sock.sendMessage(remoteJid, { text: pixKey });
+            logConversation(botId, session.userPhone, 'BOT', 'PIX', `Chave PIX: ${pixKey}`);
 
             await new Promise((r) => setTimeout(r, 700));
             await sendRealisticText(
