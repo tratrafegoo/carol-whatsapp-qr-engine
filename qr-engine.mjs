@@ -12,6 +12,140 @@ const makeWASocket = baileysPkg.default?.default || baileysPkg.default || bailey
 const useMultiFileAuthState = baileysPkg.useMultiFileAuthState || baileysPkg.default?.useMultiFileAuthState;
 const DisconnectReason = baileysPkg.DisconnectReason || baileysPkg.default?.DisconnectReason;
 const fetchLatestBaileysVersion = baileysPkg.fetchLatestBaileysVersion || baileysPkg.default?.fetchLatestBaileysVersion;
+const downloadMediaMessage = baileysPkg.downloadMediaMessage || baileysPkg.default?.downloadMediaMessage;
+const downloadContentFromMessage = baileysPkg.downloadContentFromMessage || baileysPkg.default?.downloadContentFromMessage;
+
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
+const AUDIT_PROMPT = `
+Você é um auditor financeiro sênior especializado em validar comprovantes de transferência PIX brasileiros para e-commerce e infoprodutos.
+Sua missão é analisar meticulosamente a imagem ou PDF do comprovante anexado e verificar se a transferência PIX foi REALMENTE EFETIVADA e CONCLUÍDA.
+
+REGRAS CRÍTICAS DE AUDITORIA:
+1. Status: Se estiver escrito "Agendamento", "Agendado", "Em processamento" ou indicar uma data futura, o status DEVE ser "AGENDADO" e isValidPix DEVE ser false. Agendamento NÃO é pagamento realizado!
+2. Só aprove ("isValidPix": true) se houver termos claros como "Comprovante de Transferência PIX", "PIX Realizado", "Pagamento Efetuado", "Concluído", "Sucesso" ou código de autenticação/id de transação comprovada.
+3. Extraia o valor numérico exato pago (ex: se for R$ 415,66, retorne 415.66).
+4. Extraia o nome do destinatário / favorecido e o banco se legíveis.
+
+Retorne EXCLUSIVAMENTE um JSON:
+{
+  "isValidPix": boolean,
+  "status": "CONCLUIDO" | "AGENDADO" | "FALHOU",
+  "valor": number,
+  "destinatario": string,
+  "chavePix": string,
+  "dataHora": string,
+  "idTransacao": string,
+  "banco": string,
+  "rejectionReason": string | null
+}
+`;
+
+async function getMediaBuffer(msg, sock) {
+    if (downloadMediaMessage) {
+        try {
+            return await downloadMediaMessage(
+                msg,
+                'buffer',
+                {},
+                { reuploadRequest: sock?.updateMediaMessage }
+            );
+        } catch (e) {
+            console.warn('[Media Download] downloadMediaMessage aviso:', e.message);
+        }
+    }
+    const messageContent = msg.message;
+    const type = messageContent?.imageMessage ? 'image' : messageContent?.documentMessage ? 'document' : null;
+    const mediaObj = messageContent?.imageMessage || messageContent?.documentMessage;
+    if (downloadContentFromMessage && type && mediaObj) {
+        try {
+            const stream = await downloadContentFromMessage(mediaObj, type);
+            let buffer = Buffer.from([]);
+            for await (const chunk of stream) {
+                buffer = Buffer.concat([buffer, chunk]);
+            }
+            return buffer;
+        } catch (e) {
+            console.warn('[Media Download] downloadContentFromMessage aviso:', e.message);
+        }
+    }
+    return null;
+}
+
+async function auditPixReceiptWithGemini(mediaBuffer, mimeType, expectedAmount = 19.90, beneficiary = 'Carol') {
+    if (!GEMINI_API_KEY) {
+        console.warn('[PIX Auditor] Nenhuma chave GEMINI_API_KEY configurada.');
+        return { isValid: false, reason: 'Chave da IA não configurada no servidor.' };
+    }
+
+    try {
+        const base64Data = mediaBuffer.toString('base64');
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${GEMINI_API_KEY}`;
+        
+        const response = await axios.post(
+            url,
+            {
+                contents: [
+                    {
+                        parts: [
+                            { text: AUDIT_PROMPT },
+                            {
+                                inline_data: {
+                                    mime_type: (mimeType && mimeType.includes('pdf')) ? 'application/pdf' : 'image/jpeg',
+                                    data: base64Data,
+                                },
+                            },
+                        ],
+                    },
+                ],
+                generationConfig: {
+                    response_mime_type: 'application/json',
+                },
+            },
+            { headers: { 'Content-Type': 'application/json' }, timeout: 25000 }
+        );
+
+        const textOutput = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        const parsed = JSON.parse(textOutput);
+        console.log('[PIX Auditor] 🧠 Resultado da IA:', JSON.stringify(parsed));
+
+        if (parsed.status !== 'CONCLUIDO') {
+            return {
+                isValid: false,
+                reason: 'O comprovante enviado parece ser um agendamento ou ainda não foi concluído.',
+                details: parsed,
+            };
+        }
+
+        if (typeof parsed.valor === 'number') {
+            if (parsed.valor < expectedAmount * 0.95 || parsed.valor > expectedAmount * 2.0) {
+                return {
+                    isValid: false,
+                    reason: `O valor do comprovante (R$ ${parsed.valor.toFixed(2).replace('.', ',')}) é diferente do valor do material (R$ ${expectedAmount.toFixed(2).replace('.', ',')}).`,
+                    details: parsed,
+                };
+            }
+        }
+
+        if (parsed.destinatario && typeof parsed.destinatario === 'string') {
+            const destLower = parsed.destinatario.toLowerCase();
+            const benLower = (beneficiary || 'carol').toLowerCase();
+            const isKnownUtility = ['celesc', 'enel', 'sabesp', 'copel', 'cemig', 'cpfl', 'claro', 'vivo', 'tim'].some(u => destLower.includes(u));
+            if (isKnownUtility || (!destLower.includes(benLower) && !destLower.includes('carol') && !destLower.includes('pagamento') && !destLower.includes('infoproduto'))) {
+                return {
+                    isValid: false,
+                    reason: `O destinatário do comprovante (${parsed.destinatario}) não corresponde ao pagamento correto (${beneficiary}).`,
+                    details: parsed,
+                };
+            }
+        }
+
+        return { isValid: true, details: parsed };
+    } catch (err) {
+        console.error('[PIX Auditor] Erro na API do Gemini:', err?.response?.data || err?.message);
+        return { isValid: false, reason: 'Não foi possível ler com nitidez as informações do comprovante.' };
+    }
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -101,7 +235,7 @@ const DEFAULT_FLOW_NODES = [
         position: { x: 320, y: 180 },
         label: '🎙️ Áudio de Boas-Vindas (Voz Humanizada)',
         config: {
-            audioUrl: 'https://carol-chatbot.guilhermealita.workers.dev/apresentacao.ogg',
+            audioUrl: 'audio.mp3',
             simulateRecording: true,
             recordingDurationSeconds: 4,
             fallbackText: 'Oi! Tudo bem? Que alegria ter você aqui! Preparei o seu material completo com todo carinho.',
@@ -114,7 +248,7 @@ const DEFAULT_FLOW_NODES = [
         label: '📦 Entrega do Material (PDF / Acesso)',
         config: {
             mediaType: 'DOCUMENT',
-            mediaUrl: 'https://carol-chatbot.guilhermealita.workers.dev/Material_Exclusivo_Carol.pdf',
+            mediaUrl: 'Material_Exclusivo_Carol.pdf',
             filename: 'Material_Exclusivo_Carol.pdf',
             caption: 'Aqui está seu acesso exclusivo! Dá uma olhada no conteúdo com carinho.',
         },
@@ -588,28 +722,70 @@ async function handleIncomingMessage(botId, sock, msg) {
             sock,
             remoteJid,
             userPhone,
-            '⏳ Recebi o seu comprovante! Estou verificando o pagamento, só um instante...'
+            '⏳ Recebi o seu comprovante! Estou auditando o pagamento com a nossa IA, só um instante...'
         );
 
         const expectedAmount = parseFloat(verifierNode?.config?.expectedAmount || '19.90');
-        store.funnelStats.convertedCount += 1;
-        store.funnelStats.totalRevenue = Number((store.funnelStats.totalRevenue + expectedAmount).toFixed(2));
-        session.waitingFor = null;
-        saveStore(store);
+        const beneficiaryName = verifierNode?.config?.beneficiaryName || 'Carol';
 
-        const approvedEdge = edges.find(
-            (e) => (e.source || e.sourceNodeId) === verifierNode?.nodeId && (!e.sourceHandle || e.sourceHandle === 'approved')
-        );
-        if (approvedEdge) {
-            await executeFromNode(botId, sock, remoteJid, session, approvedEdge.target || approvedEdge.targetNodeId, nodes, edges);
-        } else {
-            await sendRealisticText(
-                botId,
-                sock,
-                remoteJid,
-                userPhone,
-                `✅ *Pagamento de R$ ${expectedAmount.toFixed(2).replace('.', ',')} confirmado com sucesso!*\n\nMuito obrigada! Seu acesso completo já está 100% liberado!`
+        const mimeType = msg.message?.imageMessage?.mimetype || msg.message?.documentMessage?.mimetype || 'image/jpeg';
+        let mediaBuffer = null;
+        try {
+            mediaBuffer = await getMediaBuffer(msg, sock);
+        } catch (downloadErr) {
+            console.error('[Baileys Media Error]:', downloadErr);
+        }
+
+        let auditResult = { isValid: false, reason: 'Não foi possível baixar a imagem do comprovante.' };
+        if (mediaBuffer) {
+            auditResult = await auditPixReceiptWithGemini(mediaBuffer, mimeType, expectedAmount, beneficiaryName);
+        }
+
+        if (auditResult.isValid) {
+            store.funnelStats.convertedCount += 1;
+            store.funnelStats.totalRevenue = Number((store.funnelStats.totalRevenue + (auditResult.details?.valor || expectedAmount)).toFixed(2));
+            store.funnelStats.recentConversions.unshift({
+                userPhoneNumber: userPhone,
+                paidAmount: auditResult.details?.valor || expectedAmount,
+                updatedAt: new Date().toISOString(),
+                ctwaClid: session.ctwaClid,
+            });
+            session.waitingFor = null;
+            saveStore(store);
+
+            const approvedEdge = edges.find(
+                (e) => (e.source || e.sourceNodeId) === verifierNode?.nodeId && (!e.sourceHandle || e.sourceHandle === 'approved')
             );
+            if (approvedEdge) {
+                await executeFromNode(botId, sock, remoteJid, session, approvedEdge.target || approvedEdge.targetNodeId, nodes, edges);
+            } else {
+                await sendRealisticText(
+                    botId,
+                    sock,
+                    remoteJid,
+                    userPhone,
+                    `🎉 *Pagamento de R$ ${(auditResult.details?.valor || expectedAmount).toFixed(2).replace('.', ',')} confirmado com sucesso!*\n\nMuito obrigada pela confiança, ${session.userName}! Seu acesso completo já está 100% liberado!`
+                );
+            }
+        } else {
+            // Reprovado pela IA: Mantém session.waitingFor = 'PIX_RECEIPT' para o lead mandar o certo
+            const deniedEdge = edges.find(
+                (e) => (e.source || e.sourceNodeId) === verifierNode?.nodeId && e.sourceHandle === 'denied'
+            );
+            if (deniedEdge) {
+                const deniedNode = nodes.find((n) => n.nodeId === (deniedEdge.target || deniedEdge.targetNodeId));
+                const deniedText = deniedNode?.config?.text || deniedNode?.config?.messageText ||
+                    `⚠️ Oi! Analisei o arquivo enviado, mas ${auditResult.reason}\n\nPor favor, me envie o comprovante definitivo do PIX de R$ 19,90 aqui para liberar seu acesso!`;
+                await sendRealisticText(botId, sock, remoteJid, userPhone, deniedText);
+            } else {
+                await sendRealisticText(
+                    botId,
+                    sock,
+                    remoteJid,
+                    userPhone,
+                    `⚠️ Oi! Analisei o arquivo enviado, mas ${auditResult.reason}\n\nPor favor, envie o comprovante do PIX de R$ 19,90 aqui na conversa para liberar o seu acesso completo!`
+                );
+            }
         }
         return;
     }
@@ -637,6 +813,25 @@ async function handleIncomingMessage(botId, sock, msg) {
     }
 }
 
+async function resolveMediaBuffer(targetUrl, defaultFilename) {
+    const filename = defaultFilename || (targetUrl ? path.basename(targetUrl.split('?')[0]) : null);
+    if (filename) {
+        const localPath = path.join(__dirname, 'public', filename);
+        if (fs.existsSync(localPath)) {
+            return { buffer: fs.readFileSync(localPath), filename };
+        }
+    }
+    if (targetUrl && (targetUrl.startsWith('http://') || targetUrl.startsWith('https://'))) {
+        try {
+            const res = await axios.get(targetUrl, { responseType: 'arraybuffer', timeout: 15000 });
+            return { buffer: Buffer.from(res.data), filename: filename || 'file' };
+        } catch (err) {
+            console.error('[resolveMediaBuffer] Erro download URL:', targetUrl, err?.message);
+        }
+    }
+    return null;
+}
+
 async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, edges) {
     const node = nodes.find((n) => n.nodeId === nodeId);
     if (!node) return;
@@ -656,22 +851,24 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
             } catch {}
             await new Promise((r) => setTimeout(r, durationSec * 1000));
 
-            const audioUrl = config.audioUrl || 'https://carol-chatbot.guilhermealita.workers.dev/apresentacao.ogg';
+            const audioUrl = config.audioUrl || 'audio.mp3';
             let sentAudio = false;
-            if (audioUrl) {
-                try {
-                    const res = await axios.get(audioUrl, { responseType: 'arraybuffer', timeout: 15000 });
+            try {
+                const media = await resolveMediaBuffer(audioUrl, 'audio.mp3');
+                if (media && media.buffer) {
+                    const isMp3 = media.filename.toLowerCase().endsWith('.mp3');
                     await sock.sendMessage(remoteJid, {
-                        audio: Buffer.from(res.data),
-                        mimetype: 'audio/ogg; codecs=opus',
+                        audio: media.buffer,
+                        mimetype: isMp3 ? 'audio/mpeg' : 'audio/ogg; codecs=opus',
                         ptt: true,
                     });
                     sentAudio = true;
-                    logConversation(botId, session.userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio de Boas-Vindas enviado]');
-                } catch (err) {
-                    console.error('[Audio Send Error]:', err?.message);
+                    logConversation(botId, session.userPhone, 'BOT', 'AUDIO', `🎙️ [Áudio enviado: ${media.filename}]`);
                 }
+            } catch (err) {
+                console.error('[Audio Send Error]:', err?.message);
             }
+
             if (!sentAudio) {
                 const text =
                     config.fallbackText ||
@@ -686,7 +883,7 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
         }
 
         case 'MEDIA': {
-            const mediaUrl = config.mediaUrl || 'https://carol-chatbot.guilhermealita.workers.dev/Material_Exclusivo_Carol.pdf';
+            const mediaUrl = config.mediaUrl || 'Material_Exclusivo_Carol.pdf';
             const caption = config.caption || '📦 Aqui está seu acesso exclusivo! Dá uma olhada no conteúdo com carinho.';
             try {
                 await sock.sendPresenceUpdate('composing', remoteJid);
@@ -694,21 +891,22 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
             await new Promise((r) => setTimeout(r, 1500));
 
             let sentMedia = false;
-            if (mediaUrl) {
-                try {
-                    const res = await axios.get(mediaUrl, { responseType: 'arraybuffer', timeout: 15000 });
+            try {
+                const media = await resolveMediaBuffer(mediaUrl, 'Material_Exclusivo_Carol.pdf');
+                if (media && media.buffer) {
                     await sock.sendMessage(remoteJid, {
-                        document: Buffer.from(res.data),
+                        document: media.buffer,
                         mimetype: 'application/pdf',
-                        fileName: config.filename || 'Material_Exclusivo_Carol.pdf',
+                        fileName: config.filename || media.filename || 'Material_Exclusivo_Carol.pdf',
                         caption,
                     });
                     sentMedia = true;
-                    logConversation(botId, session.userPhone, 'BOT', 'DOCUMENT', `📦 [Documento PDF Enviado]: Material_Exclusivo_Carol.pdf`);
-                } catch (err) {
-                    console.error('[Media Send Error]:', err?.message);
+                    logConversation(botId, session.userPhone, 'BOT', 'DOCUMENT', `📦 [Documento PDF Enviado]: ${media.filename}`);
                 }
+            } catch (err) {
+                console.error('[Media Send Error]:', err?.message);
             }
+
             if (!sentMedia) {
                 await sock.sendMessage(remoteJid, { text: `📦 ${caption}` });
                 logConversation(botId, session.userPhone, 'BOT', 'DOCUMENT', `📦 ${caption}`);
@@ -821,6 +1019,7 @@ app.use((req, res, next) => {
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json({ limit: '15mb' }));
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/api/health', (_req, res) => {
     res.json({
