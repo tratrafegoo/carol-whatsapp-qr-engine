@@ -14,6 +14,8 @@ const DisconnectReason = baileysPkg.DisconnectReason || baileysPkg.default?.Disc
 const fetchLatestBaileysVersion = baileysPkg.fetchLatestBaileysVersion || baileysPkg.default?.fetchLatestBaileysVersion;
 const downloadMediaMessage = baileysPkg.downloadMediaMessage || baileysPkg.default?.downloadMediaMessage;
 const downloadContentFromMessage = baileysPkg.downloadContentFromMessage || baileysPkg.default?.downloadContentFromMessage;
+const generateWAMessageFromContent = baileysPkg.generateWAMessageFromContent || baileysPkg.default?.generateWAMessageFromContent;
+const proto = baileysPkg.proto || baileysPkg.default?.proto;
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
@@ -920,18 +922,104 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
             const pixKey = config.pixKey || 'pagamentos@seunegocio.com';
             const beneficiaryName = config.beneficiaryName || 'Carol';
             const amount = config.amount || '19.90';
-            const msg = config.message || `O valor simbólico é de apenas *R$ ${amount}*! Segue a chave PIX para cópia rápida:`;
+            const msg = config.message || `O valor simbólico é de apenas *R$ ${amount}*!`;
 
             await sendRealisticText(
                 botId,
                 sock,
                 remoteJid,
                 session.userPhone,
-                `💸 ${msg}\n\n👤 *Favorecido:* ${beneficiaryName}\n💰 *Valor:* R$ ${amount}`
+                `💸 ${msg}\n\n👇 *Só copiar a chave:*`
             );
-            await new Promise((r) => setTimeout(r, 700));
-            await sock.sendMessage(remoteJid, { text: pixKey });
-            logConversation(botId, session.userPhone, 'BOT', 'PIX', `Chave PIX: ${pixKey}`);
+            await new Promise((r) => setTimeout(r, 600));
+
+            let sentInteractive = false;
+            try {
+                if (generateWAMessageFromContent && proto) {
+                    const buttonParams = {
+                        display_text: 'Copiar chave Pix',
+                        id: 'copy_pix_key',
+                        copy_code: pixKey
+                    };
+
+                    const buttons = [
+                        {
+                            name: 'cta_copy',
+                            buttonParamsJson: JSON.stringify(buttonParams)
+                        }
+                    ];
+
+                    const interactiveMessage = proto.Message?.InteractiveMessage?.create
+                        ? proto.Message.InteractiveMessage.create({
+                              body: proto.Message.InteractiveMessage.Body?.create
+                                  ? proto.Message.InteractiveMessage.Body.create({ text: `💰 *Valor:* R$ ${amount}` })
+                                  : { text: `💰 *Valor:* R$ ${amount}` },
+                              footer: proto.Message.InteractiveMessage.Footer?.create
+                                  ? proto.Message.InteractiveMessage.Footer.create({ text: 'Toque no botão abaixo para copiar' })
+                                  : { text: 'Toque no botão abaixo para copiar' },
+                              header: proto.Message.InteractiveMessage.Header?.create
+                                  ? proto.Message.InteractiveMessage.Header.create({
+                                        title: beneficiaryName,
+                                        subtitle: `Chave: ${pixKey}`,
+                                        hasMediaAttachment: false
+                                    })
+                                  : {
+                                        title: beneficiaryName,
+                                        subtitle: `Chave: ${pixKey}`,
+                                        hasMediaAttachment: false
+                                    },
+                              nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage?.create
+                                  ? proto.Message.InteractiveMessage.NativeFlowMessage.create({
+                                        buttons
+                                    })
+                                  : {
+                                        buttons
+                                    }
+                          })
+                        : {
+                              body: { text: `💰 *Valor:* R$ ${amount}` },
+                              footer: { text: 'Toque no botão abaixo para copiar' },
+                              header: {
+                                  title: beneficiaryName,
+                                  subtitle: `Chave: ${pixKey}`,
+                                  hasMediaAttachment: false
+                              },
+                              nativeFlowMessage: {
+                                  buttons
+                              }
+                          };
+
+                    const waMessage = generateWAMessageFromContent(
+                        remoteJid,
+                        {
+                            viewOnceMessage: {
+                                message: {
+                                    messageContextInfo: {
+                                        deviceListMetadata: {},
+                                        deviceListMetadataVersion: 2
+                                    },
+                                    interactiveMessage
+                                }
+                            }
+                        },
+                        {}
+                    );
+
+                    await sock.relayMessage(remoteJid, waMessage.message, {
+                        messageId: waMessage.key.id
+                    });
+                    sentInteractive = true;
+                    logConversation(botId, session.userPhone, 'BOT', 'PIX', `[Botão Nativo PIX cta_copy]: ${pixKey}`);
+                }
+            } catch (interactiveErr) {
+                console.error('[PIX Native Button Error]:', interactiveErr?.message);
+            }
+
+            // Fallback para texto simples se o botão nativo não tiver sido enviado
+            if (!sentInteractive) {
+                await sock.sendMessage(remoteJid, { text: pixKey });
+                logConversation(botId, session.userPhone, 'BOT', 'PIX', `Chave PIX (Texto Puro): ${pixKey}`);
+            }
 
             await new Promise((r) => setTimeout(r, 700));
             await sendRealisticText(
