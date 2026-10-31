@@ -801,6 +801,15 @@ function scheduleFunil3Reminder(botId, remoteJid, userPhone) {
         }, 20 * 60 * 1000)
     );
 
+    // Follow-up 2: ~4 horas / manhã seguinte (Print 06:00)
+    timers.push(
+        setTimeout(() => {
+            sendFollowUp(2, [
+                'A paz do Senhor, minha irmã! Conseguiu realizar sua contribuição? 🙏\n\nPeço com carinho que não deixe nosso projeto no prejuízo, pois preparamos e enviamos o material com confiança. Esse trabalho ajuda muitas famílias, e sua honestidade diante de Deus faz toda diferença. 💛',
+            ]);
+        }, 4 * 60 * 60 * 1000)
+    );
+
     funil3ReminderTimers.set(key, timers);
 }
 
@@ -960,6 +969,54 @@ function scheduleFunil5Reminder(botId, remoteJid, userPhone) {
         ]);
     }, 120 * 60 * 1000));
 
+    // Step 7: ~4 horas (Print 08:19 / 08:20 - Imagem Eclesiastes 5:5 + Cobrança)
+    timers.push(setTimeout(async () => {
+        try {
+            const currentStore = loadStore();
+            const sess = currentStore.userSessions[key];
+            if (sess && sess.waitingFor === 'PIX_RECEIPT_FUNIL5') {
+                const sock = activeSockets.get(botId);
+                if (sock) {
+                    const ecImgPath = path.join(__dirname, 'public', 'funil5', 'eclesiastes.jpeg');
+                    if (fs.existsSync(ecImgPath)) {
+                        const imgBuf = fs.readFileSync(ecImgPath);
+                        await sock.sendMessage(remoteJid, { image: imgBuf });
+                    }
+                    await sock.sendMessage(remoteJid, {
+                        text: `Por favor, precisamos do seu pagamento\n\nNosso trabalho está ficando prejudicado. Você aceitou o envio do nosso material e avisamos que o valor era R$19,90\n\nPIX: 64158407000124\nNOME: Vitor Bueno`,
+                    });
+                    await new Promise((r) => setTimeout(r, 800));
+                    await sock.sendMessage(remoteJid, {
+                        text: `Me envie o comprovante para dar baixa por favor 🙏`,
+                    });
+                }
+            }
+        } catch (err) {
+            console.error('[Funil 5 Step 7 Error]:', err?.message);
+        }
+    }, 240 * 60 * 1000));
+
+    // Step 8: ~6 horas (Print 10:20 - Confirmação e dados PIX)
+    timers.push(setTimeout(() => {
+        sendFollowUp(8, [
+            `A paz do Senhor!\n\nPassando aqui só para confirmar se você conseguiu acessar todo o material que te enviei 📖✨\n\nFico no aguardo da sua contribuição via Pix, conforme combinamos 🙏\n\nQue Deus continue te guiando e te usando poderosamente!\n\nChave PIX CNPJ : 64158407000124\n\nNOME: Vitor Bueno de Carvalho\n\nVALOR : R$19,90`,
+        ]);
+    }, 360 * 60 * 1000));
+
+    // Step 9: ~9 horas (Print 13:21 - Desabafo confiança)
+    timers.push(setTimeout(() => {
+        sendFollowUp(9, [
+            `Poxa, irmão... fico triste que você aproveitou o material, mas não retribuiu minha confiança. 😔 Enviei tudo com muito carinho. Se ainda puder ser honesto comigo, mande o comprovante agora.`,
+        ]);
+    }, 540 * 60 * 1000));
+
+    // Step 10: ~9h30 (Print 13:52 - Deixaram na mão)
+    timers.push(setTimeout(() => {
+        sendFollowUp(10, [
+            `Muitas pessoas já me deixaram na mão...\nEspero de coração que você não faça o mesmo. 😔💔`,
+        ]);
+    }, 570 * 60 * 1000));
+
     funil5ReminderTimers.set(key, timers);
 }
 
@@ -1008,7 +1065,8 @@ function scheduleFunil6Reminder(botId, remoteJid, userPhone) {
     // Step 1: ~30 minutos (Print 07:22)
     timers.push(setTimeout(() => {
         sendFollowUp(1, [
-            `Ta ai Irmã?\n\nNão esquece de me mandar o comprovante tá bom? tenho um presente para você após enviar 🤗`,
+            `Ta ai Irmã?`,
+            `Não esquece de me mandar o comprovante tá bom? tenho um presente para você após enviar 😘`,
         ]);
     }, 30 * 60 * 1000));
 
@@ -1026,7 +1084,11 @@ function scheduleFunil6Reminder(botId, remoteJid, userPhone) {
                         await sock.sendMessage(remoteJid, { image: imgBuf });
                     }
                     await sock.sendMessage(remoteJid, {
-                        text: `Irmã, olha esse testemunho aqui que recebi no nosso grupo\n\nConseguiu, irmã fazer sua contribuição? Sobrou 1 vaga aqui no grupo do sorteio, aí já coloco seu nome. Me manda também os nomes que a senhora deseja que a gente apresente em oração 🙌`,
+                        text: `Irmã, olha esse testemunho aqui que recebi no nosso grupo`,
+                    });
+                    await new Promise((r) => setTimeout(r, 800));
+                    await sock.sendMessage(remoteJid, {
+                        text: `Conseguiu, irmã fazer sua contribuição? Sobrou 1 vaga aqui no grupo do sorteio, ai já coloco seu nome. Me manda também os nomes que a senhora deseja que a gente apresente em oração 🙌🏻`,
                     });
                 }
             }
@@ -2589,6 +2651,19 @@ async function handleIncomingMessage(botId, sock, msg) {
         if (!hasMediaReceipt) {
             const emoji = getHumanReactionEmoji(textContent);
             await reactToMessage(sock, remoteJid, msg.key, emoji);
+
+            // Resposta carinhosa personalizada da Missionária Raquel (Funil 3 - Print 13:50)
+            if (session.waitingFor === 'PIX_RECEIPT_FUNIL3' && ['amem', 'amém', 'ok', 'sim', 'certo', 'ta bom', 'tá bom'].some(w => normalizedText.includes(w))) {
+                await sendRealisticText(botId, sock, remoteJid, userPhone, 'Ok irmã! 🙏💙', { quoted: msg });
+                return;
+            }
+
+            // Para mensagens de confirmação/agradecimento ('amem', 'sim', 'ok', 'calma', etc.), apenas a reação já foi feita, sem spam de mensagem repetitiva
+            const isAck = ['amem', 'amém', 'sim', 'ok', 'ta bom', 'tá bom', 'certo', 'calma', 'obrigado', 'obrigada', 'deus abençoe', 'vou pagar', 'pago já', 'pode deixar'].some(w => normalizedText.includes(w));
+            if (isAck) {
+                return;
+            }
+
             await sendRealisticText(botId, sock, remoteJid, userPhone, 'Por favor, me envie a *foto ou o PDF do comprovante do PIX* aqui na conversa para eu liberar o seu acesso completo e bônus! 👇');
             return;
         }
