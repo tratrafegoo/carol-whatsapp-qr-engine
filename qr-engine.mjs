@@ -1100,6 +1100,126 @@ function scheduleFunil6Reminder(botId, remoteJid, userPhone) {
     funil6ReminderTimers.set(key, timers);
 }
 
+// ─── Esteira de Cobrança / Follow-up do Funil 7 (Alfabetização Infantil - Pinguim Estudioso) ───
+const funil7ReminderTimers = new Map();
+
+function cancelFunil7Reminder(botId, userPhone) {
+    const key = `${botId}:${userPhone}`;
+    if (funil7ReminderTimers.has(key)) {
+        const timers = funil7ReminderTimers.get(key);
+        if (Array.isArray(timers)) {
+            timers.forEach((t) => clearTimeout(t));
+        } else {
+            clearTimeout(timers);
+        }
+        funil7ReminderTimers.delete(key);
+        console.log(`[Funil 7] ⏹️ Timers de follow-up cancelados para ${userPhone}`);
+    }
+}
+
+function scheduleFunil7Reminder(botId, remoteJid, userPhone) {
+    cancelFunil7Reminder(botId, userPhone);
+    const key = `${botId}:${userPhone}`;
+    const timers = [];
+
+    const sendFollowUp = async (step, texts) => {
+        try {
+            const currentStore = loadStore();
+            const sess = currentStore.userSessions[key];
+            if (sess && sess.waitingFor === 'PIX_RECEIPT_FUNIL7') {
+                const sock = activeSockets.get(botId);
+                if (sock) {
+                    for (const text of texts) {
+                        await sock.sendMessage(remoteJid, { text });
+                        logConversation(botId, userPhone, 'BOT', 'REMINDER', text);
+                        await new Promise((r) => setTimeout(r, 800));
+                    }
+                    console.log(`[Funil 7] ⏰ Follow-up Step ${step} enviado para ${userPhone}`);
+                }
+            }
+        } catch (err) {
+            console.error(`[Funil 7 Follow-up Error]:`, err?.message);
+        }
+    };
+
+    // Step 1: ~30 minutos (Print 03:53)
+    timers.push(setTimeout(() => {
+        sendFollowUp(1, [
+            'Oii, conseguiu fazer o pix? 🙏',
+        ]);
+    }, 30 * 60 * 1000));
+
+    // Step 2: ~4 horas (Print 14:00)
+    timers.push(setTimeout(() => {
+        sendFollowUp(2, [
+            'Estou contando com o seu pagamento pra manter esse projeto vivo!\nPor favor, realize o pagamento na chave pix abaixo 👇',
+            '37999387172',
+        ]);
+    }, 240 * 60 * 1000));
+
+    // Step 3: ~8 horas (Print 16:01)
+    timers.push(setTimeout(() => {
+        sendFollowUp(3, [
+            'Eu te enviei todo o material acreditando que você faria o Pix depois.\nO valor é pequeno, R$11,90 mas pra mim representa respeito pelo meu trabalho.\nNão gosto de ficar cobrando ninguém...\nSó queria alinhar isso contigo.\nQuando puder, esse é o Pix 👇',
+            '37999387172',
+        ]);
+    }, 480 * 60 * 1000));
+
+    funil7ReminderTimers.set(key, timers);
+}
+
+// ─── Esteira de Cobrança / Follow-up do Funil 8 (Pet Comilão - Fernanda Soares) ───
+const funil8ReminderTimers = new Map();
+
+function cancelFunil8Reminder(botId, userPhone) {
+    const key = `${botId}:${userPhone}`;
+    if (funil8ReminderTimers.has(key)) {
+        const timers = funil8ReminderTimers.get(key);
+        if (Array.isArray(timers)) {
+            timers.forEach((t) => clearTimeout(t));
+        } else {
+            clearTimeout(timers);
+        }
+        funil8ReminderTimers.delete(key);
+        console.log(`[Funil 8] ⏹️ Timers de follow-up cancelados para ${userPhone}`);
+    }
+}
+
+function scheduleFunil8Reminder(botId, remoteJid, userPhone) {
+    cancelFunil8Reminder(botId, userPhone);
+    const key = `${botId}:${userPhone}`;
+    const timers = [];
+
+    const sendFollowUp = async (step, texts) => {
+        try {
+            const currentStore = loadStore();
+            const sess = currentStore.userSessions[key];
+            if (sess && sess.waitingFor === 'PIX_RECEIPT_FUNIL8') {
+                const sock = activeSockets.get(botId);
+                if (sock) {
+                    for (const text of texts) {
+                        await sock.sendMessage(remoteJid, { text });
+                        logConversation(botId, userPhone, 'BOT', 'REMINDER', text);
+                        await new Promise((r) => setTimeout(r, 800));
+                    }
+                    console.log(`[Funil 8] ⏰ Follow-up Step ${step} enviado para ${userPhone}`);
+                }
+            }
+        } catch (err) {
+            console.error(`[Funil 8 Follow-up Error]:`, err?.message);
+        }
+    };
+
+    // Step 1: ~1 hora (Print 04:21)
+    timers.push(setTimeout(() => {
+        sendFollowUp(1, [
+            `Oii, tudo bem? 🐾 Espero que tenha gostado e que seu pet adore a alimentação natural! Se tiver qualquer dúvida na hora de preparar, estou à disposição! 👩‍🍳\nPara facilitar, já vou deixar a chave Pix para a sua contribuição, tá bom? Que Deus te abençoe! 🐶💛\n\nCHAVE PIX CELULAR:\n11965034611`,
+        ]);
+    }, 60 * 60 * 1000));
+
+    funil8ReminderTimers.set(key, timers);
+}
+
 // ─── Esteira de Cobrança / Follow-up do Funil 1 (15m -> 1h -> 2h -> 3h) ───
 const parabolasReminderTimers = new Map();
 
@@ -2386,6 +2506,346 @@ async function sendFunil6Phase2(botId, sock, remoteJid, userPhone, pushName, quo
     scheduleFunil6Reminder(botId, remoteJid, userPhone);
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// FUNIL 7: Construtor de Palavras e Alfabetização Infantil - Pinguim Estudioso
+// (Gatilho: teste7 - Ref: 37 99938-7172)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function sendFunil7Phase1(botId, sock, remoteJid, userPhone, pushName) {
+    console.log(`[Funil 7 - Alfabetização] 🚀 Iniciando Fase 1 para ${pushName} (${userPhone})`);
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Olá! Bom dia, tudo bem?');
+    await new Promise((r) => setTimeout(r, 1000));
+
+    const capaPath = path.join(__dirname, 'public', 'funil7', 'capa_gratuito.jpeg');
+    if (fs.existsSync(capaPath)) {
+        try {
+            const imgBuffer = fs.readFileSync(capaPath);
+            await sock.sendMessage(remoteJid, { image: imgBuffer });
+        } catch (e) {
+            console.warn('[Funil 7 Capa Error]:', e?.message);
+        }
+    }
+    await new Promise((r) => setTimeout(r, 800));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Posso te enviar nosso material gratuito?');
+
+    const sessionKey = `${botId}:${userPhone}`;
+    store.userSessions[sessionKey] = {
+        botId,
+        userJid: remoteJid,
+        userPhone,
+        userName: pushName,
+        funnel: 'funil7',
+        waitingFor: 'CONFIRM_SEND_FUNIL7_FREE',
+        updatedAt: new Date().toISOString(),
+    };
+    saveStore(store);
+}
+
+async function sendFunil7Phase2(botId, sock, remoteJid, userPhone, pushName, quotedMsg = null) {
+    console.log(`[Funil 7 - Alfabetização] 📦 Enviando Amostra Grátis e Oferta para ${pushName} (${userPhone})`);
+
+    const quoteOptions = quotedMsg ? { quoted: quotedMsg } : {};
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Segue o material gratuito Construtor de Palavras 👇', quoteOptions);
+    await new Promise((r) => setTimeout(r, 1000));
+
+    const samplePdfPath = path.join(__dirname, 'public', 'funil7', 'CONSTRUTOR DE PALAVRAS PLR.pdf');
+    if (fs.existsSync(samplePdfPath)) {
+        try {
+            const pdfBuffer = fs.readFileSync(samplePdfPath);
+            await sock.sendMessage(remoteJid, {
+                document: pdfBuffer,
+                fileName: 'CONSTRUTOR DE PALAVRAS PLR.pdf',
+                mimetype: 'application/pdf',
+            });
+            logConversation(botId, userPhone, 'BOT', 'DOCUMENT', '📄 [PDF Grátis]: CONSTRUTOR DE PALAVRAS PLR.pdf');
+        } catch (pdfErr) {
+            console.warn('[Funil 7 PDF Grátis Error]:', pdfErr?.message);
+        }
+    }
+    await new Promise((r) => setTimeout(r, 1200));
+
+    // Áudio PTT (52s)
+    try { await sock.sendPresenceUpdate('recording', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1500));
+
+    const mp3Path = path.join(__dirname, 'public', 'funil7', 'audio_apresentacao.mp3');
+    if (fs.existsSync(mp3Path)) {
+        try {
+            const mp3Buffer = fs.readFileSync(mp3Path);
+            await sock.sendMessage(remoteJid, {
+                audio: mp3Buffer,
+                mimetype: 'audio/mpeg',
+                ptt: true,
+            });
+            logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Apresentação Funil 7 MP3 52s]');
+        } catch (mp3Err) {
+            console.warn('[Funil 7 Áudio Error]:', mp3Err?.message);
+        }
+    }
+    try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1000));
+
+    const promoImgPath = path.join(__dirname, 'public', 'funil7', 'tabela_promocao.jpeg');
+    if (fs.existsSync(promoImgPath)) {
+        try {
+            const imgBuffer = fs.readFileSync(promoImgPath);
+            await sock.sendMessage(remoteJid, { image: imgBuffer });
+        } catch (e) {}
+    }
+    await new Promise((r) => setTimeout(r, 1000));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'VÁLIDO APENAS HOJE ⭐️');
+    await new Promise((r) => setTimeout(r, 800));
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Você paga apenas R$ 11,90 pelo KIT COMPLETO! ✅');
+    await new Promise((r) => setTimeout(r, 800));
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Você gostaria de receber?');
+
+    const sessionKey = `${botId}:${userPhone}`;
+    store.userSessions[sessionKey] = {
+        botId,
+        userJid: remoteJid,
+        userPhone,
+        userName: pushName,
+        funnel: 'funil7',
+        waitingFor: 'CONFIRM_SEND_FUNIL7_FULL',
+        updatedAt: new Date().toISOString(),
+    };
+    saveStore(store);
+}
+
+async function sendFunil7Phase3(botId, sock, remoteJid, userPhone, pushName, quotedMsg = null) {
+    console.log(`[Funil 7 - Alfabetização] 🎁 Enviando Kit Completo (7 PDFs) e PIX para ${pushName} (${userPhone})`);
+
+    const quoteOptions = quotedMsg ? { quoted: quotedMsg } : {};
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Segue o KIT COMPLETO ABAIXO 👇', quoteOptions);
+    await new Promise((r) => setTimeout(r, 1000));
+
+    const fullPdfs = [
+        'CAIXA DA LEITURA.pdf',
+        'DITADO SILÁBICO GENIOS.pdf',
+        'FICHAS PARA LEITURA.pdf',
+        'FRASES NO PALITO GENIOS.pdf',
+        'FRASES PARA ALFABETIZAÇÃO.pdf',
+        'APOSTILA 3 SÍLABAS SIMPLES.pdf',
+        'MONTE O CENÁRIO PINGUIM.pdf',
+    ];
+
+    for (let i = 0; i < fullPdfs.length; i++) {
+        const item = fullPdfs[i];
+        const fullPdfPath = path.join(__dirname, 'public', 'funil7', item);
+        if (fs.existsSync(fullPdfPath)) {
+            try {
+                const pdfBuffer = fs.readFileSync(fullPdfPath);
+                await sock.sendMessage(remoteJid, {
+                    document: pdfBuffer,
+                    fileName: item,
+                    mimetype: 'application/pdf',
+                });
+                logConversation(botId, userPhone, 'BOT', 'DOCUMENT', `📄 [PDF ${i + 1}/7]: ${item}`);
+                console.log(`[Funil 7] 📄 PDF ${i + 1}/7 enviado: ${item}`);
+            } catch (err) {
+                console.warn(`[Funil 7 PDF ${item} Error]:`, err?.message);
+            }
+        }
+        await new Promise((r) => setTimeout(r, 1200));
+    }
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Prontinho, te enviei o KIT COMPLETO! 🎉');
+    await new Promise((r) => setTimeout(r, 800));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Vou enviar nossa chave PIX para facilitar seu pagamento! 😊');
+    await new Promise((r) => setTimeout(r, 800));
+
+    const pixCardText = `🔑 Chave PIX:\n📲 TELEFONE: 37999387172\n👤 Editora Branth`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, pixCardText);
+    await new Promise((r) => setTimeout(r, 800));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'O valor é R$ 11,90 se você quiser copiar e colar a chave 👇');
+    await new Promise((r) => setTimeout(r, 500));
+
+    const pixKey = '37999387172';
+    await sock.sendMessage(remoteJid, { text: pixKey });
+    logConversation(botId, userPhone, 'BOT', 'PIX', `Chave PIX: ${pixKey}`);
+    await new Promise((r) => setTimeout(r, 800));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Fico aguardando o comprovante 🙏');
+
+    const sessionKey = `${botId}:${userPhone}`;
+    store.userSessions[sessionKey] = {
+        botId,
+        userJid: remoteJid,
+        userPhone,
+        userName: pushName,
+        funnel: 'funil7',
+        waitingFor: 'PIX_RECEIPT_FUNIL7',
+        updatedAt: new Date().toISOString(),
+    };
+    saveStore(store);
+
+    scheduleFunil7Reminder(botId, remoteJid, userPhone);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// FUNIL 8: Pet Comilão e 100 Receitas de Alimentação Natural - Fernanda Soares
+// (Gatilho: teste8 - Ref: 11 92202-6498)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function sendFunil8Phase1(botId, sock, remoteJid, userPhone, pushName) {
+    console.log(`[Funil 8 - Pet Comilão] 🚀 Iniciando Fase 1 para ${pushName} (${userPhone})`);
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Oi! Que alegria ter você aqui 🤍');
+    await new Promise((r) => setTimeout(r, 800));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Se você chegou até aqui, é porque se preocupa de verdade com a saúde do seu doguinho 🐶');
+    await new Promise((r) => setTimeout(r, 1000));
+
+    // Áudio 1 PTT (1m10s)
+    try { await sock.sendPresenceUpdate('recording', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1500));
+
+    const mp3Path1 = path.join(__dirname, 'public', 'funil8', 'audio_apresentacao.mp3');
+    if (fs.existsSync(mp3Path1)) {
+        try {
+            const mp3Buffer = fs.readFileSync(mp3Path1);
+            await sock.sendMessage(remoteJid, {
+                audio: mp3Buffer,
+                mimetype: 'audio/mpeg',
+                ptt: true,
+            });
+            logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio 1 Apresentação Funil 8 MP3 1m10s]');
+        } catch (mp3Err) {
+            console.warn('[Funil 8 Áudio 1 Error]:', mp3Err?.message);
+        }
+    }
+    try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1000));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Criei o Guia do Pet Comilão, com o passo a passo pra você introduzir a Alimentação Natural e mais 100 Receitas de Alimentação Natural para cães 🐶🐱');
+    await new Promise((r) => setTimeout(r, 1000));
+
+    const benefitsText = `Dá uma olhada no que você vai receber 👇\n\n✅ Guia Completo de Alimentação Natural (passo a passo)\n✅ 100 Receitas de Alimentação Natural para Cães\n✅ Lista Semáforo: o que Pode, o que Cuidado e o que Nunca dar\n✅ Material em PDF pronto pra usar direto do celular\n✅ Acesso vitalício\n✅ Suporte direto comigo no WhatsApp`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, benefitsText);
+    await new Promise((r) => setTimeout(r, 1000));
+
+    const bonusText = `BÔNUS ⭐️⭐️⭐️\n✅ Calculadora de Porção, a quantidade exata pro peso e porte do seu pet\n\n👉 Tudo isso por uma contribuição simbólica de apenas R$15,00 SOMENTE HOJE!\n\n🐶🤍 Posso te enviar o material completo agora?`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, bonusText);
+
+    const sessionKey = `${botId}:${userPhone}`;
+    store.userSessions[sessionKey] = {
+        botId,
+        userJid: remoteJid,
+        userPhone,
+        userName: pushName,
+        funnel: 'funil8',
+        waitingFor: 'CONFIRM_SEND_FUNIL8',
+        updatedAt: new Date().toISOString(),
+    };
+    saveStore(store);
+}
+
+async function sendFunil8Phase2(botId, sock, remoteJid, userPhone, pushName, quotedMsg = null) {
+    console.log(`[Funil 8 - Pet Comilão] 📦 Enviando 4 PDFs e PIX para ${pushName} (${userPhone})`);
+
+    const quoteOptions = quotedMsg ? { quoted: quotedMsg } : {};
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Eu faço questão de enviar antes porque acredito muito na honestidade de quem ama de verdade seus pets 🤍', quoteOptions);
+    await new Promise((r) => setTimeout(r, 800));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Vou te enviar o material agora 👇');
+    await new Promise((r) => setTimeout(r, 1000));
+
+    const f8Pdfs = [
+        'Guia Pet Comilão - COMO INICIAR.pdf',
+        '50 Receitas Cozidas PET COMILÃO.pdf',
+        '50 Receitas Cruas - COM E SEM OSSO.pdf',
+        'Lista Semafaro PET COMILÃO.pdf',
+    ];
+
+    for (let i = 0; i < f8Pdfs.length; i++) {
+        const item = f8Pdfs[i];
+        const fullPdfPath = path.join(__dirname, 'public', 'funil8', item);
+        if (fs.existsSync(fullPdfPath)) {
+            try {
+                const pdfBuffer = fs.readFileSync(fullPdfPath);
+                await sock.sendMessage(remoteJid, {
+                    document: pdfBuffer,
+                    fileName: item,
+                    mimetype: 'application/pdf',
+                });
+                logConversation(botId, userPhone, 'BOT', 'DOCUMENT', `📄 [PDF ${i + 1}/4]: ${item}`);
+                console.log(`[Funil 8] 📄 PDF ${i + 1}/4 enviado: ${item}`);
+            } catch (err) {
+                console.warn(`[Funil 8 PDF ${item} Error]:`, err?.message);
+            }
+        }
+        await new Promise((r) => setTimeout(r, 1200));
+    }
+
+    const contribNotice = `🎁 AGORA QUE VOCÊ JÁ TEM TODO O MATERIAL...\n\nConfio 100% na sua honestidade. ❤️\n\nPor favor, contribua com o valor que seu coração mandar para que ela possa continuar salvando mais pets como o seu:\n\nR$ 15,00 (recomendado)\n🌟 R$19,90 (mais escolhido) 🌟\n💰 R$24,90 - Contribuição abençoada`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, contribNotice);
+    await new Promise((r) => setTimeout(r, 1000));
+
+    // Áudio 2 PTT (1m19s)
+    try { await sock.sendPresenceUpdate('recording', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1500));
+
+    const mp3Path2 = path.join(__dirname, 'public', 'funil8', 'audio_pix.mp3');
+    if (fs.existsSync(mp3Path2)) {
+        try {
+            const mp3Buffer = fs.readFileSync(mp3Path2);
+            await sock.sendMessage(remoteJid, {
+                audio: mp3Buffer,
+                mimetype: 'audio/mpeg',
+                ptt: true,
+            });
+            logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio 2 PIX Funil 8 MP3 1m19s]');
+        } catch (mp3Err) {
+            console.warn('[Funil 8 Áudio 2 Error]:', mp3Err?.message);
+        }
+    }
+    try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1000));
+
+    const pixText = `PIX TELEFONE: 11965034611\nNome: Projeto Feliz (KV DIGITAL)\n\nEscolha o valor que toca o seu coração! 💚\n\nAlgumas tutoras mandam até R$50 porque viram a vida dos pets transformar...`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, pixText);
+    await new Promise((r) => setTimeout(r, 800));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'MESMA CHAVE APENAS PARA COPIAR E COLAR 👇');
+    await new Promise((r) => setTimeout(r, 500));
+
+    const pixKey = '11965034611';
+    await sock.sendMessage(remoteJid, { text: pixKey });
+    logConversation(botId, userPhone, 'BOT', 'PIX', `Chave PIX: ${pixKey}`);
+    await new Promise((r) => setTimeout(r, 800));
+
+    const interactiveCardPath = path.join(__dirname, 'public', 'funil8', 'interactive_copiar_pix.png');
+    if (fs.existsSync(interactiveCardPath)) {
+        try {
+            const imgBuffer = fs.readFileSync(interactiveCardPath);
+            await sock.sendMessage(remoteJid, { image: imgBuffer });
+        } catch (e) {}
+    }
+    await new Promise((r) => setTimeout(r, 800));
+
+    const bonusPromiseText = `Após o pagamento, me envie o comprovante aqui, que eu vou te enviar como BÔNUS:\n\n📲 CALCULADORA DE PORÇÃO pra você saber exatamente quanto dar para o seu pet 🐶`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, bonusPromiseText);
+
+    const sessionKey = `${botId}:${userPhone}`;
+    store.userSessions[sessionKey] = {
+        botId,
+        userJid: remoteJid,
+        userPhone,
+        userName: pushName,
+        funnel: 'funil8',
+        waitingFor: 'PIX_RECEIPT_FUNIL8',
+        updatedAt: new Date().toISOString(),
+    };
+    saveStore(store);
+
+    scheduleFunil8Reminder(botId, remoteJid, userPhone);
+}
+
 async function handleIncomingMessage(botId, sock, msg) {
     if (!msg.message || msg.key.fromMe) return;
 
@@ -2445,6 +2905,8 @@ async function handleIncomingMessage(botId, sock, msg) {
         cancelFunil4Reminder(botId, userPhone);
         cancelFunil5Reminder(botId, userPhone);
         cancelFunil6Reminder(botId, userPhone);
+        cancelFunil7Reminder(botId, userPhone);
+        cancelFunil8Reminder(botId, userPhone);
     };
 
     // DISPARO FUNIL 1: As 40 Parábolas de Jesus
@@ -2513,8 +2975,30 @@ async function handleIncomingMessage(botId, sock, msg) {
         return;
     }
 
-    // SLOTS 7 A 10
-    const testSlot = isTest7 ? 7 : isTest8 ? 8 : isTest9 ? 9 : isTest10 ? 10 : null;
+    // DISPARO FUNIL 7: Construtor de Palavras e Alfabetização Infantil (37 99938-7172)
+    if (isTest7) {
+        console.log(`[Funil 7 - Alfabetização] 🚀 Disparo de TESTE 7 recebido de ${pushName} (${userPhone})`);
+        cancelAllTimers();
+        session = null;
+        delete store.userSessions[sessionKey];
+        saveStore(store);
+        await sendFunil7Phase1(botId, sock, remoteJid, userPhone, pushName);
+        return;
+    }
+
+    // DISPARO FUNIL 8: Pet Comilão - Fernanda Soares (11 92202-6498)
+    if (isTest8) {
+        console.log(`[Funil 8 - Pet Comilão] 🚀 Disparo de TESTE 8 recebido de ${pushName} (${userPhone})`);
+        cancelAllTimers();
+        session = null;
+        delete store.userSessions[sessionKey];
+        saveStore(store);
+        await sendFunil8Phase1(botId, sock, remoteJid, userPhone, pushName);
+        return;
+    }
+
+    // SLOTS 9 A 10 (Reserva)
+    const testSlot = isTest9 ? 9 : isTest10 ? 10 : null;
     if (testSlot) {
         console.log(`[Slot Funil ${testSlot}] 🚀 Disparo de TESTE ${testSlot} recebido de ${pushName} (${userPhone})`);
         cancelAllTimers();
@@ -2637,6 +3121,51 @@ async function handleIncomingMessage(botId, sock, msg) {
         return;
     }
 
+    // Funil 7: Confirmação de Amostra Grátis
+    if (session.waitingFor === 'CONFIRM_SEND_FUNIL7_FREE') {
+        const isNegative = ['não', 'nao', 'agora não', 'agora nao', 'depois', 'nop', 'cancelar'].includes(normalizedText);
+        if (isNegative) {
+            await sendRealisticText(botId, sock, remoteJid, userPhone, 'Tudo bem! Se precisar de atividades educativas para as crianças no futuro, é só me chamar por aqui! 😊');
+            session.waitingFor = null;
+            saveStore(store);
+            return;
+        }
+        const emoji = getHumanReactionEmoji(textContent);
+        await reactToMessage(sock, remoteJid, msg.key, emoji);
+        await sendFunil7Phase2(botId, sock, remoteJid, userPhone, pushName, msg);
+        return;
+    }
+
+    // Funil 7: Confirmação do Kit Completo
+    if (session.waitingFor === 'CONFIRM_SEND_FUNIL7_FULL') {
+        const isNegative = ['não', 'nao', 'agora não', 'agora nao', 'depois', 'nop', 'cancelar'].includes(normalizedText);
+        if (isNegative) {
+            await sendRealisticText(botId, sock, remoteJid, userPhone, 'Sem problemas! Aproveite bastante o Construtor de Palavras gratuito! Qualquer dúvida estou à disposição! 🌟');
+            session.waitingFor = null;
+            saveStore(store);
+            return;
+        }
+        const emoji = getHumanReactionEmoji(textContent);
+        await reactToMessage(sock, remoteJid, msg.key, emoji);
+        await sendFunil7Phase3(botId, sock, remoteJid, userPhone, pushName, msg);
+        return;
+    }
+
+    // Funil 8: Confirmação de Envio do Kit Pet Comilão
+    if (session.waitingFor === 'CONFIRM_SEND_FUNIL8') {
+        const isNegative = ['não', 'nao', 'agora não', 'agora nao', 'depois', 'nop', 'cancelar'].includes(normalizedText);
+        if (isNegative) {
+            await sendRealisticText(botId, sock, remoteJid, userPhone, 'Tudo bem! Muita saúde para o seu pet e quando quiser introduzir a alimentação natural, estarei por aqui! 🐶🤍');
+            session.waitingFor = null;
+            saveStore(store);
+            return;
+        }
+        const emoji = getHumanReactionEmoji(textContent);
+        await reactToMessage(sock, remoteJid, msg.key, emoji);
+        await sendFunil8Phase2(botId, sock, remoteJid, userPhone, pushName, msg);
+        return;
+    }
+
     // ─── Respostas de Comprovante de Pagamento (PIX) ───
     const waitingReceiptFunnels = [
         'PIX_RECEIPT',
@@ -2644,7 +3173,9 @@ async function handleIncomingMessage(botId, sock, msg) {
         'PIX_RECEIPT_FUNIL3',
         'PIX_RECEIPT_FUNIL4',
         'PIX_RECEIPT_FUNIL5',
-        'PIX_RECEIPT_FUNIL6'
+        'PIX_RECEIPT_FUNIL6',
+        'PIX_RECEIPT_FUNIL7',
+        'PIX_RECEIPT_FUNIL8'
     ];
 
     if (waitingReceiptFunnels.includes(session.waitingFor)) {
@@ -2655,6 +3186,12 @@ async function handleIncomingMessage(botId, sock, msg) {
             // Resposta carinhosa personalizada da Missionária Raquel (Funil 3 - Print 13:50)
             if (session.waitingFor === 'PIX_RECEIPT_FUNIL3' && ['amem', 'amém', 'ok', 'sim', 'certo', 'ta bom', 'tá bom'].some(w => normalizedText.includes(w))) {
                 await sendRealisticText(botId, sock, remoteJid, userPhone, 'Ok irmã! 🙏💙', { quoted: msg });
+                return;
+            }
+
+            // Resposta carinhosa da Fernanda Soares (Funil 8 - Print 03:21)
+            if (session.waitingFor === 'PIX_RECEIPT_FUNIL8' && ['amem', 'amém', 'ok', 'sim', 'certo', 'ta bom', 'tá bom', 'obrigado', 'obrigada'].some(w => normalizedText.includes(w))) {
+                await sendRealisticText(botId, sock, remoteJid, userPhone, 'Fico muito feliz de verdade em saber disso 💚🐶\nQualquer dúvida é só me chamar 🙏', { quoted: msg });
                 return;
             }
 
@@ -2713,6 +3250,16 @@ async function handleIncomingMessage(botId, sock, msg) {
             beneficiary = 'DIGITAL DSX LTDA';
             funnelName = 'Devocional Pelos Filhos';
             cancelFunil6Reminder(botId, userPhone);
+        } else if (session.waitingFor === 'PIX_RECEIPT_FUNIL7') {
+            expectedAmount = 11.90;
+            beneficiary = 'Editora Branth';
+            funnelName = 'Construtor de Palavras e Alfabetização';
+            cancelFunil7Reminder(botId, userPhone);
+        } else if (session.waitingFor === 'PIX_RECEIPT_FUNIL8') {
+            expectedAmount = 15.00;
+            beneficiary = 'KV DIGITAL';
+            funnelName = 'Guia Pet Comilão';
+            cancelFunil8Reminder(botId, userPhone);
         } else {
             cancelParabolasReminder(botId, userPhone);
         }
@@ -2744,7 +3291,13 @@ async function handleIncomingMessage(botId, sock, msg) {
             );
             await new Promise((r) => setTimeout(r, 1200));
 
-            if (session.funnel === 'funil5') {
+            if (session.funnel === 'funil7') {
+                const bonusText = `🎁 *Acesso Completo ao Kit Construtor de Palavras e Alfabetização Confirmado!*\n\nTodos os 8 materiais já estão disponíveis na sua conversa para você consultar e imprimir sempre que quiser. Que este material faça uma grande diferença no aprendizado das crianças! 🌟📚`;
+                await sendRealisticText(botId, sock, remoteJid, userPhone, bonusText);
+            } else if (session.funnel === 'funil8') {
+                const bonusText = `🎁 *BÔNUS LIBERADO: CALCULADORA DE PORÇÃO PET*\n\nAqui está o seu bônus especial conforme prometido! Muito obrigada pelo carinho e pela sua contribuição com o projeto! Que seu doguinho tenha muita saúde com a alimentação natural! 🐶💚`;
+                await sendRealisticText(botId, sock, remoteJid, userPhone, bonusText);
+            } else if (session.funnel === 'funil5') {
                 const bonusText = `🎁 *Seu acesso ao Acervo de Sermões e Bônus está 100% vitalício e garantido!*\n\nParticipe do nosso grupo de atualizações:\nhttps://chat.whatsapp.com/DDrnWQKV5vTB2UAYyQj3M2\n\nQue a Palavra de Deus prospere grandemente no seu ministério! 🙏📖`;
                 await sendRealisticText(botId, sock, remoteJid, userPhone, bonusText);
             } else if (session.funnel === 'funil6') {
