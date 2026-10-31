@@ -714,22 +714,60 @@ async function sendParabolasPhase1(botId, sock, remoteJid, userPhone, pushName) 
     try {
         await sock.sendPresenceUpdate('recording', remoteJid);
     } catch {}
-    await new Promise((r) => setTimeout(r, 3500));
+    await new Promise((r) => setTimeout(r, 2000));
 
-    try {
-        const audioPath = path.join(__dirname, 'public', 'parabolas', 'audio_parabolas.ogg');
-        if (fs.existsSync(audioPath)) {
-            const audioBuffer = fs.readFileSync(audioPath);
+    let audioSent = false;
+    const oggPath = path.join(__dirname, 'public', 'parabolas', 'audio_parabolas.ogg');
+    const mp3Path = path.join(__dirname, 'public', 'parabolas', 'audio_parabolas.mp3');
+
+    // Tentativa 1: OGG Opus Nativo (url)
+    if (fs.existsSync(oggPath)) {
+        try {
             await sock.sendMessage(remoteJid, {
-                audio: audioBuffer,
+                audio: { url: oggPath },
                 mimetype: 'audio/ogg; codecs=opus',
                 ptt: true,
+                seconds: 22,
             });
-            logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio de 22s enviado]');
+            audioSent = true;
+            logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio PTT 22s enviado via url]');
+        } catch (err1) {
+            console.warn('[Parabolas Audio Tentativa 1 (url) falhou]:', err1?.message);
+            await new Promise((r) => setTimeout(r, 1500));
+            // Tentativa 2: OGG via Buffer
+            try {
+                const oggBuffer = fs.readFileSync(oggPath);
+                await sock.sendMessage(remoteJid, {
+                    audio: oggBuffer,
+                    mimetype: 'audio/ogg; codecs=opus',
+                    ptt: true,
+                    seconds: 22,
+                });
+                audioSent = true;
+                logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio PTT 22s enviado via buffer]');
+            } catch (err2) {
+                console.warn('[Parabolas Audio Tentativa 2 (buffer) falhou]:', err2?.message);
+            }
         }
-    } catch (audioErr) {
-        console.error('[Parabolas Audio Error]:', audioErr?.message);
     }
+
+    // Tentativa 3: Fallback MP3 se o OGG for rejeitado pelos servidores da Meta
+    if (!audioSent && fs.existsSync(mp3Path)) {
+        try {
+            await new Promise((r) => setTimeout(r, 1500));
+            await sock.sendMessage(remoteJid, {
+                audio: { url: mp3Path },
+                mimetype: 'audio/mpeg',
+                ptt: true,
+                seconds: 22,
+            });
+            audioSent = true;
+            logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio MP3 22s fallback enviado]');
+        } catch (err3) {
+            console.error('[Parabolas Audio Fallback MP3 Erro]:', err3?.message);
+        }
+    }
+
     try {
         await sock.sendPresenceUpdate('paused', remoteJid);
     } catch {}
