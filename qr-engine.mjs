@@ -859,6 +859,185 @@ function scheduleFunil4Reminder(botId, remoteJid, userPhone) {
 }
 
 
+
+// ─── Esteira de Cobrança / Follow-up do Funil 5 (Acervo 5.000+ - Vitor) ───
+const funil5ReminderTimers = new Map();
+
+function cancelFunil5Reminder(botId, userPhone) {
+    const key = `${botId}:${userPhone}`;
+    if (funil5ReminderTimers.has(key)) {
+        const timers = funil5ReminderTimers.get(key);
+        if (Array.isArray(timers)) {
+            timers.forEach((t) => clearTimeout(t));
+        } else {
+            clearTimeout(timers);
+        }
+        funil5ReminderTimers.delete(key);
+        console.log(`[Funil 5] ⏹️ Timers de follow-up cancelados para ${userPhone}`);
+    }
+}
+
+function scheduleFunil5Reminder(botId, remoteJid, userPhone) {
+    cancelFunil5Reminder(botId, userPhone);
+    const key = `${botId}:${userPhone}`;
+    const timers = [];
+
+    const sendFollowUp = async (step, texts) => {
+        try {
+            const currentStore = loadStore();
+            const sess = currentStore.userSessions[key];
+            if (sess && sess.waitingFor === 'PIX_RECEIPT_FUNIL5') {
+                const sock = activeSockets.get(botId);
+                if (sock) {
+                    for (const text of texts) {
+                        await sock.sendMessage(remoteJid, { text });
+                        logConversation(botId, userPhone, 'BOT', 'REMINDER', text);
+                        await new Promise((r) => setTimeout(r, 800));
+                    }
+                    console.log(`[Funil 5] ⏰ Follow-up Step ${step} enviado para ${userPhone}`);
+                }
+            }
+        } catch (err) {
+            console.error(`[Funil 5 Follow-up Error]:`, err?.message);
+        }
+    };
+
+    // Step 1: ~10 minutos (Print 03:32)
+    timers.push(setTimeout(() => {
+        sendFollowUp(1, ['Paz.. Fiquei aqui esperando o pagamento, confiei na sua palavra...']);
+    }, 10 * 60 * 1000));
+
+    // Step 2: ~30 minutos (Print 03:52)
+    timers.push(setTimeout(() => {
+        sendFollowUp(2, [
+            'Você consegue fazer a sua contribuição agora? Se sim vou agradecer e muito! 🙏',
+            `Nosso PIX, só você copiar e colar 👇\n(CNPJ)`,
+            '64158407000124',
+            'Fico no aguardo amém ?',
+        ]);
+    }, 30 * 60 * 1000));
+
+    // Step 3: ~45 minutos (Print 04:07)
+    timers.push(setTimeout(() => {
+        sendFollowUp(3, [
+            `Conforme combinamos, os materiais e os bônus já foram enviados, e você confirmou o recebimento.\n\nAgora estou aguardando apenas a contribuição combinada. Assim que realizar, me envie o comprovante por aqui. Deus abençoe.`,
+            `🔑 CHAVE PIX CNPJ : 64158407000124\n\nVALOR: R$19,90\n\nNOME: Vitor Bueno de Carvalho`,
+        ]);
+    }, 45 * 60 * 1000));
+
+    // Step 4: ~1 hora (Print 04:58 - Áudio de cobrança)
+    timers.push(setTimeout(async () => {
+        try {
+            const currentStore = loadStore();
+            const sess = currentStore.userSessions[key];
+            if (sess && sess.waitingFor === 'PIX_RECEIPT_FUNIL5') {
+                const sock = activeSockets.get(botId);
+                if (sock) {
+                    const mp3Path = path.join(__dirname, 'public', 'funil5', 'audio_cobranca.mp3');
+                    if (fs.existsSync(mp3Path)) {
+                        const mp3Buf = fs.readFileSync(mp3Path);
+                        await sock.sendMessage(remoteJid, { audio: mp3Buf, mimetype: 'audio/mpeg', ptt: true });
+                        logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Cobrança Funil 5]');
+                    }
+                }
+            }
+        } catch (err) {
+            console.error('[Funil 5 Audio Cobrança Error]:', err?.message);
+        }
+    }, 60 * 60 * 1000));
+
+    // Step 5: ~1h20 (Print 05:18)
+    timers.push(setTimeout(() => {
+        sendFollowUp(5, [
+            `Oi ? está ai ? Consegue me enviar agora por favor ?\n\n🔑 CHAVE PIX CNPJ : 64158407000124\n\nNOME: Vitor Bueno de Carvalho\n\nVALOR : R$19,90\n\nMe envie o comprovante aqui por favor.`,
+        ]);
+    }, 80 * 60 * 1000));
+
+    // Step 6: ~2 horas (Print 06:19 - Eclesiastes)
+    timers.push(setTimeout(() => {
+        sendFollowUp(6, [
+            `Preciso te lembrar de algo: diante de Deus, palavra e compromisso também são coisas sérias.\n\nA Bíblia diz em Eclesiastes 5:4:\n\n"Quando a Deus fizeres algum voto, não tardes em cumpri-lo."\n\nA contribuição simbólica não é apenas um valor. É uma forma de honrar aquilo que foi combinado e ajudar esse projeto continuar alcançando outros irmãos que também precisam desse material.\n\nSe você recebeu, acessou e o material chegou certinho, peço com carinho:\nhonre sua palavra e faça sua contribuição.\n\nQue Deus toque no seu coração e abençoe sua vida 🙏\n\n🔑 CHAVE PIX CNPJ : 64158407000124\n\nVALOR: R$ 19,90\n\nNOME: Vitor Bueno de Carvalho`,
+        ]);
+    }, 120 * 60 * 1000));
+
+    funil5ReminderTimers.set(key, timers);
+}
+
+// ─── Esteira de Cobrança / Follow-up do Funil 6 (Missionária Flávia - Devocional) ───
+const funil6ReminderTimers = new Map();
+
+function cancelFunil6Reminder(botId, userPhone) {
+    const key = `${botId}:${userPhone}`;
+    if (funil6ReminderTimers.has(key)) {
+        const timers = funil6ReminderTimers.get(key);
+        if (Array.isArray(timers)) {
+            timers.forEach((t) => clearTimeout(t));
+        } else {
+            clearTimeout(timers);
+        }
+        funil6ReminderTimers.delete(key);
+        console.log(`[Funil 6] ⏹️ Timers de follow-up cancelados para ${userPhone}`);
+    }
+}
+
+function scheduleFunil6Reminder(botId, remoteJid, userPhone) {
+    cancelFunil6Reminder(botId, userPhone);
+    const key = `${botId}:${userPhone}`;
+    const timers = [];
+
+    const sendFollowUp = async (step, texts) => {
+        try {
+            const currentStore = loadStore();
+            const sess = currentStore.userSessions[key];
+            if (sess && sess.waitingFor === 'PIX_RECEIPT_FUNIL6') {
+                const sock = activeSockets.get(botId);
+                if (sock) {
+                    for (const text of texts) {
+                        await sock.sendMessage(remoteJid, { text });
+                        logConversation(botId, userPhone, 'BOT', 'REMINDER', text);
+                        await new Promise((r) => setTimeout(r, 800));
+                    }
+                    console.log(`[Funil 6] ⏰ Follow-up Step ${step} enviado para ${userPhone}`);
+                }
+            }
+        } catch (err) {
+            console.error(`[Funil 6 Follow-up Error]:`, err?.message);
+        }
+    };
+
+    // Step 1: ~30 minutos (Print 07:22)
+    timers.push(setTimeout(() => {
+        sendFollowUp(1, [
+            `Ta ai Irmã?\n\nNão esquece de me mandar o comprovante tá bom? tenho um presente para você após enviar 🤗`,
+        ]);
+    }, 30 * 60 * 1000));
+
+    // Step 2: ~1h30 (Print 08:22 - Testemunho do Grupo)
+    timers.push(setTimeout(async () => {
+        try {
+            const currentStore = loadStore();
+            const sess = currentStore.userSessions[key];
+            if (sess && sess.waitingFor === 'PIX_RECEIPT_FUNIL6') {
+                const sock = activeSockets.get(botId);
+                if (sock) {
+                    const imgPath = path.join(__dirname, 'public', 'funil6', 'testemunho_grupo.jpeg');
+                    if (fs.existsSync(imgPath)) {
+                        const imgBuf = fs.readFileSync(imgPath);
+                        await sock.sendMessage(remoteJid, { image: imgBuf });
+                    }
+                    await sock.sendMessage(remoteJid, {
+                        text: `Irmã, olha esse testemunho aqui que recebi no nosso grupo\n\nConseguiu, irmã fazer sua contribuição? Sobrou 1 vaga aqui no grupo do sorteio, aí já coloco seu nome. Me manda também os nomes que a senhora deseja que a gente apresente em oração 🙌`,
+                    });
+                }
+            }
+        } catch (err) {
+            console.error('[Funil 6 Follow-up 2 Error]:', err?.message);
+        }
+    }, 90 * 60 * 1000));
+
+    funil6ReminderTimers.set(key, timers);
+}
+
 // ─── Esteira de Cobrança / Follow-up do Funil 1 (15m -> 1h -> 2h -> 3h) ───
 const parabolasReminderTimers = new Map();
 
@@ -1702,6 +1881,449 @@ async function sendFunil4Phase2(botId, sock, remoteJid, userPhone, pushName, quo
     scheduleFunil4Reminder(botId, remoteJid, userPhone);
 }
 
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// FUNIL 5: Acervo 5.000+ Sermões - Vitor (Gatilho: teste5 - Ref: 17 98117-5202)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function sendFunil5Phase1(botId, sock, remoteJid, userPhone, pushName) {
+    console.log(`[Funil 5 - Acervo Sermões] 🚀 Iniciando Fase 1 para ${pushName} (${userPhone})`);
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Bom dia, tudo bem? A Paz do Senhor Jesus!');
+    await new Promise((r) => setTimeout(r, 1200));
+
+    try { await sock.sendPresenceUpdate('recording', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 2000));
+
+    const mp3Path = path.join(__dirname, 'public', 'funil5', 'audio_apresentacao.mp3');
+    if (fs.existsSync(mp3Path)) {
+        try {
+            const mp3Buffer = fs.readFileSync(mp3Path);
+            await sock.sendMessage(remoteJid, {
+                audio: mp3Buffer,
+                mimetype: 'audio/mpeg',
+                ptt: true,
+            });
+            logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Apresentação Funil 5 MP3 48s]');
+            console.log(`[Funil 5] 🎙️ Áudio 1 MP3 enviado para ${userPhone}`);
+        } catch (mp3Err) {
+            console.warn('[Funil 5 MP3 Error]:', mp3Err?.message);
+        }
+    }
+    try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1200));
+
+    await sendRealisticText(
+        botId,
+        sock,
+        remoteJid,
+        userPhone,
+        'Salva meu contato para eu poder te enviar mais materiais e conteúdos como esses, amém?'
+    );
+    await new Promise((r) => setTimeout(r, 1000));
+
+    const capaPath = path.join(__dirname, 'public', 'funil5', 'capa_acervo.jpeg');
+    if (fs.existsSync(capaPath)) {
+        try {
+            const imgBuffer = fs.readFileSync(capaPath);
+            await sock.sendMessage(remoteJid, { image: imgBuffer });
+        } catch (imgErr) {}
+    }
+    await new Promise((r) => setTimeout(r, 1200));
+
+    const offerText = `+ DE 5 MIL SERMÕES PRONTOS\nOrganizados e fáceis de usar 📖\n\n👉 É só ler, adaptar e ministrar.\n\n📲 Acesso imediato (PDFs)\n🖨️ Pode imprimir.\n\nO que você vai receber: 👇\n\n✅ Acesso ao acervo completo com + de 5MIL Sermões.\n✅ Sermões organizados por temas e categorias.\n✅ Acesso ao Grupo EXCLUSIVO no WhatsApp.\n✅ Materiais prontos pra usar, baixar e ministrar.\n\n👉 Você receberá atualizações semanais e você tem acesso VITALÍCIO!\n\nVocê vai receber 4 PRESENTES EXCLUSIVOS: 👇\n\n🎁 Os 150 Salmos explicados passo a passo.\n🎁 Os 66 livros da Bíblia Explicados (De Gênises a Apocalipse)\n🎁 AS CARTAS DE PAULO\n🎁 APLICATIVO DO APOCALIPSE\n\nAcervo completo 100% completo ⭐`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, offerText);
+    await new Promise((r) => setTimeout(r, 1200));
+
+    const priceText = `Normalmente esses materiais custariam no mínimo R$79,90\n\nMais Somente HOJE você recebe tudo isso por apenas R$19,90 no PIX\n\n(valor simbólico para ajudar nosso projeto)`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, priceText);
+    await new Promise((r) => setTimeout(r, 1000));
+
+    const trustText = `VOCÊ RECEBE TUDO PRIMEIRO\n\nE depois que eu enviar os materiais você faz a contribuição simbólica para apoiar essa obra ok? 🙏`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, trustText);
+    await new Promise((r) => setTimeout(r, 1200));
+
+    try { await sock.sendPresenceUpdate('recording', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1500));
+
+    const audioConfPath = path.join(__dirname, 'public', 'funil5', 'audio_confianca.mp3');
+    if (fs.existsSync(audioConfPath)) {
+        try {
+            const mp3Buffer = fs.readFileSync(audioConfPath);
+            await sock.sendMessage(remoteJid, {
+                audio: mp3Buffer,
+                mimetype: 'audio/mpeg',
+                ptt: true,
+            });
+            logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Confiança Funil 5 MP3 19s]');
+        } catch (mp3Err) {}
+    }
+    try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1000));
+
+    const askText = `Posso te enviar agora mesmo e você faz o pix após receber os materiais ?\n\n⚠️ Atenção: responda SIM apenas se você se comprometer a realizar o pagamento em seguida.\n\nResponda apenas SIM ou NÃO por favor.`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, askText);
+
+    const sessionKey = `${botId}:${userPhone}`;
+    store.userSessions[sessionKey] = {
+        botId,
+        userJid: remoteJid,
+        userPhone,
+        userName: pushName,
+        funnel: 'funil5',
+        waitingFor: 'CONFIRM_SEND_FUNIL5',
+        updatedAt: new Date().toISOString(),
+    };
+    saveStore(store);
+}
+
+async function sendFunil5Phase2(botId, sock, remoteJid, userPhone, pushName, quotedMsg = null) {
+    console.log(`[Funil 5 - Acervo Sermões] 📦 Iniciando Fase 2 para ${pushName} (${userPhone})`);
+
+    const quoteOptions = quotedMsg ? { quoted: quotedMsg } : {};
+
+    try { await sock.sendPresenceUpdate('recording', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1000));
+
+    const audioEnvPath = path.join(__dirname, 'public', 'funil5', 'audio_enviando.mp3');
+    if (fs.existsSync(audioEnvPath)) {
+        try {
+            const mp3Buffer = fs.readFileSync(audioEnvPath);
+            await sock.sendMessage(remoteJid, {
+                audio: mp3Buffer,
+                mimetype: 'audio/mpeg',
+                ptt: true,
+            }, quoteOptions);
+            logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Enviando Funil 5 MP3 5s]');
+        } catch (mp3Err) {}
+    }
+    try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 800));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Estou enviando agora:');
+    await new Promise((r) => setTimeout(r, 1000));
+
+    const mainPdfs = [
+        '50 ESBOÇOS EM LUCAS.pdf',
+        '50 ESBOÇOS EM MARCOS.pdf',
+        '50 ESBOÇOS EM JOÃO.pdf',
+        '70 ESBOÇOS EM MATHEUS.pdf',
+        '40 ESBOÇOS EM ATOS DOS APÓSTOLOS.pdf',
+        '50 ESBOÇOS JEREMIAS.pdf',
+        '10 ESBOÇOS AVIVAMENTO ESPIRITUAL.pdf',
+        '100 ESBOÇOS INPACTANTES ATUALIZADO.pdf',
+        'LIDERANÇA CRISTÃ.pdf',
+        '25 ESBOÇOS SOBRE JULGAMENTO.pdf',
+        '10 ESBOÇOS O VERBO.pdf',
+        '31 PROVERBIOS.pdf',
+        '25 ESBOÇOS ATOS DOS APÓSTOLOS.pdf',
+        '25 ESBOÇOS SOBRE SANSÃO.pdf',
+        'Jesus Cristo no Antigo Testamento +Pentateuco.pdf',
+        'AS 7 TROMBETAS.pdf',
+        '50 ESBOÇOS EM EZEQUIEL.pdf',
+        '25 ESBOÇOS SOBRE A CRUCIFICAÇÃO DE CRISTO.pdf',
+        'Salmos - Explicados Versículo por Versículo - PARTE 1.pdf',
+        'Salmos - Explicados Versículo por Versículo - PARTE 2.pdf',
+        'Salmos - Explicados Versículo por Versículo - PARTE 3.pdf',
+        '20 MIL ESBOÇOS.pdf'
+    ];
+
+    for (let i = 0; i < mainPdfs.length; i++) {
+        const pdfFilename = mainPdfs[i];
+        const pdfPath = path.join(__dirname, 'public', 'funil5', pdfFilename);
+        if (fs.existsSync(pdfPath)) {
+            try {
+                const pdfBuf = fs.readFileSync(pdfPath);
+                await sock.sendMessage(remoteJid, {
+                    document: pdfBuf,
+                    fileName: pdfFilename,
+                    mimetype: 'application/pdf',
+                });
+                logConversation(botId, userPhone, 'BOT', 'DOCUMENT', `📄 [PDF ${i + 1}/${mainPdfs.length}]: ${pdfFilename}`);
+                console.log(`[Funil 5] 📄 PDF ${i + 1}/${mainPdfs.length} enviado: ${pdfFilename}`);
+            } catch (pdfErr) {
+                console.warn(`[Funil 5 PDF Error]:`, pdfErr?.message);
+            }
+        }
+        await new Promise((r) => setTimeout(r, 1200));
+    }
+
+    const biblioText = `Como são muitos materiais eu separei eles em uma Biblioteca Exclusiva todos organizados por temas. 👇\n\n🚨 ACESSE O RESTANTE DOS ESBOÇOS NO LINK ABAIXO 👇\n\nhttps://bibliotecapregacoes.netlify.app/\n\nSEU ACESSO FOI LIBERADO ✅\n\nVeja no tutorial abaixo como acessar sua biblioteca online 👇👇`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, biblioText);
+    await new Promise((r) => setTimeout(r, 1200));
+
+    const vidPath = path.join(__dirname, 'public', 'funil5', 'tutorial_biblioteca.mp4');
+    if (fs.existsSync(vidPath)) {
+        try {
+            const vidBuf = fs.readFileSync(vidPath);
+            await sock.sendMessage(remoteJid, {
+                video: vidBuf,
+                mimetype: 'video/mp4',
+            });
+            logConversation(botId, userPhone, 'BOT', 'VIDEO', '🎥 [Tutorial Biblioteca Online]');
+        } catch (vidErr) {}
+    }
+    await new Promise((r) => setTimeout(r, 1500));
+
+    const presentesText = `PRESENTE 1 🎁\n\nAcesse os 66 livros da bíblia de gênises a apocallipse 👇\nhttps://drive.google.com/drive/folders/10oLG9FY90lp5gQGIbfFrdzME8tytdMGm?usp=drive_link\n\n✅ Acesso liberado\n\nPRESENTE 2 - APLICATIVO SERMÃO DO APOCALIPSE 🎁👇\n\nA plataforma de sermões já está liberada para você.\n\n🔐 Dados de login:\n\nUsuário: Apocalipse\nSenha: 1234\n\n👉 Clique e acesse:\nhttps://sermoesbiblicos.online\n\nPRESENTE 3 - AS CARTAS DE PAULO 🎁👇\n\n✅ Acesso liberado!\nhttps://drive.google.com/drive/folders/1uNovAhcit1QUosY7Srk2-jSNvG5S0dS0?usp=drive_link\n\n📲 Entre no nosso grupo oficial no WhatsApp e fique por dentro de novos materiais e conteúdos exclusivos* que liberamos por lá!\n\nLINK DO NOSSO GRUPO: 👇\nhttps://chat.whatsapp.com/DDrnWQKV5vTB2UAYyQj3M2`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, presentesText);
+    await new Promise((r) => setTimeout(r, 1200));
+
+    const pixPromptText = `Agora conto com a sua contribuição 🙏\n\nInformações de pagamento via PIX:\n\nFinanceiro 👇\n\n🔑 - Chave PIX CNPJ: 64158407000124\n\n💵 - Valor: R$ 19,90\n( Ou o valor que Deus tocar no seu coração) ❤️\n\n👤 - Nome: Vitor Bueno de Carvalho\n\n🏦 - Banco: CloudWalk I.P\n\nPara facilitar, vou te enviar a chave PIX separada para você só copiar e colar`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, pixPromptText);
+    await new Promise((r) => setTimeout(r, 800));
+
+    const pixKey = '64158407000124';
+    await sock.sendMessage(remoteJid, { text: pixKey });
+    logConversation(botId, userPhone, 'BOT', 'PIX', `Chave PIX: ${pixKey}`);
+    await new Promise((r) => setTimeout(r, 800));
+
+    try { await sock.sendPresenceUpdate('recording', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1500));
+
+    const audioPixPath = path.join(__dirname, 'public', 'funil5', 'audio_pix.mp3');
+    if (fs.existsSync(audioPixPath)) {
+        try {
+            const mp3Buffer = fs.readFileSync(audioPixPath);
+            await sock.sendMessage(remoteJid, {
+                audio: mp3Buffer,
+                mimetype: 'audio/mpeg',
+                ptt: true,
+            });
+            logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio PIX Funil 5 MP3 18s]');
+        } catch (mp3Err) {}
+    }
+    try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1000));
+
+    const aguardoText = `Fico no aguardo do pagamento, só me enviar o comprovante!\n\nAgora conto com a sua honestidade amém. 🙏`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, aguardoText);
+
+    const sessionKey = `${botId}:${userPhone}`;
+    store.userSessions[sessionKey] = {
+        botId,
+        userJid: remoteJid,
+        userPhone,
+        userName: pushName,
+        funnel: 'funil5',
+        waitingFor: 'PIX_RECEIPT_FUNIL5',
+        updatedAt: new Date().toISOString(),
+    };
+    saveStore(store);
+
+    scheduleFunil5Reminder(botId, remoteJid, userPhone);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// FUNIL 6: Devocional Pelos Filhos - Missionária Flávia (Gatilho: teste6 - Ref: 12 98308-5720)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function sendFunil6Phase1(botId, sock, remoteJid, userPhone, pushName) {
+    console.log(`[Funil 6 - Devocional] 🚀 Iniciando Fase 1 para ${pushName} (${userPhone})`);
+
+    const text1 = `A paz do Senhor, minha irmã! Que Deus abençoe ✨\n\nSó 1 minuto, que vou te mandar um áudio explicando sobre o Devocional.`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, text1);
+    await new Promise((r) => setTimeout(r, 1200));
+
+    try { await sock.sendPresenceUpdate('recording', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 2000));
+
+    const mp3Path = path.join(__dirname, 'public', 'funil6', 'audio_apresentacao.mp3');
+    if (fs.existsSync(mp3Path)) {
+        try {
+            const mp3Buffer = fs.readFileSync(mp3Path);
+            await sock.sendMessage(remoteJid, {
+                audio: mp3Buffer,
+                mimetype: 'audio/mpeg',
+                ptt: true,
+            });
+            logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Apresentação Funil 6 MP3 1m20s]');
+        } catch (mp3Err) {}
+    }
+    try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1200));
+
+    const askChildText = `Deixa eu te perguntar mais uma coisa: como se chama o seu filho ou filha que se afastou?`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, askChildText);
+
+    const sessionKey = `${botId}:${userPhone}`;
+    store.userSessions[sessionKey] = {
+        botId,
+        userJid: remoteJid,
+        userPhone,
+        userName: pushName,
+        funnel: 'funil6',
+        waitingFor: 'FILHO_NAME_FUNIL6',
+        updatedAt: new Date().toISOString(),
+    };
+    saveStore(store);
+}
+
+async function sendFunil6AfterChildName(botId, sock, remoteJid, userPhone, pushName, quotedMsg = null) {
+    console.log(`[Funil 6 - Devocional] 💬 Resposta sobre o filho recebida de ${pushName} (${userPhone})`);
+
+    const quoteOptions = quotedMsg ? { quoted: quotedMsg } : {};
+    const textPrayer = `Sei que o coração aperta, mas Deus não esquece, vamos orar juntos pra que dê tudo certo 🙏\n\nMas sabe o que realmente toca o meu coração, irmã?`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, textPrayer, quoteOptions);
+    await new Promise((r) => setTimeout(r, 1200));
+
+    const printPath = path.join(__dirname, 'public', 'funil6', 'print_testemunho_filho.jpeg');
+    if (fs.existsSync(printPath)) {
+        try {
+            const imgBuffer = fs.readFileSync(printPath);
+            await sock.sendMessage(remoteJid, { image: imgBuffer });
+        } catch (imgErr) {}
+    }
+    await new Promise((r) => setTimeout(r, 1200));
+
+    const faithAsk = `Os testemunhos das mulheres que fazem o devocional\n\nE eu sei que Deus pode fazer um milagre na sua família também! Você acredita? 🙏`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, faithAsk);
+
+    const sessionKey = `${botId}:${userPhone}`;
+    store.userSessions[sessionKey] = {
+        botId,
+        userJid: remoteJid,
+        userPhone,
+        userName: pushName,
+        funnel: 'funil6',
+        waitingFor: 'CONFIRM_SEND_FUNIL6',
+        updatedAt: new Date().toISOString(),
+    };
+    saveStore(store);
+}
+
+async function sendFunil6Phase2(botId, sock, remoteJid, userPhone, pushName, quotedMsg = null) {
+    console.log(`[Funil 6 - Devocional] 📦 Iniciando Fase 2 para ${pushName} (${userPhone})`);
+
+    const quoteOptions = quotedMsg ? { quoted: quotedMsg } : {};
+    const textAmen = `Amém irmã! Deus está cuidando de cada detalhe com muito amor ❤️\n\nIrmã, eu vou te mandar mais 1 áudio explicando como funciona o Devocional ⬇️`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, textAmen, quoteOptions);
+    await new Promise((r) => setTimeout(r, 1200));
+
+    try { await sock.sendPresenceUpdate('recording', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 2000));
+
+    const audioExpPath = path.join(__dirname, 'public', 'funil6', 'audio_explicacao.mp3');
+    if (fs.existsSync(audioExpPath)) {
+        try {
+            const mp3Buffer = fs.readFileSync(audioExpPath);
+            await sock.sendMessage(remoteJid, {
+                audio: mp3Buffer,
+                mimetype: 'audio/mpeg',
+                ptt: true,
+            });
+            logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Explicação Funil 6 MP3 1m39s]');
+        } catch (mp3Err) {}
+    }
+    try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1200));
+
+    const sendTrustText = `Glória a Deus! Em breve quero ouvir seu testemunho, irmã! Vou te enviar agora ⬇️`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, sendTrustText);
+    await new Promise((r) => setTimeout(r, 1000));
+
+    const pdfs = [
+        { file: 'Devocional 7 dias.pdf', name: 'Devocional 7 dias.pdf' },
+        { file: 'Devocional 21 dias.pdf', name: 'Devocional 21 dias.pdf' },
+    ];
+
+    for (let i = 0; i < pdfs.length; i++) {
+        const item = pdfs[i];
+        const fullPdfPath = path.join(__dirname, 'public', 'funil6', item.file);
+        if (fs.existsSync(fullPdfPath)) {
+            try {
+                const pdfBuffer = fs.readFileSync(fullPdfPath);
+                await sock.sendMessage(remoteJid, {
+                    document: pdfBuffer,
+                    fileName: item.name,
+                    mimetype: 'application/pdf',
+                });
+                logConversation(botId, userPhone, 'BOT', 'DOCUMENT', `📄 [PDF ${i + 1}/2]: ${item.name}`);
+            } catch (pdfErr) {}
+        }
+        await new Promise((r) => setTimeout(r, 1200));
+    }
+
+    const platformText = `Caso a senhora não consiga abrir pelo PDF, vou te mandar o link pra abrir direto 👇\nhttps://devocional7diasonline.lovable.app`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, platformText);
+    await new Promise((r) => setTimeout(r, 1200));
+
+    try { await sock.sendPresenceUpdate('recording', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1500));
+
+    const audioEntPath = path.join(__dirname, 'public', 'funil6', 'audio_entrega.mp3');
+    if (fs.existsSync(audioEntPath)) {
+        try {
+            const mp3Buffer = fs.readFileSync(audioEntPath);
+            await sock.sendMessage(remoteJid, {
+                audio: mp3Buffer,
+                mimetype: 'audio/mpeg',
+                ptt: true,
+            });
+            logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Entrega Funil 6 MP3 1m28s]');
+        } catch (mp3Err) {}
+    }
+    try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1200));
+
+    const kitPath = path.join(__dirname, 'public', 'funil6', 'kit_caixa_devocional.jpeg');
+    if (fs.existsSync(kitPath)) {
+        try {
+            const imgBuffer = fs.readFileSync(kitPath);
+            await sock.sendMessage(remoteJid, { image: imgBuffer });
+        } catch (imgErr) {}
+    }
+    await new Promise((r) => setTimeout(r, 1200));
+
+    const pixPromptText = `Agora eu conto com sua honestidade para manter esse projeto vivo 🙏\n\nInformações para contribuição:\n\n📌 Chave Pix (Celular): 12983085720\n📌 Nome que aparece: DIGITAL DSX LTDA\n📌 Banco: DOCK IP S.A.\n📌 Valor: O que Deus tocar no seu coração`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, pixPromptText);
+    await new Promise((r) => setTimeout(r, 800));
+
+    const pixKey = '12983085720';
+    await sock.sendMessage(remoteJid, { text: pixKey });
+    logConversation(botId, userPhone, 'BOT', 'PIX', `Chave PIX: ${pixKey}`);
+    await new Promise((r) => setTimeout(r, 800));
+
+    const instructText = `Aqui é a chave PIX no número do Celular separada para você só copiar e colar Irmã 👇👇👇`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, instructText);
+    await new Promise((r) => setTimeout(r, 1000));
+
+    try { await sock.sendPresenceUpdate('recording', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1500));
+
+    const audioUltPath = path.join(__dirname, 'public', 'funil6', 'audio_ultimo_sorteio.mp3');
+    if (fs.existsSync(audioUltPath)) {
+        try {
+            const mp3Buffer = fs.readFileSync(audioUltPath);
+            await sock.sendMessage(remoteJid, {
+                audio: mp3Buffer,
+                mimetype: 'audio/mpeg',
+                ptt: true,
+            });
+            logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Último Áudio Funil 6 MP3 59s]');
+        } catch (mp3Err) {}
+    }
+    try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1000));
+
+    const sorteioNotice = `E irmã, por mais que não tenha como contribuir agora, tenta ver se consegue ainda hoje, porque já coloco seu nome no sorteio. Muitas mães já ganharam e a próxima pode ser você 🙏\n\nMe manda o comprovante, irmã, que eu já coloco a senhora no nosso grupo de oração do WhatsApp 🙏`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, sorteioNotice);
+
+    const sessionKey = `${botId}:${userPhone}`;
+    store.userSessions[sessionKey] = {
+        botId,
+        userJid: remoteJid,
+        userPhone,
+        userName: pushName,
+        funnel: 'funil6',
+        waitingFor: 'PIX_RECEIPT_FUNIL6',
+        updatedAt: new Date().toISOString(),
+    };
+    saveStore(store);
+
+    scheduleFunil6Reminder(botId, remoteJid, userPhone);
+}
+
 async function handleIncomingMessage(botId, sock, msg) {
     if (!msg.message || msg.key.fromMe) return;
 
@@ -1759,6 +2381,8 @@ async function handleIncomingMessage(botId, sock, msg) {
         cancelFunil2Reminder(botId, userPhone);
         cancelFunil3Reminder(botId, userPhone);
         cancelFunil4Reminder(botId, userPhone);
+        cancelFunil5Reminder(botId, userPhone);
+        cancelFunil6Reminder(botId, userPhone);
     };
 
     // DISPARO FUNIL 1: As 40 Parábolas de Jesus
@@ -1772,7 +2396,7 @@ async function handleIncomingMessage(botId, sock, msg) {
         return;
     }
 
-    // DISPARO FUNIL 2: Guia de Cuidados com Pessoa Acamada
+    // DISPARO FUNIL 2: Guia de Cuidados com Pessoa Acamada (82 9685-7184)
     if (isTest2) {
         console.log(`[Funil 2 - Acamados] 🚀 Disparo de TESTE 2 recebido de ${pushName} (${userPhone})`);
         cancelAllTimers();
@@ -1783,7 +2407,7 @@ async function handleIncomingMessage(botId, sock, msg) {
         return;
     }
 
-    // DISPARO FUNIL 3: 500 Esboços de Pregações (Missionária Raquel)
+    // DISPARO FUNIL 3: 500 Esboços de Pregações - Missionária Raquel (11 96359-2672)
     if (isTest3) {
         console.log(`[Funil 3 - Esboços] 🚀 Disparo de TESTE 3 recebido de ${pushName} (${userPhone})`);
         cancelAllTimers();
@@ -1794,7 +2418,7 @@ async function handleIncomingMessage(botId, sock, msg) {
         return;
     }
 
-    // DISPARO FUNIL 4: Jornada da Bíblia (João Antônio)
+    // DISPARO FUNIL 4: Jornada da Bíblia - João Antônio (82 99689-8259)
     if (isTest4) {
         console.log(`[Funil 4 - Jornada Bíblia] 🚀 Disparo de TESTE 4 recebido de ${pushName} (${userPhone})`);
         cancelAllTimers();
@@ -1805,8 +2429,30 @@ async function handleIncomingMessage(botId, sock, msg) {
         return;
     }
 
-    // SLOTS 5 A 10
-    const testSlot = isTest5 ? 5 : isTest6 ? 6 : isTest7 ? 7 : isTest8 ? 8 : isTest9 ? 9 : isTest10 ? 10 : null;
+    // DISPARO FUNIL 5: Acervo 5.000+ Sermões - Vitor (17 98117-5202)
+    if (isTest5) {
+        console.log(`[Funil 5 - Acervo Sermões] 🚀 Disparo de TESTE 5 recebido de ${pushName} (${userPhone})`);
+        cancelAllTimers();
+        session = null;
+        delete store.userSessions[sessionKey];
+        saveStore(store);
+        await sendFunil5Phase1(botId, sock, remoteJid, userPhone, pushName);
+        return;
+    }
+
+    // DISPARO FUNIL 6: Devocional Pelos Filhos - Missionária Flávia (12 98308-5720)
+    if (isTest6) {
+        console.log(`[Funil 6 - Devocional] 🚀 Disparo de TESTE 6 recebido de ${pushName} (${userPhone})`);
+        cancelAllTimers();
+        session = null;
+        delete store.userSessions[sessionKey];
+        saveStore(store);
+        await sendFunil6Phase1(botId, sock, remoteJid, userPhone, pushName);
+        return;
+    }
+
+    // SLOTS 7 A 10
+    const testSlot = isTest7 ? 7 : isTest8 ? 8 : isTest9 ? 9 : isTest10 ? 10 : null;
     if (testSlot) {
         console.log(`[Slot Funil ${testSlot}] 🚀 Disparo de TESTE ${testSlot} recebido de ${pushName} (${userPhone})`);
         cancelAllTimers();
@@ -1891,8 +2537,54 @@ async function handleIncomingMessage(botId, sock, msg) {
         return;
     }
 
+    // Funil 5: Acervo Sermões (Vitor)
+    if (session.waitingFor === 'CONFIRM_SEND_FUNIL5') {
+        const isNegative = ['não', 'nao', 'agora não', 'agora nao', 'depois', 'nop', 'cancelar'].includes(normalizedText);
+        if (isNegative) {
+            await sendRealisticText(botId, sock, remoteJid, userPhone, 'Sem problemas, meu irmão! Se desejar os sermões futuramente, é só me chamar por aqui. A Paz do Senhor Jesus! 🙏');
+            session.waitingFor = null;
+            saveStore(store);
+            return;
+        }
+        const emoji = getHumanReactionEmoji(textContent);
+        await reactToMessage(sock, remoteJid, msg.key, emoji);
+        await sendFunil5Phase2(botId, sock, remoteJid, userPhone, pushName, msg);
+        return;
+    }
+
+    // Funil 6: Pergunta do Nome do Filho (Missionária Flávia)
+    if (session.waitingFor === 'FILHO_NAME_FUNIL6') {
+        const emoji = getHumanReactionEmoji(textContent);
+        await reactToMessage(sock, remoteJid, msg.key, emoji);
+        await sendFunil6AfterChildName(botId, sock, remoteJid, userPhone, pushName, msg);
+        return;
+    }
+
+    // Funil 6: Confirmação de Envio do Devocional
+    if (session.waitingFor === 'CONFIRM_SEND_FUNIL6') {
+        const isNegative = ['não', 'nao', 'agora não', 'agora nao', 'depois', 'nop', 'cancelar'].includes(normalizedText);
+        if (isNegative) {
+            await sendRealisticText(botId, sock, remoteJid, userPhone, 'Tudo bem, minha irmã! Continuarei orando pela sua família. Quando desejar o devocional, estarei por aqui! 🙏❤️');
+            session.waitingFor = null;
+            saveStore(store);
+            return;
+        }
+        const emoji = getHumanReactionEmoji(textContent);
+        await reactToMessage(sock, remoteJid, msg.key, emoji);
+        await sendFunil6Phase2(botId, sock, remoteJid, userPhone, pushName, msg);
+        return;
+    }
+
     // ─── Respostas de Comprovante de Pagamento (PIX) ───
-    const waitingReceiptFunnels = ['PIX_RECEIPT', 'PIX_RECEIPT_FUNIL2', 'PIX_RECEIPT_FUNIL3', 'PIX_RECEIPT_FUNIL4'];
+    const waitingReceiptFunnels = [
+        'PIX_RECEIPT',
+        'PIX_RECEIPT_FUNIL2',
+        'PIX_RECEIPT_FUNIL3',
+        'PIX_RECEIPT_FUNIL4',
+        'PIX_RECEIPT_FUNIL5',
+        'PIX_RECEIPT_FUNIL6'
+    ];
+
     if (waitingReceiptFunnels.includes(session.waitingFor)) {
         if (!hasMediaReceipt) {
             const emoji = getHumanReactionEmoji(textContent);
@@ -1936,6 +2628,16 @@ async function handleIncomingMessage(botId, sock, msg) {
             beneficiary = 'JOÃO GABRIEL';
             funnelName = 'Jornada da Bíblia';
             cancelFunil4Reminder(botId, userPhone);
+        } else if (session.waitingFor === 'PIX_RECEIPT_FUNIL5') {
+            expectedAmount = 19.90;
+            beneficiary = 'Vitor Bueno de Carvalho';
+            funnelName = 'Acervo 5.000+ Sermões Prontos';
+            cancelFunil5Reminder(botId, userPhone);
+        } else if (session.waitingFor === 'PIX_RECEIPT_FUNIL6') {
+            expectedAmount = 5.00; // qualquer contribuição voluntária
+            beneficiary = 'DIGITAL DSX LTDA';
+            funnelName = 'Devocional Pelos Filhos';
+            cancelFunil6Reminder(botId, userPhone);
         } else {
             cancelParabolasReminder(botId, userPhone);
         }
@@ -1967,7 +2669,13 @@ async function handleIncomingMessage(botId, sock, msg) {
             );
             await new Promise((r) => setTimeout(r, 1200));
 
-            if (session.funnel === 'funil3') {
+            if (session.funnel === 'funil5') {
+                const bonusText = `🎁 *Seu acesso ao Acervo de Sermões e Bônus está 100% vitalício e garantido!*\n\nParticipe do nosso grupo de atualizações:\nhttps://chat.whatsapp.com/DDrnWQKV5vTB2UAYyQj3M2\n\nQue a Palavra de Deus prospere grandemente no seu ministério! 🙏📖`;
+                await sendRealisticText(botId, sock, remoteJid, userPhone, bonusText);
+            } else if (session.funnel === 'funil6') {
+                const bonusText = `🎁 *Você já está participando do sorteio da Caixa Devocional!*\n\nEm breve entraremos em contato com as contempladas. Que o Senhor traga restauração e bênçãos sobre a vida dos seus filhos! ❤️🙏`;
+                await sendRealisticText(botId, sock, remoteJid, userPhone, bonusText);
+            } else if (session.funnel === 'funil3') {
                 const bonusText = `🎁 *Acesso aos Bônus da Missionária Raquel Liberados:*\n\n1. Comunidade de Pregadoras no WhatsApp\n2. Guia da Pregadora\n3. 50 Ilustrações para Pregações\n4. 500 Versículos Organizados por Tema\n\nLink de acesso permanente:\nhttps://drive.google.com/drive/folders/1FPYg1bkaf5YYRvQI_YjjNk3CSdwKVEvT?usp=sharing`;
                 await sendRealisticText(botId, sock, remoteJid, userPhone, bonusText);
             } else if (session.funnel === 'funil4') {
