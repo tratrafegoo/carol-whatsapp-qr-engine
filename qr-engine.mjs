@@ -1076,16 +1076,55 @@ async function handleIncomingMessage(botId, sock, msg) {
     let session = store.userSessions[sessionKey];
 
     const normalizedText = textContent.trim().toLowerCase();
-    const isTestTrigger = ['teste', 'test', '#teste', '!teste', '/teste'].some(k => normalizedText === k || normalizedText.startsWith(k + ' ') || normalizedText.startsWith(k));
 
-    // GATILHO RESTRITO A TESTE: Só inicia o funil se a mensagem for explicitamente "teste"
-    if (isTestTrigger) {
-        console.log(`[Funil X1] 🚀 Gatilho de TESTE recebido de ${pushName} (${userPhone}). Reiniciando e disparando Fase 1...`);
+    // Roteador Multi-Funil por Gatilhos de Teste:
+    const isTest1 = ['teste1', 'teste 1', '#teste1', '!teste1', '/teste1', 'teste', 'test', '#teste', '!teste', '/teste'].some(k => normalizedText === k || normalizedText.startsWith(k + ' ') || normalizedText === k);
+    const isTest2 = ['teste2', 'teste 2', '#teste2', '!teste2', '/teste2'].some(k => normalizedText === k || normalizedText.startsWith(k + ' ') || normalizedText === k);
+    const isTest3 = ['teste3', 'teste 3', '#teste3', '!teste3', '/teste3'].some(k => normalizedText === k || normalizedText.startsWith(k + ' ') || normalizedText === k);
+    const isTest4 = ['teste4', 'teste 4', '#teste4', '!teste4', '/teste4'].some(k => normalizedText === k || normalizedText.startsWith(k + ' ') || normalizedText === k);
+
+    // DISPARO FUNIL 1: As 40 Parábolas de Jesus
+    if (isTest1) {
+        console.log(`[Funil 1 - Parábolas] 🚀 Disparo de TESTE 1 recebido de ${pushName} (${userPhone}). Reiniciando e disparando Fase 1...`);
         cancelParabolasReminder(botId, userPhone);
         session = null;
         delete store.userSessions[sessionKey];
         saveStore(store);
         await sendParabolasPhase1(botId, sock, remoteJid, userPhone, pushName);
+        return;
+    }
+
+    // DISPARO FUNIL 2: Próximo Produto / Oferta
+    if (isTest2) {
+        console.log(`[Funil 2] 🚀 Disparo de TESTE 2 recebido de ${pushName} (${userPhone})`);
+        cancelParabolasReminder(botId, userPhone);
+        session = null;
+        delete store.userSessions[sessionKey];
+        saveStore(store);
+        await sendRealisticText(
+            botId,
+            sock,
+            remoteJid,
+            userPhone,
+            `🚀 *Funil 2 Conectado!* Aguardando os materiais e prints do produto 2 para iniciar a entrega automática.\n\nEnvie os arquivos na pasta do funil para ativarmos o fluxo completo!`
+        );
+        return;
+    }
+
+    // DISPARO FUNIL 3: Próximo Produto / Oferta
+    if (isTest3) {
+        console.log(`[Funil 3] 🚀 Disparo de TESTE 3 recebido de ${pushName} (${userPhone})`);
+        cancelParabolasReminder(botId, userPhone);
+        session = null;
+        delete store.userSessions[sessionKey];
+        saveStore(store);
+        await sendRealisticText(
+            botId,
+            sock,
+            remoteJid,
+            userPhone,
+            `🚀 *Funil 3 Conectado!* Aguardando a definição do produto 3.`
+        );
         return;
     }
 
