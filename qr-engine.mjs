@@ -702,6 +702,15 @@ function cancelParabolasReminder(botId, userPhone) {
     }
 }
 
+// ─── Waveform Real (64 Barras) da Voz de Jessica ───
+// Extraído cirurgicamente via FFT/PCM para gerar o desenho de ondas sonoras no WhatsApp
+const PARABOLAS_AUDIO_WAVEFORM = new Uint8Array([
+    21, 63, 35, 33, 35, 31, 35, 38, 53, 36, 24, 26, 4, 31, 72, 22,
+    46, 39, 37, 4, 46, 100, 28, 41, 69, 5, 39, 86, 8, 33, 29, 39,
+    4, 51, 38, 27, 18, 35, 28, 42, 29, 72, 14, 18, 23, 46, 22, 33,
+    41, 40, 6, 31, 48, 24, 14, 4, 37, 67, 9, 40, 48, 35, 13, 4
+]);
+
 // ─── FASE 1: Apresentação da Oferta (Print 1 & 2) ───
 async function sendParabolasPhase1(botId, sock, remoteJid, userPhone, pushName) {
     console.log(`[Funil Parabolas] 🚀 Iniciando Fase 1 para ${pushName} (${userPhone})`);
@@ -710,7 +719,7 @@ async function sendParabolasPhase1(botId, sock, remoteJid, userPhone, pushName) 
     await sendRealisticText(botId, sock, remoteJid, userPhone, 'A Paz do Senhor!');
     await new Promise((r) => setTimeout(r, 800));
 
-    // 2. Áudio de 22 segundos gravado na hora (PTT)
+    // 2. Áudio de 22 segundos gravado na hora (PTT com Waveform Real)
     try {
         await sock.sendPresenceUpdate('recording', remoteJid);
     } catch {}
@@ -720,7 +729,7 @@ async function sendParabolasPhase1(botId, sock, remoteJid, userPhone, pushName) 
     const oggPath = path.join(__dirname, 'public', 'parabolas', 'audio_parabolas.ogg');
     const mp3Path = path.join(__dirname, 'public', 'parabolas', 'audio_parabolas.mp3');
 
-    // Tentativa 1: OGG Opus Nativo (url)
+    // Tentativa 1: OGG Opus Nativo com Waveform de 64 barras sonoras
     if (fs.existsSync(oggPath)) {
         try {
             await sock.sendMessage(remoteJid, {
@@ -728,13 +737,14 @@ async function sendParabolasPhase1(botId, sock, remoteJid, userPhone, pushName) 
                 mimetype: 'audio/ogg; codecs=opus',
                 ptt: true,
                 seconds: 22,
+                waveform: PARABOLAS_AUDIO_WAVEFORM,
             });
             audioSent = true;
-            logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio PTT 22s enviado via url]');
+            logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio PTT 22s enviado com Waveform]');
         } catch (err1) {
             console.warn('[Parabolas Audio Tentativa 1 (url) falhou]:', err1?.message);
             await new Promise((r) => setTimeout(r, 1500));
-            // Tentativa 2: OGG via Buffer
+            // Tentativa 2: OGG via Buffer com Waveform
             try {
                 const oggBuffer = fs.readFileSync(oggPath);
                 await sock.sendMessage(remoteJid, {
@@ -742,16 +752,17 @@ async function sendParabolasPhase1(botId, sock, remoteJid, userPhone, pushName) 
                     mimetype: 'audio/ogg; codecs=opus',
                     ptt: true,
                     seconds: 22,
+                    waveform: PARABOLAS_AUDIO_WAVEFORM,
                 });
                 audioSent = true;
-                logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio PTT 22s enviado via buffer]');
+                logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio PTT 22s buffer com Waveform]');
             } catch (err2) {
                 console.warn('[Parabolas Audio Tentativa 2 (buffer) falhou]:', err2?.message);
             }
         }
     }
 
-    // Tentativa 3: Fallback MP3 se o OGG for rejeitado pelos servidores da Meta
+    // Tentativa 3: Fallback MP3 se o OGG falhar
     if (!audioSent && fs.existsSync(mp3Path)) {
         try {
             await new Promise((r) => setTimeout(r, 1500));
@@ -760,6 +771,7 @@ async function sendParabolasPhase1(botId, sock, remoteJid, userPhone, pushName) 
                 mimetype: 'audio/mpeg',
                 ptt: true,
                 seconds: 22,
+                waveform: PARABOLAS_AUDIO_WAVEFORM,
             });
             audioSent = true;
             logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio MP3 22s fallback enviado]');
