@@ -121,7 +121,7 @@ async function auditPixReceiptWithGemini(mediaBuffer, mimeType, expectedAmount =
         }
 
         if (typeof parsed.valor === 'number') {
-            const minAllowed = expectedAmount <= 25 ? 9.50 : expectedAmount * 0.95;
+            const minAllowed = expectedAmount <= 25 ? 4.50 : expectedAmount * 0.95;
             if (parsed.valor < minAllowed) {
                 return {
                     isValid: false,
@@ -662,54 +662,80 @@ async function disconnectQrSession(botId = 'bot_whatsapp_principal', wipeCreds =
     });
 }
 
-// ─── Lembrete de 15 Minutos do Funil 1 (Parábolas de Jesus) ───
+// ─── Esteira de Cobrança / Follow-up do Funil 1 (15m -> 1h -> 2h -> 3h) ───
 const parabolasReminderTimers = new Map();
 
-function scheduleParabolasReminder(botId, remoteJid, userPhone) {
+function cancelParabolasReminder(botId, userPhone) {
     const key = `${botId}:${userPhone}`;
     if (parabolasReminderTimers.has(key)) {
-        clearTimeout(parabolasReminderTimers.get(key));
+        const timers = parabolasReminderTimers.get(key);
+        if (Array.isArray(timers)) {
+            timers.forEach((t) => clearTimeout(t));
+        } else {
+            clearTimeout(timers);
+        }
+        parabolasReminderTimers.delete(key);
     }
-    const timer = setTimeout(async () => {
+}
+
+function scheduleParabolasReminder(botId, remoteJid, userPhone) {
+    cancelParabolasReminder(botId, userPhone);
+    const key = `${botId}:${userPhone}`;
+    const timers = [];
+
+    const sendFollowUp = async (step, texts) => {
         try {
             const currentStore = loadStore();
             const sess = currentStore.userSessions[key];
             if (sess && sess.waitingFor === 'PIX_RECEIPT') {
                 const sock = activeSockets.get(botId);
                 if (sock) {
-                    await sock.sendMessage(remoteJid, {
-                        text: 'Todo seu material foi enviado!\nFico no seu aguardo!'
-                    });
-                    logConversation(botId, userPhone, 'BOT', 'REMINDER', 'Todo seu material foi enviado!\nFico no seu aguardo!');
-                    console.log(`[Funil Parabolas] ⏰ Lembrete de 15min enviado para ${userPhone}`);
+                    for (const text of texts) {
+                        await sock.sendMessage(remoteJid, { text });
+                        logConversation(botId, userPhone, 'BOT', 'REMINDER', text);
+                        await new Promise((r) => setTimeout(r, 800));
+                    }
+                    console.log(`[Funil Parabolas] ⏰ Follow-up Step ${step} enviado para ${userPhone}`);
                 }
             }
         } catch (err) {
-            console.error('[Reminder Timer Error]:', err?.message);
-        } finally {
-            parabolasReminderTimers.delete(key);
+            console.error(`[Follow-up Step ${step} Error]:`, err?.message);
         }
-    }, 15 * 60 * 1000); // 15 minutos
+    };
 
-    parabolasReminderTimers.set(key, timer);
+    // Follow-up 1: 15 minutos (Print 5)
+    timers.push(
+        setTimeout(() => {
+            sendFollowUp(1, ['Todo seu material foi enviado!\nFico no seu aguardo!']);
+        }, 15 * 60 * 1000)
+    );
+
+    // Follow-up 2: +1 hora após o 1º (75 minutos total)
+    timers.push(
+        setTimeout(() => {
+            sendFollowUp(2, ['Você irá realizar o pagamento hoje?']);
+        }, 75 * 60 * 1000)
+    );
+
+    // Follow-up 3: +2 horas após o 2º (195 minutos total)
+    timers.push(
+        setTimeout(() => {
+            sendFollowUp(3, ['Oi?']);
+        }, 195 * 60 * 1000)
+    );
+
+    // Follow-up 4: +3 horas após o 3º (375 minutos total) - Downsell
+    timers.push(
+        setTimeout(() => {
+            sendFollowUp(4, [
+                'Confiei em você e enviei todo o material, fico no aguardo do comprovante',
+                'Qualquer valor ajuda!\nPode ser 20, 10 ou 5 reais!',
+            ]);
+        }, 375 * 60 * 1000)
+    );
+
+    parabolasReminderTimers.set(key, timers);
 }
-
-function cancelParabolasReminder(botId, userPhone) {
-    const key = `${botId}:${userPhone}`;
-    if (parabolasReminderTimers.has(key)) {
-        clearTimeout(parabolasReminderTimers.get(key));
-        parabolasReminderTimers.delete(key);
-    }
-}
-
-// ─── Waveform Real (64 Barras) da Voz de Jessica ───
-// Extraído cirurgicamente via FFT/PCM para gerar o desenho de ondas sonoras no WhatsApp
-const PARABOLAS_AUDIO_WAVEFORM = new Uint8Array([
-    21, 63, 35, 33, 35, 31, 35, 38, 53, 36, 24, 26, 4, 31, 72, 22,
-    46, 39, 37, 4, 46, 100, 28, 41, 69, 5, 39, 86, 8, 33, 29, 39,
-    4, 51, 38, 27, 18, 35, 28, 42, 29, 72, 14, 18, 23, 46, 22, 33,
-    41, 40, 6, 31, 48, 24, 14, 4, 37, 67, 9, 40, 48, 35, 13, 4
-]);
 
 // ─── FASE 1: Apresentação da Oferta (Print 1 & 2) ───
 async function sendParabolasPhase1(botId, sock, remoteJid, userPhone, pushName) {
@@ -719,65 +745,39 @@ async function sendParabolasPhase1(botId, sock, remoteJid, userPhone, pushName) 
     await sendRealisticText(botId, sock, remoteJid, userPhone, 'A Paz do Senhor!');
     await new Promise((r) => setTimeout(r, 800));
 
-    // 2. Áudio de 22 segundos gravado na hora (PTT com Waveform Real)
+    // 2. Áudio em MP3 Real de 22 segundos (PTT)
     try {
         await sock.sendPresenceUpdate('recording', remoteJid);
     } catch {}
     await new Promise((r) => setTimeout(r, 2000));
 
-    let audioSent = false;
-    const oggPath = path.join(__dirname, 'public', 'parabolas', 'audio_parabolas.ogg');
     const mp3Path = path.join(__dirname, 'public', 'parabolas', 'audio_parabolas.mp3');
-
-    // Tentativa 1: OGG Opus Nativo com Waveform de 64 barras sonoras
-    if (fs.existsSync(oggPath)) {
+    if (fs.existsSync(mp3Path)) {
         try {
+            const mp3Buffer = fs.readFileSync(mp3Path);
             await sock.sendMessage(remoteJid, {
-                audio: { url: oggPath },
-                mimetype: 'audio/ogg; codecs=opus',
-                ptt: true,
-                seconds: 22,
-                waveform: PARABOLAS_AUDIO_WAVEFORM,
-            });
-            audioSent = true;
-            logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio PTT 22s enviado com Waveform]');
-        } catch (err1) {
-            console.warn('[Parabolas Audio Tentativa 1 (url) falhou]:', err1?.message);
-            await new Promise((r) => setTimeout(r, 1500));
-            // Tentativa 2: OGG via Buffer com Waveform
-            try {
-                const oggBuffer = fs.readFileSync(oggPath);
-                await sock.sendMessage(remoteJid, {
-                    audio: oggBuffer,
-                    mimetype: 'audio/ogg; codecs=opus',
-                    ptt: true,
-                    seconds: 22,
-                    waveform: PARABOLAS_AUDIO_WAVEFORM,
-                });
-                audioSent = true;
-                logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio PTT 22s buffer com Waveform]');
-            } catch (err2) {
-                console.warn('[Parabolas Audio Tentativa 2 (buffer) falhou]:', err2?.message);
-            }
-        }
-    }
-
-    // Tentativa 3: Fallback MP3 se o OGG falhar
-    if (!audioSent && fs.existsSync(mp3Path)) {
-        try {
-            await new Promise((r) => setTimeout(r, 1500));
-            await sock.sendMessage(remoteJid, {
-                audio: { url: mp3Path },
+                audio: mp3Buffer,
                 mimetype: 'audio/mpeg',
                 ptt: true,
-                seconds: 22,
-                waveform: PARABOLAS_AUDIO_WAVEFORM,
             });
-            audioSent = true;
-            logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio MP3 22s fallback enviado]');
-        } catch (err3) {
-            console.error('[Parabolas Audio Fallback MP3 Erro]:', err3?.message);
+            logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio MP3 de 22s enviado]');
+            console.log(`[Funil Parabolas] 🎙️ Áudio MP3 enviado com sucesso para ${userPhone}`);
+        } catch (mp3Err) {
+            console.warn('[MP3 Buffer Send Error, retrying with URL]:', mp3Err?.message);
+            await new Promise((r) => setTimeout(r, 1200));
+            try {
+                await sock.sendMessage(remoteJid, {
+                    audio: { url: mp3Path },
+                    mimetype: 'audio/mpeg',
+                    ptt: true,
+                });
+                logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio MP3 via URL enviado]');
+            } catch (urlErr) {
+                console.error('[MP3 URL Send Error]:', urlErr?.message);
+            }
         }
+    } else {
+        console.error('[Funil Parabolas] ❌ Arquivo MP3 não encontrado:', mp3Path);
     }
 
     try {
