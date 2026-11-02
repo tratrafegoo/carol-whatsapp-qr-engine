@@ -662,9 +662,22 @@ async function disconnectQrSession(botId = 'bot_whatsapp_principal', wipeCreds =
     });
 }
 
-// ─── Sistema de Reações Humanizadas (WhatsApp Reactions) ───
+// ─── Sistema de Reações Humanizadas Universal (WhatsApp Reactions) ───
+const reactedMessagesCache = new Set();
+
 async function reactToMessage(sock, remoteJid, messageKey, emoji) {
     if (!sock || !remoteJid || !messageKey) return;
+    const msgId = messageKey.id;
+    if (msgId && reactedMessagesCache.has(msgId)) {
+        return;
+    }
+    if (msgId) {
+        reactedMessagesCache.add(msgId);
+        if (reactedMessagesCache.size > 3000) {
+            const first = reactedMessagesCache.values().next().value;
+            reactedMessagesCache.delete(first);
+        }
+    }
     try {
         await sock.sendMessage(remoteJid, {
             react: {
@@ -672,26 +685,36 @@ async function reactToMessage(sock, remoteJid, messageKey, emoji) {
                 key: messageKey,
             },
         });
-        console.log(`[Reação WhatsApp] Reagido com ${emoji} na mensagem ${messageKey.id} para ${remoteJid}`);
+        console.log(`[Reação WhatsApp] Reagido com ${emoji} na mensagem ${msgId} para ${remoteJid}`);
     } catch (e) {
         console.warn('[Reação WhatsApp Aviso]:', e?.message);
     }
 }
 
-function getHumanReactionEmoji(text) {
+function getHumanReactionEmoji(text, isNegative = false) {
+    if (isNegative) return '🙏';
     const t = (text || '').toLowerCase().trim();
+
+    // Afirmativas e confirmações
+    const isAffirmative = [
+        'sim', 'pode', 'manda', 'ok', 'beleza', 'claro', 'com certeza',
+        'quero', 'bora', 'manda ai', 'manda aí', 'positivo', 'show', 'topo',
+        'aceito', 'vamos', 'pode ser', 'por favor', 'mande', 'concerteza', 'isso'
+    ].some(w => t === w || t.includes(w));
+    if (isAffirmative) return '👍';
+
+    // Religiosas, gratidão e afeto
     const isReligiousOrAffectionate = [
         'amem', 'amém', 'deus', 'abençoe', 'abencoe', 'bênção', 'bencao',
         'obrigado', 'obrigada', 'gratidão', 'gratidao', 'paz', 'gloria',
-        'glória', 'jesus', 'maravilha', 'coração', 'coracao'
+        'glória', 'jesus', 'maravilha', 'coração', 'coracao', 'carinho',
+        'lindo', 'linda', 'maravilhoso', 'fofo', 'fofura', 'amor', 'irmã', 'irma', 'irmão', 'irmao'
     ].some(w => t.includes(w));
     if (isReligiousOrAffectionate) return '❤️';
 
-    const isAffirmative = [
-        'sim', 'pode', 'manda', 'ok', 'beleza', 'claro', 'com certeza',
-        'quero', 'bora', 'manda ai', 'manda aí', 'positivo'
-    ].some(w => t.includes(w));
-    if (isAffirmative) return '👍';
+    // Dúvidas ou perguntas
+    const isQuestionOrDoubt = ['quanto', 'valor', 'preco', 'preço', 'como', 'onde', 'qual', 'chave', 'pix', 'envia', 'tem', 'dúvida', 'duvida'].some(w => t.includes(w));
+    if (isQuestionOrDoubt) return '👍';
 
     return '❤️';
 }
@@ -2854,6 +2877,11 @@ async function handleIncomingMessage(botId, sock, msg) {
         return;
     }
 
+    if (msg.message.reactionMessage) {
+        // Usuário apenas reagiu a uma mensagem nossa, não processa
+        return;
+    }
+
     const userPhone = remoteJid.split('@')[0].split(':')[0];
     const pushName = msg.pushName || 'Cliente';
 
@@ -2869,15 +2897,17 @@ async function handleIncomingMessage(botId, sock, msg) {
     const hasImage = !!msg.message.imageMessage;
     const hasDocument = !!msg.message.documentMessage || !!msg.message.documentWithCaptionMessage;
     const hasMediaReceipt = hasImage || hasDocument;
+    const hasAudio = !!msg.message.audioMessage;
+    const hasSticker = !!msg.message.stickerMessage;
 
-    console.log(`[Funil X1] 📩 Mensagem de ${pushName} (${userPhone}): "${textContent || (hasMediaReceipt ? '[COMPROVANTE]' : '')}"`);
+    console.log(`[Funil X1] 📩 Mensagem de ${pushName} (${userPhone}): "${textContent || (hasMediaReceipt ? '[COMPROVANTE]' : hasAudio ? '[AUDIO]' : hasSticker ? '[FIGURINHA]' : '')}"`);
 
     logConversation(
         botId,
         userPhone,
         'USER',
-        hasImage ? 'IMAGE' : hasDocument ? 'DOCUMENT' : 'TEXT',
-        textContent || (hasMediaReceipt ? '[Comprovante Enviado]' : '[Mensagem]'),
+        hasImage ? 'IMAGE' : hasDocument ? 'DOCUMENT' : hasAudio ? 'AUDIO' : hasSticker ? 'STICKER' : 'TEXT',
+        textContent || (hasMediaReceipt ? '[Comprovante Enviado]' : hasAudio ? '[Áudio Enviado]' : hasSticker ? '[Figurinha]' : '[Mensagem]'),
         pushName
     );
 
@@ -2885,6 +2915,13 @@ async function handleIncomingMessage(botId, sock, msg) {
     let session = store.userSessions[sessionKey];
 
     const normalizedText = textContent.trim().toLowerCase();
+
+    // ─── Sistema Universal de Reações Humanizadas para TODOS os Funis (Atuais e Futuros) ───
+    const isNegative = ['não', 'nao', 'agora não', 'agora nao', 'depois', 'nop', 'cancelar', 'não quero', 'nao quero'].some(w => normalizedText === w || normalizedText.startsWith(w + ' '));
+    const autoEmoji = hasMediaReceipt ? '❤️' : (hasAudio ? '👍' : (hasSticker ? '❤️' : getHumanReactionEmoji(textContent, isNegative)));
+    
+    // Dispara a reação humanizada imediatamente na mensagem do lead
+    reactToMessage(sock, remoteJid, msg.key, autoEmoji).catch(() => {});
 
     // Roteador Multi-Funil por Gatilhos de Teste (teste1 a teste10):
     const isTest1 = ['teste1', 'teste 1', '#teste1', '!teste1', '/teste1', 'teste', 'test', '#teste', '!teste', '/teste'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
