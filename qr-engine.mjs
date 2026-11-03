@@ -1040,6 +1040,136 @@ function scheduleFunil5Reminder(botId, remoteJid, userPhone) {
         ]);
     }, 570 * 60 * 1000));
 
+    // Step 11: ~15 horas (Print 18:56 - Áudio Noite Dia 1 + PIX)
+    timers.push(setTimeout(async () => {
+        try {
+            const currentStore = loadStore();
+            const sess = currentStore.userSessions[key];
+            if (sess && sess.waitingFor === 'PIX_RECEIPT_FUNIL5') {
+                const sock = activeSockets.get(botId);
+                if (sock) {
+                    const mp3Path = path.join(__dirname, 'public', 'funil5', 'audio_lembrete_dia1_18h56.mp3');
+                    if (fs.existsSync(mp3Path)) {
+                        const mp3Buf = fs.readFileSync(mp3Path);
+                        await sock.sendMessage(remoteJid, { audio: mp3Buf, mimetype: 'audio/mpeg', ptt: true });
+                        logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Lembrete Dia 1 18h56]');
+                    }
+                    await sock.sendMessage(remoteJid, { text: `PIX: 64158407000124\n(CNPJ)\nR$19,90` });
+                }
+            }
+        } catch (err) {
+            console.error('[Funil 5 Step 11 Error]:', err?.message);
+        }
+    }, 900 * 60 * 1000));
+
+    // Step 12: ~17 horas (Print 20:57 - Áudio Noite Dia 1 + PIX)
+    timers.push(setTimeout(async () => {
+        try {
+            const currentStore = loadStore();
+            const sess = currentStore.userSessions[key];
+            if (sess && sess.waitingFor === 'PIX_RECEIPT_FUNIL5') {
+                const sock = activeSockets.get(botId);
+                if (sock) {
+                    const mp3Path = path.join(__dirname, 'public', 'funil5', 'audio_lembrete_dia1_20h57.mp3');
+                    if (fs.existsSync(mp3Path)) {
+                        const mp3Buf = fs.readFileSync(mp3Path);
+                        await sock.sendMessage(remoteJid, { audio: mp3Buf, mimetype: 'audio/mpeg', ptt: true });
+                        logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Lembrete Dia 1 20h57]');
+                    }
+                    await sock.sendMessage(remoteJid, { text: `CHAVE PIX : 64158407000124\nVALOR: R$19,90\nMe envie o comprovante para dar baixa por favor 🙏` });
+                }
+            }
+        } catch (err) {
+            console.error('[Funil 5 Step 12 Error]:', err?.message);
+        }
+    }, 1020 * 60 * 1000));
+
+    // Step 13: ~23 horas (Dia 2 - 02:57)
+    timers.push(setTimeout(() => {
+        sendFollowUp(13, [
+            `Porque você fez isso? 🙏\nEu te enviei tudo antes justamente na confiança…\n\nAvisamos que seria necessário fazer o Pix hoje após receber os materiais!\nVocê aceitou o envio dos materiais, peço que por favor, não deixe nosso trabalho prejudicado.\n\n🙏Precisamos do Pix de R$19,90 para não ficarmos no prejuízo\n\nChave Pix CNPJ: 👇\n- 64158407000124`
+        ]);
+    }, 1380 * 60 * 1000));
+
+    // Step 14: ~24 horas (Dia 2 - 03:58 - Foto Eclesiastes)
+    timers.push(setTimeout(async () => {
+        try {
+            const currentStore = loadStore();
+            const sess = currentStore.userSessions[key];
+            if (sess && sess.waitingFor === 'PIX_RECEIPT_FUNIL5') {
+                const sock = activeSockets.get(botId);
+                if (sock) {
+                    await sock.sendMessage(remoteJid, { text: `Eclesiastes 5:5\n“É melhor não fazer promessa do que fazer e não cumprir.”` });
+                    const imgP = path.join(__dirname, 'public', 'funil5', 'eclesiastes_dia2.jpeg');
+                    if (fs.existsSync(imgP)) {
+                        const imgBuf = fs.readFileSync(imgP);
+                        await sock.sendMessage(remoteJid, { image: imgBuf });
+                    }
+                    await sock.sendMessage(remoteJid, { text: `Precisamos da contribuição combinada 🙏\nChave PIX (CNPJ) : 64158407000124` });
+                }
+            }
+        } catch (err) {
+            console.error('[Funil 5 Step 14 Error]:', err?.message);
+        }
+    }, 1440 * 60 * 1000));
+
+    // Step 15: ~26 horas (Dia 2 - 05:58)
+    timers.push(setTimeout(() => {
+        sendFollowUp(15, [
+            `Confiei em você e já te enviei todo o material completo junto com os bônus.... 🎁\n\nEsse acervo tem ajudado muitos pastores, líderes e servos de Deus que precisam de direção e apoio na preparação das mensagens… e é justamente essa contribuição simbólica que mantém esse ministério ativo e alcançando outras vidas.\n\nPor isso, peço com carinho que não faça como algumas pessoas que recebem e não retornam 🙏\n\nA contribuição é de apenas R$19,90 pelo acervo completo.\n\nConto com a sua honestidade e apoio para continuarmos abençoando mais pessoas através da Palavra 📖✨`
+        ]);
+    }, 1560 * 60 * 1000));
+
+    // Step 16: ~27 horas (Dia 2 - 06:58)
+    timers.push(setTimeout(() => {
+        sendFollowUp(16, [
+            `Por que você visualiza a mensagem e não responde ?? depositei minha confiança em você`,
+            `Para facilitar, vou te enviar a chave Pix separada para você só copiar e colar 👇👇`,
+            `64158407000124`,
+            `(CHAVE PIX É CNPJ)\nMe envie o comprovante por favor 🙏`
+        ]);
+    }, 1620 * 60 * 1000));
+
+    // Step 17: ~35 horas (Dia 2 - 14:59)
+    timers.push(setTimeout(() => {
+        sendFollowUp(17, [
+            `A paz querido irmão(a), responde por favor 😢🙏🏻`
+        ]);
+    }, 2100 * 60 * 1000));
+
+    // Step 18: ~38 horas (Dia 2 - 17:59)
+    timers.push(setTimeout(() => {
+        sendFollowUp(18, [
+            `Irmão(ã), preciso ser sincero com você…\n\nIsso acaba sendo uma falta de respeito com o trabalho que foi feito com tanto zelo e dedicação.\n\nDepositamos nossa confiança em você, liberamos todo o material primeiro, acreditando no compromisso entre irmãos.\n\nNosso propósito nunca foi vender apenas um conteúdo, mas fortalecer vidas e ministérios através da Palavra.\n\nContamos com a sua honestidade para cumprir o que foi combinado 🙏\n\nAssim que realizar a contribuição simbólica, me envie o comprovante para que eu possa liberar os bônus prometidos.\n\nSeguimos juntos na obra.`
+        ]);
+    }, 2280 * 60 * 1000));
+
+    // Step 19: ~45 horas (Dia 3 - 00:00)
+    timers.push(setTimeout(() => {
+        sendFollowUp(19, [
+            `Quando for possível para você, peço que efetue o pagamento dos materiais enviados, honrando o compromisso que assumimos entre irmãos 🙏\n\nFico no aguardo.`,
+            `Valor: R$19,00`,
+            `Chave PIX CNPJ : 64158407000124`
+        ]);
+    }, 2700 * 60 * 1000));
+
+    // Step 20: ~50 horas (Dia 3 - 05:00)
+    timers.push(setTimeout(() => {
+        sendFollowUp(20, [
+            `Não faça igual outras pessoas, enviei os estudos com carinho e na confiança, que Deus possa tocar no seu coração e você enviar a contrbuição de R$19,90 AMÉM ?`,
+            `PIX CNPJ : 64158407000124\nVALOR : R$19,90`
+        ]);
+    }, 3000 * 60 * 1000));
+
+    // Step 21: ~62 horas (Dia 3 - 17:00)
+    timers.push(setTimeout(() => {
+        sendFollowUp(21, [
+            `A Paz você ainda está ai?`,
+            `me da um retorno, por favor... 🙏`,
+            `Precisamos da conntrbuição de R$19,90 para nãao ficarmos no prejuizo, confiei em você e liberei todos os materiais, agora por favor me envie o comprovante 🙏`
+        ]);
+    }, 3720 * 60 * 1000));
+
     funil5ReminderTimers.set(key, timers);
 }
 
@@ -1120,7 +1250,69 @@ function scheduleFunil6Reminder(botId, remoteJid, userPhone) {
         }
     }, 90 * 60 * 1000));
 
-    funil6ReminderTimers.set(key, timers);
+    
+
+    // Step 3: ~14 horas (Print 17:47)
+    timers.push(setTimeout(() => {
+        sendFollowUp(3, [
+            `Ta ai Irmã?`,
+            `Não esquece de me mandar o comprovante tá bom? tenho um presente para você após enviar 🤭`
+        ]);
+    }, 840 * 60 * 1000));
+
+    // Step 4: ~15 horas (Print 18:47 - Foto Testemunho 2)
+    timers.push(setTimeout(async () => {
+        try {
+            const currentStore = loadStore();
+            const sess = currentStore.userSessions[key];
+            if (sess && sess.waitingFor === 'PIX_RECEIPT_FUNIL6') {
+                const sock = activeSockets.get(botId);
+                if (sock) {
+                    const imgP = path.join(__dirname, 'public', 'funil6', 'testemunho_grupo2.jpeg');
+                    if (fs.existsSync(imgP)) {
+                        const imgBuf = fs.readFileSync(imgP);
+                        await sock.sendMessage(remoteJid, { image: imgBuf });
+                    }
+                    await sock.sendMessage(remoteJid, { text: `Irmã, olha esse testemunho aqui que recebi no nosso grupo` });
+                    await new Promise(r => setTimeout(r, 800));
+                    await sock.sendMessage(remoteJid, { text: `Conseguiu, irmã fazer sua contribuição? Sobrou 1 vaga aqui no grupo do sorteio, ai já coloco seu nome. Me manda também os nomes que a senhora deseja que a gente apresente em oração 🙌🏼` });
+                }
+            }
+        } catch (err) {
+            console.error('[Funil 6 Step 4 Error]:', err?.message);
+        }
+    }, 900 * 60 * 1000));
+
+    // Step 5: ~27 horas (Dia 2 - 06:47 - Áudio de Oração)
+    timers.push(setTimeout(async () => {
+        try {
+            const currentStore = loadStore();
+            const sess = currentStore.userSessions[key];
+            if (sess && sess.waitingFor === 'PIX_RECEIPT_FUNIL6') {
+                const sock = activeSockets.get(botId);
+                if (sock) {
+                    await sock.sendMessage(remoteJid, { text: `A paz do Senhor, minha irmã! ✨` });
+                    const audioP = path.join(__dirname, 'public', 'funil6', 'audio_oracao_dia2.mp3');
+                    if (fs.existsSync(audioP)) {
+                        const audioBuf = fs.readFileSync(audioP);
+                        await sock.sendMessage(remoteJid, { audio: audioBuf, mimetype: 'audio/mpeg', ptt: true });
+                        logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Oração Dia 2 Funil 6]');
+                    }
+                }
+            }
+        } catch (err) {
+            console.error('[Funil 6 Step 5 Error]:', err?.message);
+        }
+    }, 1620 * 60 * 1000));
+
+    // Step 6: ~51 horas (Dia 3 - 06:48 - Culto Familiar)
+    timers.push(setTimeout(() => {
+        sendFollowUp(6, [
+            `Nós acabamos de fazer um culto e lembramos de sua família! Deus te abençoe! ❤️`,
+            `Não esqueça de nós também, viu!! 🙏🏼`
+        ]);
+    }, 3060 * 60 * 1000));
+funil6ReminderTimers.set(key, timers);
 }
 
 // ─── Esteira de Cobrança / Follow-up do Funil 7 (Alfabetização Infantil - Pinguim Estudioso) ───
@@ -1240,8 +1432,1073 @@ function scheduleFunil8Reminder(botId, remoteJid, userPhone) {
         ]);
     }, 60 * 60 * 1000));
 
+    // Step 2: ~23 horas (Dia 2 - 02:22 - Áudio Pet)
+    timers.push(setTimeout(async () => {
+        try {
+            const currentStore = loadStore();
+            const sess = currentStore.userSessions[key];
+            if (sess && sess.waitingFor === 'PIX_RECEIPT_FUNIL8') {
+                const sock = activeSockets.get(botId);
+                if (sock) {
+                    const audioP = path.join(__dirname, 'public', 'funil8', 'audio_dia2_pet.mp3');
+                    if (fs.existsSync(audioP)) {
+                        const audioBuf = fs.readFileSync(audioP);
+                        await sock.sendMessage(remoteJid, { audio: audioBuf, mimetype: 'audio/mpeg', ptt: true });
+                        logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Dia 2 Pet Funil 8]');
+                    }
+                    await sock.sendMessage(remoteJid, { text: `CHAVE PIX TELEFONE: 11965034611` });
+                }
+            }
+        } catch (err) {
+            console.error('[Funil 8 Step 2 Error]:', err?.message);
+        }
+    }, 1380 * 60 * 1000));
+
     funil8ReminderTimers.set(key, timers);
 }
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// FUNIL 9: Receitas de Produtos de Limpeza - Junior (Gatilho: teste9)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function sendFunil9Phase1(botId, sock, remoteJid, userPhone, pushName) {
+    console.log(`[Funil 9 - Junior Limpeza] 🚀 Iniciando Fase 1 para ${pushName} (${userPhone})`);
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'olá tudo bem');
+    await new Promise((r) => setTimeout(r, 1000));
+
+    // Áudio PTT
+    try { await sock.sendPresenceUpdate('recording', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1500));
+
+    const audioPath = path.join(__dirname, 'public', 'funil9', 'audio_apresentacao.mp3');
+    if (fs.existsSync(audioPath)) {
+        try {
+            const buf = fs.readFileSync(audioPath);
+            await sock.sendMessage(remoteJid, { audio: buf, mimetype: 'audio/mpeg', ptt: true });
+            logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Apresentação Funil 9]');
+        } catch (err) {
+            console.warn('[Funil 9 Audio Error]:', err?.message);
+        }
+    }
+    try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1000));
+
+    const fotoPath = path.join(__dirname, 'public', 'funil9', 'foto_receitas.jpeg');
+    if (fs.existsSync(fotoPath)) {
+        try {
+            const imgBuf = fs.readFileSync(fotoPath);
+            await sock.sendMessage(remoteJid, { image: imgBuf });
+        } catch (imgErr) {}
+    }
+    await new Promise((r) => setTimeout(r, 1200));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'peço apenas *25,00* pelas receitas de produtos de limpeza\nmas aceito o valor que puder 🙏🏻❤️');
+    await new Promise((r) => setTimeout(r, 1200));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'chave pix Celular\n*42999944139*\nconfira meu nome\n(Junior Campos dos Santos)');
+    await new Promise((r) => setTimeout(r, 1200));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'confio na tua honestidade e já vou enviar as receitas para você 🙏');
+    await new Promise((r) => setTimeout(r, 1200));
+
+    const pdfPath = path.join(__dirname, 'public', 'funil9', 'PRODUTOS_DE_LIMPEZA_2.pdf');
+    if (fs.existsSync(pdfPath)) {
+        try {
+            const pdfBuf = fs.readFileSync(pdfPath);
+            await sock.sendMessage(remoteJid, {
+                document: pdfBuf,
+                fileName: 'PRODUTOS_DE_LIMPEZA_2.pdf',
+                mimetype: 'application/pdf',
+            });
+            logConversation(botId, userPhone, 'BOT', 'DOCUMENT', '📄 [PDF]: PRODUTOS_DE_LIMPEZA_2.pdf');
+        } catch (err) {
+            console.warn('[Funil 9 PDF Error]:', err?.message);
+        }
+    }
+
+    const sessionKey = `${botId}:${userPhone}`;
+    store.userSessions[sessionKey] = {
+        botId,
+        userJid: remoteJid,
+        userPhone,
+        userName: pushName,
+        funnel: 'funil9',
+        waitingFor: 'PIX_RECEIPT_FUNIL9',
+        updatedAt: new Date().toISOString(),
+    };
+    saveStore(store);
+
+    scheduleFunil9Reminder(botId, remoteJid, userPhone);
+}
+
+const funil9ReminderTimers = new Map();
+
+function cancelFunil9Reminder(botId, userPhone) {
+    const key = `${botId}:${userPhone}`;
+    if (funil9ReminderTimers.has(key)) {
+        const timers = funil9ReminderTimers.get(key);
+        if (Array.isArray(timers)) timers.forEach((t) => clearTimeout(t));
+        else clearTimeout(timers);
+        funil9ReminderTimers.delete(key);
+    }
+}
+
+function scheduleFunil9Reminder(botId, remoteJid, userPhone) {
+    cancelFunil9Reminder(botId, userPhone);
+    const key = `${botId}:${userPhone}`;
+    const timers = [];
+
+    const sendFollowUp = async (step, texts) => {
+        try {
+            const currentStore = loadStore();
+            const sess = currentStore.userSessions[key];
+            if (sess && sess.waitingFor === 'PIX_RECEIPT_FUNIL9') {
+                const sock = activeSockets.get(botId);
+                if (sock) {
+                    for (const text of texts) {
+                        await sock.sendMessage(remoteJid, { text });
+                        logConversation(botId, userPhone, 'BOT', 'REMINDER', text);
+                        await new Promise((r) => setTimeout(r, 800));
+                    }
+                }
+            }
+        } catch (err) {
+            console.error('[Funil 9 Reminder Error]:', err?.message);
+        }
+    };
+
+    // Step 1: ~30 min
+    timers.push(setTimeout(() => {
+        sendFollowUp(1, ['Oi tudo bem? Conseguiu dar uma olhada nas receitas? 🙏']);
+    }, 30 * 60 * 1000));
+
+    // Step 2: ~1h30
+    timers.push(setTimeout(() => {
+        sendFollowUp(2, [
+            'Chave pix Celular:\n42999944139\nNome: Junior Campos dos Santos',
+            'Assim que fizer é só mandar o comprovante aqui!'
+        ]);
+    }, 90 * 60 * 1000));
+
+    funil9ReminderTimers.set(key, timers);
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// FUNIL 10: Bolsas Lucrativas (+200 Moldes) - Thaíse Costura (Gatilho: teste10)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function sendFunil10Phase1(botId, sock, remoteJid, userPhone, pushName) {
+    console.log(`[Funil 10 - Thaíse Costura] 🚀 Iniciando Fase 1 para ${pushName} (${userPhone})`);
+
+    const img1 = path.join(__dirname, 'public', 'funil10', 'foto_thaise.jpeg');
+    if (fs.existsSync(img1)) {
+        try {
+            const buf = fs.readFileSync(img1);
+            await sock.sendMessage(remoteJid, {
+                image: buf,
+                caption: '🌷 Oii, tudo bem? Muito prazer, me chamo Thaíse!\nSe você curte costura criativa, guarda meu contato aqui pra gente conversar melhor, viu meu bem 🙏❤️🌸'
+            });
+        } catch (err) {}
+    } else {
+        await sendRealisticText(botId, sock, remoteJid, userPhone, '🌷 Oii, tudo bem? Muito prazer, me chamo Thaíse!\nSe você curte costura criativa, guarda meu contato aqui pra gente conversar melhor, viu meu bem 🙏❤️🌸');
+    }
+    await new Promise((r) => setTimeout(r, 1200));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Você quer aprender uma coisa que te dá uma renda extra garantida, né?');
+
+    const sessionKey = `${botId}:${userPhone}`;
+    store.userSessions[sessionKey] = {
+        botId,
+        userJid: remoteJid,
+        userPhone,
+        userName: pushName,
+        funnel: 'funil10',
+        waitingFor: 'CONFIRM_SEND_FUNIL10',
+        updatedAt: new Date().toISOString(),
+    };
+    saveStore(store);
+}
+
+async function sendFunil10Phase2(botId, sock, remoteJid, userPhone, pushName, quotedMsg = null) {
+    console.log(`[Funil 10 - Thaíse Costura] 📦 Fase 2 (Oferta) para ${pushName} (${userPhone})`);
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Perfeito!! Salvou meu contato? Me avisa que já te envio! 🧵✨');
+    await new Promise((r) => setTimeout(r, 1000));
+
+    const img2 = path.join(__dirname, 'public', 'funil10', 'foto_oferta.jpeg');
+    if (fs.existsSync(img2)) {
+        try {
+            const buf = fs.readFileSync(img2);
+            await sock.sendMessage(remoteJid, { image: buf });
+        } catch (err) {}
+    }
+    await new Promise((r) => setTimeout(r, 1000));
+
+    const offer = `📲✨ APLICATIVO WEB EXCLUSIVO + CURSO COMPLETO!\n\n💻 Aplicativo Web com materiais organizados e ferramentas digitais\n✂️ +200 moldes de BOLSAS, NECESSAIRES, MOCHILAS E CARTEIRAS\n🎬 Videoaulas passo a passo + medidas e dicas práticas\n🧵 Técnicas de acabamento para valorizar suas peças\n💰 Ferramenta de precificação + cálculo de custos e lucros\n📋 Lista de fornecedores de materiais e aviamentos\n📸 Tutorial de fotografia para deixar suas peças mais atrativas\n🛍️ Tutorial de vendas para aprender a vender no Instagram, Mercado Livre, Shopee, lojas e feirinhas\n🎁 Modelos extras + Grupo no WhatsApp com materiais gratuitos e novidades\n\n🔥 HOJE: APENAS R$ 14,90!🔥`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, offer);
+    await new Promise((r) => setTimeout(r, 1000));
+
+    // Áudio oferta
+    try { await sock.sendPresenceUpdate('recording', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1500));
+    const audioOferta = path.join(__dirname, 'public', 'funil10', 'audio_oferta.mp3');
+    if (fs.existsSync(audioOferta)) {
+        try {
+            const buf = fs.readFileSync(audioOferta);
+            await sock.sendMessage(remoteJid, { audio: buf, mimetype: 'audio/mpeg', ptt: true });
+            logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Oferta Funil 10]');
+        } catch (err) {}
+    }
+    try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1000));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, '💰 Tudo isso por *apenas R$14,90*!');
+    await new Promise((r) => setTimeout(r, 800));
+
+    const imgPreco = path.join(__dirname, 'public', 'funil10', 'foto_preco.jpeg');
+    if (fs.existsSync(imgPreco)) {
+        try {
+            const buf = fs.readFileSync(imgPreco);
+            await sock.sendMessage(remoteJid, { image: buf });
+        } catch (err) {}
+    }
+    await new Promise((r) => setTimeout(r, 1000));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Posso confiar em você e te enviar agora? 💖');
+
+    const sessionKey = `${botId}:${userPhone}`;
+    store.userSessions[sessionKey] = {
+        botId,
+        userJid: remoteJid,
+        userPhone,
+        userName: pushName,
+        funnel: 'funil10',
+        waitingFor: 'CONFIRM_SEND_MOLDES_FUNIL10',
+        updatedAt: new Date().toISOString(),
+    };
+    saveStore(store);
+}
+
+async function sendFunil10Phase3(botId, sock, remoteJid, userPhone, pushName, quotedMsg = null) {
+    console.log(`[Funil 10 - Thaíse Costura] 🚀 Fase 3 (Envio Antecipado) para ${pushName} (${userPhone})`);
+
+    // Áudio app web
+    try { await sock.sendPresenceUpdate('recording', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1200));
+    const audioApp = path.join(__dirname, 'public', 'funil10', 'audio_app_web.mp3');
+    if (fs.existsSync(audioApp)) {
+        try {
+            const buf = fs.readFileSync(audioApp);
+            await sock.sendMessage(remoteJid, { audio: buf, mimetype: 'audio/mpeg', ptt: true });
+        } catch (err) {}
+    }
+    try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1000));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Dá uma olhadinha nesse vídeo aqui em cima ☝️❤️ que eu te mostro como acessar bem fácil.\nÉ só clicar no link aqui embaixo pra abrir 🌸👇');
+    await new Promise((r) => setTimeout(r, 800));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'https://bolsas-lucrativas.vercel.app/');
+    await new Promise((r) => setTimeout(r, 800));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, '🟢 Material Completo + Bônus\n👉 https://drive.google.com/drive/folders/1pMwwl2EbCe2i2Zf3QXXuHGRSzlFIdyxR\n✅ Material liberado.');
+    await new Promise((r) => setTimeout(r, 1000));
+
+    const vid1 = path.join(__dirname, 'public', 'funil10', 'video_tutorial_1.mp4');
+    if (fs.existsSync(vid1)) {
+        try {
+            const buf = fs.readFileSync(vid1);
+            await sock.sendMessage(remoteJid, { video: buf });
+        } catch (err) {}
+    }
+    await new Promise((r) => setTimeout(r, 1200));
+
+    // Áudio confiança
+    try { await sock.sendPresenceUpdate('recording', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1500));
+    const audioConf = path.join(__dirname, 'public', 'funil10', 'audio_confianca.mp3');
+    if (fs.existsSync(audioConf)) {
+        try {
+            const buf = fs.readFileSync(audioConf);
+            await sock.sendMessage(remoteJid, { audio: buf, mimetype: 'audio/mpeg', ptt: true });
+        } catch (err) {}
+    }
+    try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1000));
+
+    const trustText = `Agora conto com você! 🙏\nConfiei em você e te enviei tudo primeiro, agora, contamos com sua palavra de pessoa honesta!\nEsses valores vão para trazer comida e roupas para meu filho dentro de casa. 🩷\n\nEscolha sua forma de contribuição:\n🟡 R$ 14,90 –> Recebe 200 MOLDES VITALÍCIO\n🟢 R$ 19,00 –> Recebe 200 MOLDES +10 MOLDES extras. VITALÍCIO\n💖 R$ 25,00 –> Recebe 200 MOLDES +14 MOLDES extras.VITALÍCIO\n🩷 R$ 37,00 –> Recebe 200 MOLDES +16 MOLDES extras VITALÍCIO\n💜 R$ 49,00 –> Recebe 200 MOLDES +30 MOLDES extras VITALÍCIO\n\n👉 Esse apoio mantém o projeto ativo e abençoando mais costureiras ✝️`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, trustText);
+    await new Promise((r) => setTimeout(r, 1000));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'A maioria das clientes escolhem R$19 porque sabem que cada molde abençoado pode mudar uma vida.');
+    await new Promise((r) => setTimeout(r, 1000));
+
+    const pixDados = `✅ Acesso vitalício\n🔑 Chave Pix TELEFONE\n*PIX (celular):* 71992287791\n*BANCO:* NUBANK\n*NOME:* THAISE OLIVEIRA LIMA\n\n*👇 Só copiar e colar o TELEFONE👇*`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, pixDados);
+    await new Promise((r) => setTimeout(r, 800));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, '71992287791');
+    await new Promise((r) => setTimeout(r, 1000));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Só falta o *pagamento por pix + comprovante* isso para liberar seu certificado.');
+    await new Promise((r) => setTimeout(r, 800));
+
+    const pdfBolsa = path.join(__dirname, 'public', 'funil10', '200_MOLDES_-_BOLSA_JEANS.pdf');
+    if (fs.existsSync(pdfBolsa)) {
+        try {
+            const buf = fs.readFileSync(pdfBolsa);
+            await sock.sendMessage(remoteJid, {
+                document: buf,
+                fileName: '200_MOLDES_-_BOLSA_JEANS.pdf',
+                mimetype: 'application/pdf',
+            });
+        } catch (err) {}
+    }
+    await new Promise((r) => setTimeout(r, 1000));
+
+    // Áudio certificado
+    try { await sock.sendPresenceUpdate('recording', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1500));
+    const audioCert = path.join(__dirname, 'public', 'funil10', 'audio_certificado.mp3');
+    if (fs.existsSync(audioCert)) {
+        try {
+            const buf = fs.readFileSync(audioCert);
+            await sock.sendMessage(remoteJid, { audio: buf, mimetype: 'audio/mpeg', ptt: true });
+        } catch (err) {}
+    }
+    try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1000));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Assim que finalizar sua contribuição, me manda o comprovante que eu já libero seu *certificado* (no aplicativo), além de moldes, videoaulas e acesso à comunidade! 🏆💚');
+
+    const sessionKey = `${botId}:${userPhone}`;
+    store.userSessions[sessionKey] = {
+        botId,
+        userJid: remoteJid,
+        userPhone,
+        userName: pushName,
+        funnel: 'funil10',
+        waitingFor: 'PIX_RECEIPT_FUNIL10',
+        updatedAt: new Date().toISOString(),
+    };
+    saveStore(store);
+
+    scheduleFunil10Reminder(botId, remoteJid, userPhone);
+}
+
+const funil10ReminderTimers = new Map();
+
+function cancelFunil10Reminder(botId, userPhone) {
+    const key = `${botId}:${userPhone}`;
+    if (funil10ReminderTimers.has(key)) {
+        const timers = funil10ReminderTimers.get(key);
+        if (Array.isArray(timers)) timers.forEach((t) => clearTimeout(t));
+        else clearTimeout(timers);
+        funil10ReminderTimers.delete(key);
+    }
+}
+
+function scheduleFunil10Reminder(botId, remoteJid, userPhone) {
+    cancelFunil10Reminder(botId, userPhone);
+    const key = `${botId}:${userPhone}`;
+    const timers = [];
+
+    const sendFollowUp = async (step, texts) => {
+        try {
+            const currentStore = loadStore();
+            const sess = currentStore.userSessions[key];
+            if (sess && sess.waitingFor === 'PIX_RECEIPT_FUNIL10') {
+                const sock = activeSockets.get(botId);
+                if (sock) {
+                    for (const text of texts) {
+                        await sock.sendMessage(remoteJid, { text });
+                        logConversation(botId, userPhone, 'BOT', 'REMINDER', text);
+                        await new Promise((r) => setTimeout(r, 800));
+                    }
+                }
+            }
+        } catch (err) {
+            console.error('[Funil 10 Reminder Error]:', err?.message);
+        }
+    };
+
+    // Step 1: ~15 min
+    timers.push(setTimeout(() => {
+        sendFollowUp(1, ['Fico aguardando seu retorno sobre o valor com o comprovante, combinado?']);
+    }, 15 * 60 * 1000));
+
+    // Step 2: ~30 min
+    timers.push(setTimeout(() => {
+        sendFollowUp(2, ['Fico no aguardo, assim que puder me envie o comprovante, já separei seu presente aqui ❤️🙏']);
+    }, 30 * 60 * 1000));
+
+    // Step 3: ~1h
+    timers.push(setTimeout(() => {
+        sendFollowUp(3, ['Oii, deu tudo certinho?\nQuando puder me envia o comprovante ❤️']);
+    }, 60 * 60 * 1000));
+
+    // Step 4: Dia 2 (~12h) - Áudio Lembrete + Link App
+    timers.push(setTimeout(async () => {
+        try {
+            const currentStore = loadStore();
+            const sess = currentStore.userSessions[key];
+            if (sess && sess.waitingFor === 'PIX_RECEIPT_FUNIL10') {
+                const sock = activeSockets.get(botId);
+                if (sock) {
+                    const audioP = path.join(__dirname, 'public', 'funil10', 'audio_lembrete_dia2.mp3');
+                    if (fs.existsSync(audioP)) {
+                        const buf = fs.readFileSync(audioP);
+                        await sock.sendMessage(remoteJid, { audio: buf, mimetype: 'audio/mpeg', ptt: true });
+                    }
+                    await sock.sendMessage(remoteJid, { text: 'https://bolsas-lucrativas.vercel.app/' });
+                }
+            }
+        } catch (err) {}
+    }, 720 * 60 * 1000));
+
+    funil10ReminderTimers.set(key, timers);
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// FUNIL 11: Estimulação Cognitiva Idosos - Selma (Projeto Mente Viva)
+// (Gatilho: teste11)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function sendFunil11Phase1(botId, sock, remoteJid, userPhone, pushName) {
+    console.log(`[Funil 11 - Selma Mente Viva] 🚀 Iniciando Fase 1 para ${pushName} (${userPhone})`);
+
+    const imgSelma = path.join(__dirname, 'public', 'funil11', 'foto_selma.jpeg');
+    if (fs.existsSync(imgSelma)) {
+        try {
+            const buf = fs.readFileSync(imgSelma);
+            await sock.sendMessage(remoteJid, {
+                image: buf,
+                caption: 'Olá, meu anjo! Tudo bem?\nEu sou a Selma, do Projeto Mente Viva 💙\nJá salva meu contato, assim você não perde nenhum arquivo ou orientação'
+            });
+        } catch (err) {}
+    }
+    await new Promise((r) => setTimeout(r, 1200));
+
+    // Áudio apresentação
+    try { await sock.sendPresenceUpdate('recording', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1500));
+    const audioApres = path.join(__dirname, 'public', 'funil11', 'audio_apresentacao.mp3');
+    if (fs.existsSync(audioApres)) {
+        try {
+            const buf = fs.readFileSync(audioApres);
+            await sock.sendMessage(remoteJid, { audio: buf, mimetype: 'audio/mpeg', ptt: true });
+            logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Apresentação Funil 11]');
+        } catch (err) {}
+    }
+    try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1200));
+
+    const vidDemo = path.join(__dirname, 'public', 'funil11', 'video_demonstracao.mp4');
+    if (fs.existsSync(vidDemo)) {
+        try {
+            const buf = fs.readFileSync(vidDemo);
+            await sock.sendMessage(remoteJid, { video: buf });
+        } catch (err) {}
+    }
+    await new Promise((r) => setTimeout(r, 1200));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Viu como fica bonita no papel? 😊\nEu te mando as apostilas aqui, sem pagar nada antes.\n\nPosso mandar?');
+
+    const sessionKey = `${botId}:${userPhone}`;
+    store.userSessions[sessionKey] = {
+        botId,
+        userJid: remoteJid,
+        userPhone,
+        userName: pushName,
+        funnel: 'funil11',
+        waitingFor: 'CONFIRM_SEND_FUNIL11',
+        updatedAt: new Date().toISOString(),
+    };
+    saveStore(store);
+}
+
+async function sendFunil11Phase2(botId, sock, remoteJid, userPhone, pushName, quotedMsg = null) {
+    console.log(`[Funil 11 - Selma Mente Viva] 📦 Fase 2 (Entrega PDFs) para ${pushName} (${userPhone})`);
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Vou te enviar! Segue aqui os materiais 👇');
+    await new Promise((r) => setTimeout(r, 1000));
+
+    const pdfs = ['Mente Viva 50 - GVL.pdf', 'Mente Viva 2.0 - GVL.pdf'];
+    for (const p of pdfs) {
+        const fullP = path.join(__dirname, 'public', 'funil11', p);
+        if (fs.existsSync(fullP)) {
+            try {
+                const buf = fs.readFileSync(fullP);
+                await sock.sendMessage(remoteJid, {
+                    document: buf,
+                    fileName: p,
+                    mimetype: 'application/pdf',
+                });
+            } catch (err) {}
+        }
+        await new Promise((r) => setTimeout(r, 1200));
+    }
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Você já pode imprimir as atividades e começar hoje mesmo, no seu tempo e no conforto da sua casa 💛\nEspero que goste do material 🥰');
+    await new Promise((r) => setTimeout(r, 1000));
+
+    const imgApp = path.join(__dirname, 'public', 'funil11', 'foto_app.jpeg');
+    if (fs.existsSync(imgApp)) {
+        try {
+            const buf = fs.readFileSync(imgApp);
+            await sock.sendMessage(remoteJid, {
+                image: buf,
+                caption: 'E tem mais um presente: o app Mente Viva 📱\nSão 400 atividades direto no celular, sem imprimir.\nA letra aumenta e ele lê a atividade pra você.\nVai junto com a contribuição de R$ 30 💛'
+            });
+        } catch (err) {}
+    }
+    await new Promise((r) => setTimeout(r, 1200));
+
+    const apoioText = `Nós mantemos o projeto Mente Viva pela contribuição de quem recebe e gosta 😊\n\n💰O apoio mínimo é de R$20.\n✨ R$ 30, o apoio mais escolhido, e vai junto o app Mente Viva ✨\n💎 R$ 50+ — uma forma especial de me ajudar a chegar a mais pessoas 💎\n\nCada apoio ajuda este projeto a continuar levando atividades que estimulam a mente e fazem a diferença na rotina de muitas pessoas. 💙\n\n💌 PIX: 31975362565\nNome: Projeto Viva Luz\nVou deixar a chave aqui para facilitar👇`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, apoioText);
+    await new Promise((r) => setTimeout(r, 800));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, '31975362565');
+    await new Promise((r) => setTimeout(r, 1000));
+
+    // Áudio confiança
+    try { await sock.sendPresenceUpdate('recording', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1500));
+    const audioConf = path.join(__dirname, 'public', 'funil11', 'audio_confianca.mp3');
+    if (fs.existsSync(audioConf)) {
+        try {
+            const buf = fs.readFileSync(audioConf);
+            await sock.sendMessage(remoteJid, { audio: buf, mimetype: 'audio/mpeg', ptt: true });
+        } catch (err) {}
+    }
+    try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1000));
+
+    const bonusInfo = `Quando você fizer a contribuição, é só me enviar o comprovante 😊\nAssim que confirmar, eu te envio os bônus:\n\n📙 80 Atividades Mentais Extras\n💪 Corpo Ativo em Casa\n🧘 Guia de Alongamentos\n📱 E com R$ 30 ou mais, o app Mente Viva, liberado no seu número na hora que eu conferir\n\nEstou por aqui! 🙏`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, bonusInfo);
+
+    const sessionKey = `${botId}:${userPhone}`;
+    store.userSessions[sessionKey] = {
+        botId,
+        userJid: remoteJid,
+        userPhone,
+        userName: pushName,
+        funnel: 'funil11',
+        waitingFor: 'PIX_RECEIPT_FUNIL11',
+        updatedAt: new Date().toISOString(),
+    };
+    saveStore(store);
+
+    scheduleFunil11Reminder(botId, remoteJid, userPhone);
+}
+
+const funil11ReminderTimers = new Map();
+
+function cancelFunil11Reminder(botId, userPhone) {
+    const key = `${botId}:${userPhone}`;
+    if (funil11ReminderTimers.has(key)) {
+        const timers = funil11ReminderTimers.get(key);
+        if (Array.isArray(timers)) timers.forEach((t) => clearTimeout(t));
+        else clearTimeout(timers);
+        funil11ReminderTimers.delete(key);
+    }
+}
+
+function scheduleFunil11Reminder(botId, remoteJid, userPhone) {
+    cancelFunil11Reminder(botId, userPhone);
+    const key = `${botId}:${userPhone}`;
+    const timers = [];
+
+    const sendFollowUp = async (step, texts) => {
+        try {
+            const currentStore = loadStore();
+            const sess = currentStore.userSessions[key];
+            if (sess && sess.waitingFor === 'PIX_RECEIPT_FUNIL11') {
+                const sock = activeSockets.get(botId);
+                if (sock) {
+                    for (const text of texts) {
+                        await sock.sendMessage(remoteJid, { text });
+                        logConversation(botId, userPhone, 'BOT', 'REMINDER', text);
+                        await new Promise((r) => setTimeout(r, 800));
+                    }
+                }
+            }
+        } catch (err) {}
+    };
+
+    // Step 1: ~1 hora
+    timers.push(setTimeout(() => {
+        sendFollowUp(1, ['Amém, Deus abençoe você também 🙏 Já deu pra fazer a lista do mercado, na página 28?']);
+    }, 60 * 60 * 1000));
+
+    funil11ReminderTimers.set(key, timers);
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// FUNIL 12: Cardápio Adventista (90 Dias Saúde) - Déb (Gatilho: teste12)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function sendFunil12Phase1(botId, sock, remoteJid, userPhone, pushName) {
+    console.log(`[Funil 12 - Déb Cardápio Adventista] 🚀 Iniciando Fase 1 para ${pushName} (${userPhone})`);
+
+    const intro = `Oii ${pushName || ''}, tudo bem? Que a paz de Deus esteja com você! Já vou te mandar o seu material agora mesmo 🙏🏼✨\n\nSe você é Adventista do Sétimo Dia, sabe o desafio que é manter uma alimentação 100% de acordo com o que a Bíblia ensina. Por isso eu organizei o Cardápio Adventista: com receitas saborosas, naturais, sem açúcar refinado, sem carnes impuras e saudável de verdade e além disso que agrada toda a família... 🥗\n\nVou te explicar em alguns segundos como você vai ter acesso a tudo isso!`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, intro);
+    await new Promise((r) => setTimeout(r, 1200));
+
+    // Áudio 1
+    try { await sock.sendPresenceUpdate('recording', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1500));
+    const a1 = path.join(__dirname, 'public', 'funil12', 'audio_apresentacao.mp3');
+    if (fs.existsSync(a1)) {
+        try {
+            const buf = fs.readFileSync(a1);
+            await sock.sendMessage(remoteJid, { audio: buf, mimetype: 'audio/mpeg', ptt: true });
+        } catch (err) {}
+    }
+    try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1000));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Posso te explicar?');
+
+    const sessionKey = `${botId}:${userPhone}`;
+    store.userSessions[sessionKey] = {
+        botId,
+        userJid: remoteJid,
+        userPhone,
+        userName: pushName,
+        funnel: 'funil12',
+        waitingFor: 'CONFIRM_INFO_FUNIL12',
+        updatedAt: new Date().toISOString(),
+    };
+    saveStore(store);
+}
+
+async function sendFunil12Phase2(botId, sock, remoteJid, userPhone, pushName, quotedMsg = null) {
+    console.log(`[Funil 12 - Déb Cardápio Adventista] 📦 Fase 2 (Explicação) para ${pushName} (${userPhone})`);
+
+    // Áudio 2
+    try { await sock.sendPresenceUpdate('recording', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1500));
+    const a2 = path.join(__dirname, 'public', 'funil12', 'audio_explicacao.mp3');
+    if (fs.existsSync(a2)) {
+        try {
+            const buf = fs.readFileSync(a2);
+            await sock.sendMessage(remoteJid, { audio: buf, mimetype: 'audio/mpeg', ptt: true });
+        } catch (err) {}
+    }
+    try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1000));
+
+    const cardapioDesc = `O Menu - Cardápio Adventista é o material completo para você organizar a sua cozinha com saúde e sabor — com tudo o que você precisa para preparar refeições incríveis, 100% naturais e alinhadas com os princípios bíblicos.\n\n✅ +150 Receitas Saudáveis e Testadas\n✅ Cafés da Manhã Nutritivos\n✅ Almoços Completos & Ricos\n✅ Jantares Leves\n✅ Lanches Práticos e Rápidos\n✅ Organização para 90 Dias\n✅ Listas de Ingredientes Simples\n\nE muito mais! 🥗🥑`;
+    const imgCardapio = path.join(__dirname, 'public', 'funil12', 'foto_cardapio.jpeg');
+    if (fs.existsSync(imgCardapio)) {
+        try {
+            const buf = fs.readFileSync(imgCardapio);
+            await sock.sendMessage(remoteJid, { image: buf, caption: cardapioDesc });
+        } catch (err) {}
+    }
+    await new Promise((r) => setTimeout(r, 1200));
+
+    const precoText = `O material é 100% digital, em formato PDF de alta resolução, enviado direto aqui no seu WhatsApp para você usar no celular ou imprimir quando quiser. 📱📄\n\nA contribuição é de apenas R$ 19,90 — um valor simbólico que me ajuda a cobrir os custos de pesquisa, edição e produção dessas receitas, permitindo que a gente continue mantendo esse projeto ativo e ajudando cada vez mais nossos irmãos e irmãs a cuidarem do corpo e da alimentação seguindo a Palavra.\n\nLembrando, que eu te envio todo o material antes para você analisar e só depois se gostar, nos ajudar com a contribuição, ok?`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, precoText);
+    await new Promise((r) => setTimeout(r, 1000));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Posso te enviar o material primeiro e depois você faz a sua contribuição?');
+
+    const sessionKey = `${botId}:${userPhone}`;
+    store.userSessions[sessionKey] = {
+        botId,
+        userJid: remoteJid,
+        userPhone,
+        userName: pushName,
+        funnel: 'funil12',
+        waitingFor: 'CONFIRM_SEND_FUNIL12',
+        updatedAt: new Date().toISOString(),
+    };
+    saveStore(store);
+}
+
+async function sendFunil12Phase3(botId, sock, remoteJid, userPhone, pushName, quotedMsg = null) {
+    console.log(`[Funil 12 - Déb Cardápio Adventista] 🚀 Fase 3 (Envio 3 PDFs) para ${pushName} (${userPhone})`);
+
+    // Áudio envio
+    try { await sock.sendPresenceUpdate('recording', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1500));
+    const a3 = path.join(__dirname, 'public', 'funil12', 'audio_envio.mp3');
+    if (fs.existsSync(a3)) {
+        try {
+            const buf = fs.readFileSync(a3);
+            await sock.sendMessage(remoteJid, { audio: buf, mimetype: 'audio/mpeg', ptt: true });
+        } catch (err) {}
+    }
+    try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1000));
+
+    const debPdfs = [
+        'MENU - CARDÁPIO ADVENTISTA.pdf',
+        'RECEITAS PARA O SÁBADO.pdf',
+        '25 SOBREMESAS SAUDÁVEIS.pdf'
+    ];
+
+    for (const p of debPdfs) {
+        // Encontra o arquivo correto independente da normalização
+        const files = fs.readdirSync(path.join(__dirname, 'public', 'funil12'));
+        const found = files.find(f => f.toLowerCase().includes(p.toLowerCase().slice(0, 10)));
+        if (found) {
+            try {
+                const buf = fs.readFileSync(path.join(__dirname, 'public', 'funil12', found));
+                await sock.sendMessage(remoteJid, {
+                    document: buf,
+                    fileName: found,
+                    mimetype: 'application/pdf',
+                });
+            } catch (err) {}
+        }
+        await new Promise((r) => setTimeout(r, 1200));
+    }
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Agora confio no seu coração e no agir de Deus ✝️🤍');
+    await new Promise((r) => setTimeout(r, 800));
+
+    const pixText = `O Cardápio Adventista já foi enviado todinho para você! Agora é a sua vez de enviar o PIX para ajudar a esse material chegar mais a frente, combinado?\n\n🙏 VOCÊ PODE CONTRIBUIR COM:\n💰 R$ 19,90\n💰 R$ 24,90\n💰 R$ 29,90\n⭐ R$ 49,90\n\nOu o valor que o seu coração mandar. A maioria dos irmãos e irmãs estão contribuindo com R$ 29,90 ou mais... Contribua com o que DEUS tocou no seu coração! 💖\n\n. Nome: RP Empreendimentos Digitais LTDA.\n. Banco: STONE IP PAGAMENTOS\n\nPara facilitar, vou te enviar a chave Pix separada para você só copiar e colar 👇👇`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, pixText);
+    await new Promise((r) => setTimeout(r, 800));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, '71993667052');
+    await new Promise((r) => setTimeout(r, 1000));
+
+    const bonusFinal = `Assim que você me mandar o comprovante da sua contribuição aqui, eu mesma vou te enviar na hora o restante do seu Pacote de Bônus Exclusivos! 🎁✨\n\nNele eu fiz questão de colocar:\n✅ Bônus 01 — Lista Inteligente & Econômica de Compras\n✅ Bônus 02 — Guia Alimentar dos Princípios de Ellen White\n\nJá te mandei a nossa chave pix. É só fazer a sua contribuição e me mandar o comprovante, desde já, agradeço.`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, bonusFinal);
+
+    const sessionKey = `${botId}:${userPhone}`;
+    store.userSessions[sessionKey] = {
+        botId,
+        userJid: remoteJid,
+        userPhone,
+        userName: pushName,
+        funnel: 'funil12',
+        waitingFor: 'PIX_RECEIPT_FUNIL12',
+        updatedAt: new Date().toISOString(),
+    };
+    saveStore(store);
+
+    scheduleFunil12Reminder(botId, remoteJid, userPhone);
+}
+
+const funil12ReminderTimers = new Map();
+
+function cancelFunil12Reminder(botId, userPhone) {
+    const key = `${botId}:${userPhone}`;
+    if (funil12ReminderTimers.has(key)) {
+        const timers = funil12ReminderTimers.get(key);
+        if (Array.isArray(timers)) timers.forEach((t) => clearTimeout(t));
+        else clearTimeout(timers);
+        funil12ReminderTimers.delete(key);
+    }
+}
+
+function scheduleFunil12Reminder(botId, remoteJid, userPhone) {
+    cancelFunil12Reminder(botId, userPhone);
+    const key = `${botId}:${userPhone}`;
+    const timers = [];
+
+    const sendFollowUp = async (step, texts) => {
+        try {
+            const currentStore = loadStore();
+            const sess = currentStore.userSessions[key];
+            if (sess && sess.waitingFor === 'PIX_RECEIPT_FUNIL12') {
+                const sock = activeSockets.get(botId);
+                if (sock) {
+                    for (const text of texts) {
+                        await sock.sendMessage(remoteJid, { text });
+                        logConversation(botId, userPhone, 'BOT', 'REMINDER', text);
+                        await new Promise((r) => setTimeout(r, 800));
+                    }
+                }
+            }
+        } catch (err) {}
+    };
+
+    // Step 1: ~1h
+    timers.push(setTimeout(() => {
+        sendFollowUp(1, [
+            'Amém, minha irmã 🤍\nSe você já conseguiu fazer o Pix, me manda o comprovante aqui pra eu confirmar direitinho, tá bom?\nSe ainda não fez, tudo bem também. Quando for fazer, a chave é essa aqui:\n\n71993667052\nNome: RP Empreendimentos Digitais LTDA.\nBanco: Stone IP Pagamentos'
+        ]);
+    }, 60 * 60 * 1000));
+
+    funil12ReminderTimers.set(key, timers);
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// FUNIL 13: Devocional Pelos Filhos - Missionária Maria (DAYZA LTDA)
+// (Gatilho: teste13)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function sendFunil13Phase1(botId, sock, remoteJid, userPhone, pushName) {
+    console.log(`[Funil 13 - Missionária Maria] 🚀 Iniciando Fase 1 para ${pushName} (${userPhone})`);
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'A paz do Senhor, minha irmã! Que Deus abençoe ✨');
+    await new Promise((r) => setTimeout(r, 800));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Só 1 minuto, que vou te mandar um áudio explicando sobre o Devocional.');
+    await new Promise((r) => setTimeout(r, 1000));
+
+    // Áudio 1
+    try { await sock.sendPresenceUpdate('recording', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1500));
+    const a1 = path.join(__dirname, 'public', 'funil13', 'audio_apresentacao.mp3');
+    if (fs.existsSync(a1)) {
+        try {
+            const buf = fs.readFileSync(a1);
+            await sock.sendMessage(remoteJid, { audio: buf, mimetype: 'audio/mpeg', ptt: true });
+            logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Apresentação Funil 13]');
+        } catch (err) {}
+    }
+    try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1000));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Deixa eu te perguntar mais uma coisa: como se chama o seu filho ou filha que se afastou?');
+
+    const sessionKey = `${botId}:${userPhone}`;
+    store.userSessions[sessionKey] = {
+        botId,
+        userJid: remoteJid,
+        userPhone,
+        userName: pushName,
+        funnel: 'funil13',
+        waitingFor: 'FILHO_NAME_FUNIL13',
+        updatedAt: new Date().toISOString(),
+    };
+    saveStore(store);
+}
+
+async function sendFunil13AfterChildName(botId, sock, remoteJid, userPhone, pushName, quotedMsg = null) {
+    console.log(`[Funil 13 - Missionária Maria] 👧 Recebido nome do filho de ${pushName} (${userPhone})`);
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Sei que o coração aperta, mas Deus não esquece, vamos orar juntos pra que dê tudo certo 🙏');
+    await new Promise((r) => setTimeout(r, 800));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Mas sabe o que realmente toca o meu coração, irmã?');
+    await new Promise((r) => setTimeout(r, 800));
+
+    const imgTest = path.join(__dirname, 'public', 'funil13', 'foto_testemunho_1.jpeg');
+    if (fs.existsSync(imgTest)) {
+        try {
+            const buf = fs.readFileSync(imgTest);
+            await sock.sendMessage(remoteJid, {
+                image: buf,
+                caption: 'Os testemunhos das mulheres que fazem o devocional'
+            });
+        } catch (err) {}
+    }
+    await new Promise((r) => setTimeout(r, 1000));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'E eu sei que Deus pode fazer um milagre na sua família também! *Você acredita?* 🙏🏼');
+    await new Promise((r) => setTimeout(r, 1000));
+
+    // Áudio explicação
+    try { await sock.sendPresenceUpdate('recording', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1500));
+    const a2 = path.join(__dirname, 'public', 'funil13', 'audio_explicacao.mp3');
+    if (fs.existsSync(a2)) {
+        try {
+            const buf = fs.readFileSync(a2);
+            await sock.sendMessage(remoteJid, { audio: buf, mimetype: 'audio/mpeg', ptt: true });
+        } catch (err) {}
+    }
+    try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1000));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Posso mandar o Devocional agora e contar com sua contribuição, com o que Deus tocar no seu coração? 🙏🏻');
+
+    const sessionKey = `${botId}:${userPhone}`;
+    store.userSessions[sessionKey] = {
+        botId,
+        userJid: remoteJid,
+        userPhone,
+        userName: pushName,
+        funnel: 'funil13',
+        waitingFor: 'CONFIRM_SEND_FUNIL13',
+        updatedAt: new Date().toISOString(),
+    };
+    saveStore(store);
+}
+
+async function sendFunil13Phase2(botId, sock, remoteJid, userPhone, pushName, quotedMsg = null) {
+    console.log(`[Funil 13 - Missionária Maria] 📦 Enviando Devocional e PIX para ${pushName} (${userPhone})`);
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Glória a Deus! Em breve quero ouvir seu testemunho, irmã! Vou te enviar agora ⬇️');
+    await new Promise((r) => setTimeout(r, 1000));
+
+    const pdfs = ['Devocional 7 dias.pdf', 'Devocional 21 dias.pdf'];
+    for (const p of pdfs) {
+        const fullP = path.join(__dirname, 'public', 'funil13', p);
+        if (fs.existsSync(fullP)) {
+            try {
+                const buf = fs.readFileSync(fullP);
+                await sock.sendMessage(remoteJid, {
+                    document: buf,
+                    fileName: p,
+                    mimetype: 'application/pdf',
+                });
+            } catch (err) {}
+        }
+        await new Promise((r) => setTimeout(r, 1200));
+    }
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Caso a senhora não consiga abrir pelo PDF, vou te mandar o link pra abrir direto 👇🏻\nhttps://cutt.ly/devocional-libertacao');
+    await new Promise((r) => setTimeout(r, 1000));
+
+    // Áudio devocional online
+    try { await sock.sendPresenceUpdate('recording', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1500));
+    const aOnline = path.join(__dirname, 'public', 'funil13', 'audio_devocional_online.mp3');
+    if (fs.existsSync(aOnline)) {
+        try {
+            const buf = fs.readFileSync(aOnline);
+            await sock.sendMessage(remoteJid, { audio: buf, mimetype: 'audio/mpeg', ptt: true });
+        } catch (err) {}
+    }
+    try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1000));
+
+    const imgCaixa = path.join(__dirname, 'public', 'funil13', 'foto_caixa_devocional.jpeg');
+    if (fs.existsSync(imgCaixa)) {
+        try {
+            const buf = fs.readFileSync(imgCaixa);
+            await sock.sendMessage(remoteJid, { image: buf });
+        } catch (err) {}
+    }
+    await new Promise((r) => setTimeout(r, 1000));
+
+    const pixText = `Agora eu conto com sua honestidade para manter esse projeto vivo 🙏🏻\n\nInformações para contribuição:\n📌 Chave Pix (telefone): 33999826417\n📌 Nome que aparece: *DAYZA LTDA*\n📌 Valor: *O que Deus tocar no seu coração*`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, pixText);
+    await new Promise((r) => setTimeout(r, 800));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Aqui é a chave PIX no número de celular separada para você só copiar e colar Irmã👇👇👇');
+    await new Promise((r) => setTimeout(r, 600));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, '33999826417');
+    await new Promise((r) => setTimeout(r, 1000));
+
+    // Áudio oração final
+    try { await sock.sendPresenceUpdate('recording', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1500));
+    const aFinal = path.join(__dirname, 'public', 'funil13', 'audio_oracao_final.mp3');
+    if (fs.existsSync(aFinal)) {
+        try {
+            const buf = fs.readFileSync(aFinal);
+            await sock.sendMessage(remoteJid, { audio: buf, mimetype: 'audio/mpeg', ptt: true });
+        } catch (err) {}
+    }
+    try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
+    await new Promise((r) => setTimeout(r, 1000));
+
+    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Me manda o comprovante, irmã, que eu já coloco a senhora no nosso grupo de oração do WhatsApp 🙏🏼');
+
+    const sessionKey = `${botId}:${userPhone}`;
+    store.userSessions[sessionKey] = {
+        botId,
+        userJid: remoteJid,
+        userPhone,
+        userName: pushName,
+        funnel: 'funil13',
+        waitingFor: 'PIX_RECEIPT_FUNIL13',
+        updatedAt: new Date().toISOString(),
+    };
+    saveStore(store);
+
+    scheduleFunil13Reminder(botId, remoteJid, userPhone);
+}
+
+const funil13ReminderTimers = new Map();
+
+function cancelFunil13Reminder(botId, userPhone) {
+    const key = `${botId}:${userPhone}`;
+    if (funil13ReminderTimers.has(key)) {
+        const timers = funil13ReminderTimers.get(key);
+        if (Array.isArray(timers)) timers.forEach((t) => clearTimeout(t));
+        else clearTimeout(timers);
+        funil13ReminderTimers.delete(key);
+    }
+}
+
+function scheduleFunil13Reminder(botId, remoteJid, userPhone) {
+    cancelFunil13Reminder(botId, userPhone);
+    const key = `${botId}:${userPhone}`;
+    const timers = [];
+
+    const sendFollowUp = async (step, texts) => {
+        try {
+            const currentStore = loadStore();
+            const sess = currentStore.userSessions[key];
+            if (sess && sess.waitingFor === 'PIX_RECEIPT_FUNIL13') {
+                const sock = activeSockets.get(botId);
+                if (sock) {
+                    for (const text of texts) {
+                        await sock.sendMessage(remoteJid, { text });
+                        logConversation(botId, userPhone, 'BOT', 'REMINDER', text);
+                        await new Promise((r) => setTimeout(r, 800));
+                    }
+                }
+            }
+        } catch (err) {}
+    };
+
+    // Step 1: ~1h
+    timers.push(setTimeout(() => {
+        sendFollowUp(1, ['Ta ai Irmã?']);
+    }, 60 * 60 * 1000));
+
+    // Step 2: ~2h - Foto Lembrete
+    timers.push(setTimeout(async () => {
+        try {
+            const currentStore = loadStore();
+            const sess = currentStore.userSessions[key];
+            if (sess && sess.waitingFor === 'PIX_RECEIPT_FUNIL13') {
+                const sock = activeSockets.get(botId);
+                if (sock) {
+                    const imgP = path.join(__dirname, 'public', 'funil13', 'foto_lembrete_testemunho.jpeg');
+                    if (fs.existsSync(imgP)) {
+                        const buf = fs.readFileSync(imgP);
+                        await sock.sendMessage(remoteJid, { image: buf });
+                    }
+                    await sock.sendMessage(remoteJid, { text: 'Irmã, olha esse testemunho aqui que recebi no nosso grupo' });
+                    await new Promise(r => setTimeout(r, 800));
+                    await sock.sendMessage(remoteJid, { text: 'Conseguiu, irmã? Me manda também os nomes que a senhora deseja que a gente apresente em oração 🙌🏼' });
+                }
+            }
+        } catch (err) {}
+    }, 120 * 60 * 1000));
+
+    // Step 3: Dia 2 (~16h) - Áudio Lembrete
+    timers.push(setTimeout(async () => {
+        try {
+            const currentStore = loadStore();
+            const sess = currentStore.userSessions[key];
+            if (sess && sess.waitingFor === 'PIX_RECEIPT_FUNIL13') {
+                const sock = activeSockets.get(botId);
+                if (sock) {
+                    await sock.sendMessage(remoteJid, { text: 'A paz do Senhor, minha irmã! ✨' });
+                    const audioP = path.join(__dirname, 'public', 'funil13', 'audio_lembrete_dia2.mp3');
+                    if (fs.existsSync(audioP)) {
+                        const buf = fs.readFileSync(audioP);
+                        await sock.sendMessage(remoteJid, { audio: buf, mimetype: 'audio/mpeg', ptt: true });
+                    }
+                }
+            }
+        } catch (err) {}
+    }, 960 * 60 * 1000));
+
+    funil13ReminderTimers.set(key, timers);
+}
+
 
 // ─── Esteira de Cobrança / Follow-up do Funil 1 (15m -> 1h -> 2h -> 3h) ───
 const parabolasReminderTimers = new Map();
@@ -2934,6 +4191,9 @@ async function handleIncomingMessage(botId, sock, msg) {
     const isTest8 = ['teste8', 'teste 8', '#teste8', '!teste8', '/teste8'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
     const isTest9 = ['teste9', 'teste 9', '#teste9', '!teste9', '/teste9'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
     const isTest10 = ['teste10', 'teste 10', '#teste10', '!teste10', '/teste10'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
+    const isTest11 = ['teste11', 'teste 11', '#teste11', '!teste11', '/teste11'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
+    const isTest12 = ['teste12', 'teste 12', '#teste12', '!teste12', '/teste12'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
+    const isTest13 = ['teste13', 'teste 13', '#teste13', '!teste13', '/teste13'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
 
     const cancelAllTimers = () => {
         cancelParabolasReminder(botId, userPhone);
@@ -2944,6 +4204,11 @@ async function handleIncomingMessage(botId, sock, msg) {
         cancelFunil6Reminder(botId, userPhone);
         cancelFunil7Reminder(botId, userPhone);
         cancelFunil8Reminder(botId, userPhone);
+        cancelFunil9Reminder(botId, userPhone);
+        cancelFunil10Reminder(botId, userPhone);
+        cancelFunil11Reminder(botId, userPhone);
+        cancelFunil12Reminder(botId, userPhone);
+        cancelFunil13Reminder(botId, userPhone);
     };
 
     // DISPARO FUNIL 1: As 40 Parábolas de Jesus
@@ -3034,21 +4299,58 @@ async function handleIncomingMessage(botId, sock, msg) {
         return;
     }
 
-    // SLOTS 9 A 10 (Reserva)
-    const testSlot = isTest9 ? 9 : isTest10 ? 10 : null;
-    if (testSlot) {
-        console.log(`[Slot Funil ${testSlot}] 🚀 Disparo de TESTE ${testSlot} recebido de ${pushName} (${userPhone})`);
+        // DISPARO FUNIL 9: Junior Limpeza (42 99994-4139)
+    if (isTest9) {
+        console.log(`[Funil 9 - Junior Limpeza] 🚀 Disparo de TESTE 9 recebido de ${pushName} (${userPhone})`);
         cancelAllTimers();
         session = null;
         delete store.userSessions[sessionKey];
         saveStore(store);
-        await sendRealisticText(
-            botId,
-            sock,
-            remoteJid,
-            userPhone,
-            `🚀 *Slot Funil ${testSlot} Ativo!*\n\nA pasta \`funil ${testSlot}/\` está criada com a subpasta \`ads/\` e conectada neste WhatsApp.\n\nBasta colocar os materiais, cópia e PDFs na pasta para ativarmos o envio automático!`
-        );
+        await sendFunil9Phase1(botId, sock, remoteJid, userPhone, pushName);
+        return;
+    }
+
+    // DISPARO FUNIL 10: Bolsas Lucrativas - Thaíse Costura (71 99228-7791)
+    if (isTest10) {
+        console.log(`[Funil 10 - Thaíse Costura] 🚀 Disparo de TESTE 10 recebido de ${pushName} (${userPhone})`);
+        cancelAllTimers();
+        session = null;
+        delete store.userSessions[sessionKey];
+        saveStore(store);
+        await sendFunil10Phase1(botId, sock, remoteJid, userPhone, pushName);
+        return;
+    }
+
+    // DISPARO FUNIL 11: Projeto Mente Viva - Selma (31 97536-2565)
+    if (isTest11) {
+        console.log(`[Funil 11 - Selma Mente Viva] 🚀 Disparo de TESTE 11 recebido de ${pushName} (${userPhone})`);
+        cancelAllTimers();
+        session = null;
+        delete store.userSessions[sessionKey];
+        saveStore(store);
+        await sendFunil11Phase1(botId, sock, remoteJid, userPhone, pushName);
+        return;
+    }
+
+    // DISPARO FUNIL 12: Cardápio Adventista - Déb (71 99366-7052)
+    if (isTest12) {
+        console.log(`[Funil 12 - Déb Cardápio Adventista] 🚀 Disparo de TESTE 12 recebido de ${pushName} (${userPhone})`);
+        cancelAllTimers();
+        session = null;
+        delete store.userSessions[sessionKey];
+        saveStore(store);
+        await sendFunil12Phase1(botId, sock, remoteJid, userPhone, pushName);
+        return;
+    }
+
+    // DISPARO FUNIL 13: Devocional Pelos Filhos - Missionária Maria (33 99982-6417)
+    if (isTest13) {
+        console.log(`[Funil 13 - Missionária Maria] 🚀 Disparo de TESTE 13 recebido de ${pushName} (${userPhone})`);
+        cancelAllTimers();
+        session = null;
+        delete store.userSessions[sessionKey];
+        saveStore(store);
+        await sendFunil13Phase1(botId, sock, remoteJid, userPhone, pushName);
         return;
     }
 
@@ -3203,6 +4505,62 @@ async function handleIncomingMessage(botId, sock, msg) {
         return;
     }
 
+    // Funil 10: Confirmação Inicial Thaíse Costura
+    if (session.waitingFor === 'CONFIRM_SEND_FUNIL10') {
+        const emoji = getHumanReactionEmoji(textContent);
+        await reactToMessage(sock, remoteJid, msg.key, emoji);
+        await sendFunil10Phase2(botId, sock, remoteJid, userPhone, pushName, msg);
+        return;
+    }
+
+    // Funil 10: Confirmação Envio Moldes Thaíse
+    if (session.waitingFor === 'CONFIRM_SEND_MOLDES_FUNIL10') {
+        const emoji = getHumanReactionEmoji(textContent);
+        await reactToMessage(sock, remoteJid, msg.key, emoji);
+        await sendFunil10Phase3(botId, sock, remoteJid, userPhone, pushName, msg);
+        return;
+    }
+
+    // Funil 11: Confirmação Envio Selma Mente Viva
+    if (session.waitingFor === 'CONFIRM_SEND_FUNIL11') {
+        const emoji = getHumanReactionEmoji(textContent);
+        await reactToMessage(sock, remoteJid, msg.key, emoji);
+        await sendFunil11Phase2(botId, sock, remoteJid, userPhone, pushName, msg);
+        return;
+    }
+
+    // Funil 12: Confirmação Explicação Déb Cardápio
+    if (session.waitingFor === 'CONFIRM_INFO_FUNIL12') {
+        const emoji = getHumanReactionEmoji(textContent);
+        await reactToMessage(sock, remoteJid, msg.key, emoji);
+        await sendFunil12Phase2(botId, sock, remoteJid, userPhone, pushName, msg);
+        return;
+    }
+
+    // Funil 12: Confirmação Envio PDFs Déb Cardápio
+    if (session.waitingFor === 'CONFIRM_SEND_FUNIL12') {
+        const emoji = getHumanReactionEmoji(textContent);
+        await reactToMessage(sock, remoteJid, msg.key, emoji);
+        await sendFunil12Phase3(botId, sock, remoteJid, userPhone, pushName, msg);
+        return;
+    }
+
+    // Funil 13: Nome do Filho Missionária Maria
+    if (session.waitingFor === 'FILHO_NAME_FUNIL13') {
+        const emoji = getHumanReactionEmoji(textContent);
+        await reactToMessage(sock, remoteJid, msg.key, emoji);
+        await sendFunil13AfterChildName(botId, sock, remoteJid, userPhone, pushName, msg);
+        return;
+    }
+
+    // Funil 13: Confirmação Envio Missionária Maria
+    if (session.waitingFor === 'CONFIRM_SEND_FUNIL13') {
+        const emoji = getHumanReactionEmoji(textContent);
+        await reactToMessage(sock, remoteJid, msg.key, emoji);
+        await sendFunil13Phase2(botId, sock, remoteJid, userPhone, pushName, msg);
+        return;
+    }
+
     // ─── Respostas de Comprovante de Pagamento (PIX) ───
     const waitingReceiptFunnels = [
         'PIX_RECEIPT',
@@ -3212,7 +4570,12 @@ async function handleIncomingMessage(botId, sock, msg) {
         'PIX_RECEIPT_FUNIL5',
         'PIX_RECEIPT_FUNIL6',
         'PIX_RECEIPT_FUNIL7',
-        'PIX_RECEIPT_FUNIL8'
+        'PIX_RECEIPT_FUNIL8',
+        'PIX_RECEIPT_FUNIL9',
+        'PIX_RECEIPT_FUNIL10',
+        'PIX_RECEIPT_FUNIL11',
+        'PIX_RECEIPT_FUNIL12',
+        'PIX_RECEIPT_FUNIL13'
     ];
 
     if (waitingReceiptFunnels.includes(session.waitingFor)) {
@@ -3229,6 +4592,30 @@ async function handleIncomingMessage(botId, sock, msg) {
             // Resposta carinhosa da Fernanda Soares (Funil 8 - Print 03:21)
             if (session.waitingFor === 'PIX_RECEIPT_FUNIL8' && ['amem', 'amém', 'ok', 'sim', 'certo', 'ta bom', 'tá bom', 'obrigado', 'obrigada'].some(w => normalizedText.includes(w))) {
                 await sendRealisticText(botId, sock, remoteJid, userPhone, 'Fico muito feliz de verdade em saber disso 💚🐶\nQualquer dúvida é só me chamar 🙏', { quoted: msg });
+                return;
+            }
+
+            // Respostas da Selma (Funil 11 - Projeto Mente Viva)
+            if (session.waitingFor === 'PIX_RECEIPT_FUNIL11') {
+                if (['lendo', 'ler', 'estou lendo'].some(w => normalizedText.includes(w))) {
+                    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Que bom que está lendo 😊 Quando chegar à página 28, faça a lista do mercado e depois me conte quantos itens lembrou.', { quoted: msg });
+                    return;
+                }
+                if (['amem', 'amém', 'creio', 'sim'].some(w => normalizedText.includes(w))) {
+                    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Amém, Deus abençoe você também 🙏 Já deu pra fazer a lista do mercado, na página 28?', { quoted: msg });
+                    return;
+                }
+            }
+
+            // Resposta carinhosa de Déb (Funil 12 - Cardápio Adventista)
+            if (session.waitingFor === 'PIX_RECEIPT_FUNIL12' && ['amem', 'amém', 'manda', 'sim', 'ok'].some(w => normalizedText.includes(w))) {
+                await sendRealisticText(botId, sock, remoteJid, userPhone, 'Amém, minha irmã 🤍 Quando você puder, faz a contribuição no Pix e me manda o comprovante aqui, pode ser print mesmo. Aí eu confirmo e te envio os 2 bônus certinho.', { quoted: msg });
+                return;
+            }
+
+            // Resposta carinhosa da Thaíse Costura (Funil 10)
+            if (session.waitingFor === 'PIX_RECEIPT_FUNIL10' && ['amem', 'amém', 'ok', 'sim'].some(w => normalizedText.includes(w))) {
+                await sendRealisticText(botId, sock, remoteJid, userPhone, 'Fico no aguardo, assim que puder me envie o comprovante, já separei seu presente aqui ❤️🙏', { quoted: msg });
                 return;
             }
 
@@ -3297,6 +4684,31 @@ async function handleIncomingMessage(botId, sock, msg) {
             beneficiary = 'KV DIGITAL';
             funnelName = 'Guia Pet Comilão';
             cancelFunil8Reminder(botId, userPhone);
+        } else if (session.waitingFor === 'PIX_RECEIPT_FUNIL9') {
+            expectedAmount = 25.00;
+            beneficiary = 'Junior Campos dos Santos';
+            funnelName = 'Receitas Produtos de Limpeza';
+            cancelFunil9Reminder(botId, userPhone);
+        } else if (session.waitingFor === 'PIX_RECEIPT_FUNIL10') {
+            expectedAmount = 14.90;
+            beneficiary = 'THAISE OLIVEIRA LIMA';
+            funnelName = 'Bolsas Lucrativas - 200 Moldes';
+            cancelFunil10Reminder(botId, userPhone);
+        } else if (session.waitingFor === 'PIX_RECEIPT_FUNIL11') {
+            expectedAmount = 20.00;
+            beneficiary = 'Projeto Viva Luz';
+            funnelName = 'Projeto Mente Viva';
+            cancelFunil11Reminder(botId, userPhone);
+        } else if (session.waitingFor === 'PIX_RECEIPT_FUNIL12') {
+            expectedAmount = 19.90;
+            beneficiary = 'RP Empreendimentos';
+            funnelName = 'Cardápio Adventista';
+            cancelFunil12Reminder(botId, userPhone);
+        } else if (session.waitingFor === 'PIX_RECEIPT_FUNIL13') {
+            expectedAmount = 5.00;
+            beneficiary = 'DAYZA LTDA';
+            funnelName = 'Devocional Pelos Filhos - Maria';
+            cancelFunil13Reminder(botId, userPhone);
         } else {
             cancelParabolasReminder(botId, userPhone);
         }
@@ -3333,6 +4745,21 @@ async function handleIncomingMessage(botId, sock, msg) {
                 await sendRealisticText(botId, sock, remoteJid, userPhone, bonusText);
             } else if (session.funnel === 'funil8') {
                 const bonusText = `🎁 *BÔNUS LIBERADO: CALCULADORA DE PORÇÃO PET*\n\nAqui está o seu bônus especial conforme prometido! Muito obrigada pelo carinho e pela sua contribuição com o projeto! Que seu doguinho tenha muita saúde com a alimentação natural! 🐶💚`;
+                await sendRealisticText(botId, sock, remoteJid, userPhone, bonusText);
+            } else if (session.funnel === 'funil9') {
+                const bonusText = `🎁 *Acesso Completo às Receitas de Produtos de Limpeza Confirmado!*\n\nMuito obrigado pela sua honestidade e contribuição de coração! Que essas receitas te ajudem muito! 🙏❤️`;
+                await sendRealisticText(botId, sock, remoteJid, userPhone, bonusText);
+            } else if (session.funnel === 'funil10') {
+                const bonusText = `🎁 *BÔNUS LIBERADO: CERTIFICADO + MOLDES EXTRAS*\n\nSeu certificado com assinatura e todos os moldes extras e videoaulas já estão 100% liberados no aplicativo:\nhttps://bolsas-lucrativas.vercel.app/\n\nMuito sucesso na sua jornada na costura! 🏆✨`;
+                await sendRealisticText(botId, sock, remoteJid, userPhone, bonusText);
+            } else if (session.funnel === 'funil11') {
+                const bonusText = `🎁 *BÔNUS LIBERADO: APP MENTE VIVA + ATIVIDADES EXTRAS*\n\nSeu acesso ao App Mente Viva e aos bônus extras de alongamento e mente ativa já estão liberados! Que façam uma diferença linda no seu dia a dia! 🧘💛`;
+                await sendRealisticText(botId, sock, remoteJid, userPhone, bonusText);
+            } else if (session.funnel === 'funil12') {
+                const bonusText = `🎁 *BÔNUS LIBERADOS: PRINCÍPIOS DE SAÚDE*\n\nAqui estão seus 2 bônus conforme combinamos:\n✅ Bônus 01: Lista Inteligente de Compras\n✅ Bônus 02: Guia Alimentar dos Princípios de Ellen White\n\nQue Deus abençoe você e sua família poderosamente! 🥗🥑`;
+                await sendRealisticText(botId, sock, remoteJid, userPhone, bonusText);
+            } else if (session.funnel === 'funil13') {
+                const bonusText = `🎁 *Altar de Oração Pelos Filhos*\n\nJá coloquei o nome do seu filho e de sua família em nosso altar de oração 🙏❤️ Em breve quero ouvir o seu milagre e testemunho!`;
                 await sendRealisticText(botId, sock, remoteJid, userPhone, bonusText);
             } else if (session.funnel === 'funil5') {
                 const bonusText = `🎁 *Seu acesso ao Acervo de Sermões e Bônus está 100% vitalício e garantido!*\n\nParticipe do nosso grupo de atualizações:\nhttps://chat.whatsapp.com/DDrnWQKV5vTB2UAYyQj3M2\n\nQue a Palavra de Deus prospere grandemente no seu ministério! 🙏📖`;
