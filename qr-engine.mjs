@@ -20,6 +20,243 @@ const proto = baileysPkg.proto || baileysPkg.default?.proto;
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
+// ─── LISTA MESTRE DOS 13 FUNIS DO CHATBOT X1 ───
+export const FUNNELS_CATALOG = [
+    {
+        id: 'funil1',
+        name: 'As 40 Parábolas de Jesus',
+        trigger: 'teste1',
+        expectedAmount: 25.00,
+        beneficiary: 'GPS EBOOKS DIGITAIS LTDA',
+        whatsappPhone: '551152291989',
+        defaultMessage: 'Olá! Gostaria de receber o material das 40 Parábolas de Jesus [ref_{{campaign.id}}_{{ad.id}}]'
+    },
+    {
+        id: 'funil2',
+        name: 'Guia Cuidados com Pessoa Acamada',
+        trigger: 'teste2',
+        expectedAmount: 10.00,
+        beneficiary: 'SANTOS LIVROS',
+        whatsappPhone: '558296857184',
+        defaultMessage: 'Olá! Gostaria de receber o Guia de Cuidados com Acamados [ref_{{campaign.id}}_{{ad.id}}]'
+    },
+    {
+        id: 'funil3',
+        name: '500 Esboços de Pregações (Raquel)',
+        trigger: 'teste3',
+        expectedAmount: 10.00,
+        beneficiary: 'Marco Antonio',
+        whatsappPhone: '5511963592672',
+        defaultMessage: 'Paz do Senhor! Quero receber os 500 Esboços de Pregações [ref_{{campaign.id}}_{{ad.id}}]'
+    },
+    {
+        id: 'funil4',
+        name: 'Jornada da Bíblia (João Antônio)',
+        trigger: 'teste4',
+        expectedAmount: 20.00,
+        beneficiary: 'JOÃO GABRIEL',
+        whatsappPhone: '5582996898259',
+        defaultMessage: 'Olá João! Gostaria de receber a Jornada da Bíblia [ref_{{campaign.id}}_{{ad.id}}]'
+    },
+    {
+        id: 'funil5',
+        name: 'Acervo 5.000+ Sermões Prontos (Vitor)',
+        trigger: 'teste5',
+        expectedAmount: 19.90,
+        beneficiary: 'Vitor Bueno de Carvalho',
+        whatsappPhone: '5517981175202',
+        defaultMessage: 'Olá! Gostaria de receber o Acervo de Sermões Prontos [ref_{{campaign.id}}_{{ad.id}}]'
+    },
+    {
+        id: 'funil6',
+        name: 'Devocional Pelos Filhos (Flávia)',
+        trigger: 'teste6',
+        expectedAmount: 5.00,
+        beneficiary: 'DIGITAL DSX LTDA',
+        whatsappPhone: '5512983085720',
+        defaultMessage: 'Paz! Quero colocar meu filho no altar de oração e devocional [ref_{{campaign.id}}_{{ad.id}}]'
+    },
+    {
+        id: 'funil7',
+        name: 'Construtor de Palavras e Alfabetização',
+        trigger: 'teste7',
+        expectedAmount: 11.90,
+        beneficiary: 'Editora Branth',
+        whatsappPhone: '5537999387172',
+        defaultMessage: 'Olá! Gostaria do material do Construtor de Palavras [ref_{{campaign.id}}_{{ad.id}}]'
+    },
+    {
+        id: 'funil8',
+        name: 'Guia Pet Comilão (Fernanda Soares)',
+        trigger: 'teste8',
+        expectedAmount: 15.00,
+        beneficiary: 'KV DIGITAL',
+        whatsappPhone: '5511922026498',
+        defaultMessage: 'Olá Fernanda! Gostaria do Guia Pet Comilão com a calculadora de porções [ref_{{campaign.id}}_{{ad.id}}]'
+    },
+    {
+        id: 'funil9',
+        name: 'Receitas Produtos de Limpeza',
+        trigger: 'teste9',
+        expectedAmount: 25.00,
+        beneficiary: 'Junior Campos dos Santos',
+        whatsappPhone: '551152291989',
+        defaultMessage: 'Olá! Gostaria de receber as Receitas de Produtos de Limpeza [ref_{{campaign.id}}_{{ad.id}}]'
+    },
+    {
+        id: 'funil10',
+        name: 'Bolsas Lucrativas - 200 Moldes',
+        trigger: 'teste10',
+        expectedAmount: 14.90,
+        beneficiary: 'THAISE OLIVEIRA LIMA',
+        whatsappPhone: '551152291989',
+        defaultMessage: 'Olá Thaíse! Quero aprender a fazer as Bolsas Lucrativas e moldes [ref_{{campaign.id}}_{{ad.id}}]'
+    },
+    {
+        id: 'funil11',
+        name: 'Projeto Mente Viva (Selma)',
+        trigger: 'teste11',
+        expectedAmount: 20.00,
+        beneficiary: 'Projeto Viva Luz',
+        whatsappPhone: '551152291989',
+        defaultMessage: 'Olá Selma! Gostaria de participar do Projeto Mente Viva [ref_{{campaign.id}}_{{ad.id}}]'
+    },
+    {
+        id: 'funil12',
+        name: 'Cardápio Adventista (Déb)',
+        trigger: 'teste12',
+        expectedAmount: 19.90,
+        beneficiary: 'RP Empreendimentos',
+        whatsappPhone: '551152291989',
+        defaultMessage: 'Olá Déb! Gostaria do Cardápio Adventista e bônus [ref_{{campaign.id}}_{{ad.id}}]'
+    },
+    {
+        id: 'funil13',
+        name: 'Devocional Pelos Filhos - Maria',
+        trigger: 'teste13',
+        expectedAmount: 5.00,
+        beneficiary: 'DAYZA LTDA',
+        whatsappPhone: '551152291989',
+        defaultMessage: 'Olá! Quero oração pelos meus filhos e devocional [ref_{{campaign.id}}_{{ad.id}}]'
+    }
+];
+
+// ─── EXTRAÇÃO DE CONTEXTO DE ANÚNCIO (CTWA NATIVO OU TAGS UTM) ───
+function extractAdContext(msg, textContent) {
+    const adData = {};
+    const contextInfo =
+        msg.message?.extendedTextMessage?.contextInfo ||
+        msg.message?.contextInfo ||
+        msg.message?.imageMessage?.contextInfo ||
+        {};
+
+    if (contextInfo.externalAdReply) {
+        adData.isCtwa = true;
+        adData.adTitle = contextInfo.externalAdReply.title || '';
+        adData.sourceUrl = contextInfo.externalAdReply.sourceUrl || '';
+    }
+
+    if (contextInfo.conversionData) {
+        try {
+            adData.conversionData = Buffer.isBuffer(contextInfo.conversionData)
+                ? contextInfo.conversionData.toString('hex')
+                : String(contextInfo.conversionData);
+        } catch {}
+    }
+
+    if (contextInfo.ctwaClid) {
+        adData.ctwaClid = contextInfo.ctwaClid;
+    }
+
+    // Identificação de tags inseridas no texto de mensagem (Ex: [ref_1202084910284_1202084910285] ou [ref:1202084910284] ou [1202084910284])
+    if (textContent) {
+        const refMatch = textContent.match(/\[(?:ref:?_?|Ref:?\s*|ref\s+)?([0-9a-zA-Z_\-]+)\]/i);
+        if (refMatch && refMatch[1]) {
+            const rawRef = refMatch[1].trim();
+            adData.rawTag = rawRef;
+            const parts = rawRef.split('_');
+            if (parts.length >= 2) {
+                adData.campaignId = parts[0];
+                adData.adId = parts[1];
+            } else {
+                adData.campaignId = rawRef;
+            }
+        }
+    }
+
+    return Object.keys(adData).length > 0 ? adData : null;
+}
+
+// ─── DISPARO PARA META CONVERSIONS API (CAPI) ───
+async function sendMetaCapiConversion(transactionRecord) {
+    const metaPixelId = process.env.META_PIXEL_ID || store.metaConfig?.pixelId;
+    const metaAccessToken = process.env.META_ACCESS_TOKEN || store.metaConfig?.accessToken;
+
+    if (!metaPixelId || !metaAccessToken) {
+        console.log(`[Meta CAPI] ⚠️ Pixel ID ou Access Token da Meta não configurados no Chatbot. Conversão registrada localmente.`);
+        return { success: false, skipped: true, reason: 'Pixel ID ou Access Token ausente' };
+    }
+
+    try {
+        const cleanPhone = (transactionRecord.userPhone || '').replace(/\D/g, '');
+        const phoneHash = cleanPhone ? crypto.createHash('sha256').update(cleanPhone).digest('hex') : undefined;
+        
+        const firstName = (transactionRecord.pushName || '').trim().split(' ')[0].toLowerCase();
+        const fnHash = firstName ? crypto.createHash('sha256').update(firstName).digest('hex') : undefined;
+
+        const payload = {
+            data: [
+                {
+                    event_name: 'Purchase',
+                    event_time: Math.floor(Date.now() / 1000),
+                    action_source: 'business_messaging',
+                    messaging_channel: 'whatsapp',
+                    user_data: {
+                        ph: phoneHash ? [phoneHash] : [],
+                        fn: fnHash ? [fnHash] : [],
+                        ctwa_clid: transactionRecord.ctwaClid || undefined
+                    },
+                    custom_data: {
+                        currency: 'BRL',
+                        value: Number(Number(transactionRecord.amount || 0).toFixed(2)),
+                        content_name: transactionRecord.funnelName,
+                        content_type: 'product',
+                        order_id: transactionRecord.id,
+                        campaign_id: transactionRecord.campaignId || undefined,
+                        ad_id: transactionRecord.adId || undefined
+                    }
+                }
+            ]
+        };
+
+        const capiUrl = `https://graph.facebook.com/v21.0/${metaPixelId}/events?access_token=${metaAccessToken}`;
+        const res = await axios.post(capiUrl, payload, { timeout: 10000 });
+        console.log(`[Meta CAPI] ✅ Evento Purchase enviado com sucesso para a Meta! Eventos recebidos: ${res.data?.events_received || 1}`);
+        return { success: true, data: res.data };
+    } catch (err) {
+        console.error(`[Meta CAPI] ❌ Erro ao enviar evento de conversão para a Meta:`, err.response?.data || err.message);
+        return { success: false, error: err.response?.data?.error?.message || err.message };
+    }
+}
+
+// ─── DISPARO PARA WEBHOOK DO FACEHUB ───
+async function notifyFaceHubWebhook(transactionRecord) {
+    const webhookUrl = process.env.FACEHUB_WEBHOOK_URL || store.metaConfig?.facehubWebhookUrl;
+    if (!webhookUrl) return;
+
+    try {
+        await axios.post(webhookUrl, {
+            event: 'transaction.approved',
+            timestamp: new Date().toISOString(),
+            transaction: transactionRecord
+        }, { timeout: 5000 });
+        console.log(`[FaceHub Webhook] ✅ Transação enviada para o FaceHub com sucesso: ${webhookUrl}`);
+    } catch (err) {
+        console.error(`[FaceHub Webhook] ❌ Falha ao notificar FaceHub:`, err.message);
+    }
+}
+
+
 const AUDIT_PROMPT = `
 Você é um auditor financeiro sênior especializado em validar comprovantes de transferência PIX brasileiros para e-commerce e infoprodutos.
 Sua missão é analisar meticulosamente a imagem ou PDF do comprovante anexado e verificar se a transferência PIX foi REALMENTE EFETIVADA e CONCLUÍDA.
@@ -4327,6 +4564,25 @@ async function handleIncomingMessage(botId, sock, msg) {
     const sessionKey = `${botId}:${userPhone}`;
     let session = store.userSessions[sessionKey];
 
+    // Capturar contexto de anúncio (CTWA ou tags dinâmicas no texto)
+    const detectedAd = extractAdContext(msg, textContent);
+    if (detectedAd) {
+        if (!session) {
+            session = {
+                botId,
+                userJid: remoteJid,
+                userPhone,
+                userName: pushName,
+                adData: detectedAd,
+                updatedAt: new Date().toISOString()
+            };
+            store.userSessions[sessionKey] = session;
+        } else {
+            session.adData = { ...(session.adData || {}), ...detectedAd };
+        }
+        console.log(`[Atribuição Meta Ads] 🎯 Detectado anúncio para ${userPhone}:`, session.adData);
+    }
+
     const normalizedText = textContent.trim().toLowerCase();
 
     // ─── Sistema Universal de Reações Humanizadas para TODOS os Funis (Atuais e Futuros) ───
@@ -4884,6 +5140,46 @@ async function handleIncomingMessage(botId, sock, msg) {
                 updatedAt: new Date().toISOString(),
                 funnel: funnelName,
             });
+
+            // ─── Registro Oficial de Transação & Disparo Meta CAPI + FaceHub ───
+            const txId = 'tx_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+            const now = new Date();
+            const transactionRecord = {
+                id: txId,
+                timestamp: now.toISOString(),
+                timeFormatted: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                dateFormatted: now.toLocaleDateString('pt-BR'),
+                botId,
+                funnelId: session.funnel || 'funil1',
+                funnelName,
+                amount: paidValue,
+                beneficiary,
+                userPhone,
+                pushName,
+                campaignId: session.adData?.campaignId || null,
+                adId: session.adData?.adId || null,
+                adTag: session.adData?.rawTag || null,
+                isCtwa: !!session.adData?.isCtwa,
+                ctwaClid: session.adData?.ctwaClid || null,
+                status: 'APROVADO_PIX',
+                capiStatus: 'PENDING'
+            };
+
+            // Disparar Meta Conversions API (CAPI)
+            try {
+                const capiRes = await sendMetaCapiConversion(transactionRecord);
+                transactionRecord.capiStatus = capiRes.success ? 'ENVIADO_CAPI_OK' : (capiRes.skipped ? 'CAPI_CONFIG_PENDENTE' : 'ERRO_CAPI: ' + capiRes.error);
+            } catch (capiErr) {
+                transactionRecord.capiStatus = 'ERRO_CAPI: ' + capiErr.message;
+            }
+
+            store.funnelTransactions = store.funnelTransactions || [];
+            store.funnelTransactions.unshift(transactionRecord);
+            if (store.funnelTransactions.length > 500) store.funnelTransactions.pop();
+
+            // Notificar Webhook FaceHub se configurado
+            notifyFaceHubWebhook(transactionRecord).catch(() => {});
+
             session.waitingFor = null;
             saveStore(store);
 
@@ -5350,6 +5646,132 @@ app.post('/api/bots/:botId/whatsapp/qr/test-message', async (req, res) => {
         const sock = activeSockets.get(botId);
         if (!sock) {
             res.status(400).json({ success: false, error: 'Escaneie o QR Code primeiro' });
+
+// ─── ROTAS DE INTEGRAÇÃO COM O FACEHUB (META ADS MULTI-CONTAS) ───
+app.get('/api/funnels', (_req, res) => {
+    // Mesclar catálogo estático com estatísticas em tempo real
+    const stats = store.funnelStats || {};
+    const funnelsWithStats = FUNNELS_CATALOG.map(f => {
+        const txs = (store.funnelTransactions || []).filter(t => t.funnelId === f.id);
+        const sales = txs.length;
+        const revenue = txs.reduce((acc, cur) => acc + (cur.amount || 0), 0);
+        return {
+            ...f,
+            sales,
+            revenue: Number(revenue.toFixed(2))
+        };
+    });
+    res.json({ success: true, count: funnelsWithStats.length, funnels: funnelsWithStats });
+});
+
+app.get('/api/funnels/transactions', (req, res) => {
+    const limit = parseInt(req.query.limit || '50', 10);
+    const funnelId = req.query.funnelId;
+    let list = store.funnelTransactions || [];
+    if (funnelId) {
+        list = list.filter(t => t.funnelId === funnelId);
+    }
+    res.json({
+        success: true,
+        count: list.length,
+        transactions: list.slice(0, limit)
+    });
+});
+
+app.get('/api/funnels/metrics', (_req, res) => {
+    const txs = store.funnelTransactions || [];
+    const totalRevenue = txs.reduce((acc, cur) => acc + (cur.amount || 0), 0);
+    const totalSales = txs.length;
+    const capiSuccess = txs.filter(t => t.capiStatus === 'ENVIADO_CAPI_OK').length;
+    
+    // Agrupamento por campanha
+    const campaignMap = {};
+    txs.forEach(t => {
+        const campKey = t.campaignId || 'Orgânico / Sem Tag';
+        if (!campaignMap[campKey]) {
+            campaignMap[campKey] = { campaignId: campKey, sales: 0, revenue: 0, funnels: {} };
+        }
+        campaignMap[campKey].sales += 1;
+        campaignMap[campKey].revenue += (t.amount || 0);
+        campaignMap[campKey].funnels[t.funnelName] = (campaignMap[campKey].funnels[t.funnelName] || 0) + 1;
+    });
+
+    res.json({
+        success: true,
+        metrics: {
+            totalSales,
+            totalRevenue: Number(totalRevenue.toFixed(2)),
+            capiSuccess,
+            campaignsTracked: Object.values(campaignMap)
+        }
+    });
+});
+
+app.get('/api/meta/config', (_req, res) => {
+    const cfg = store.metaConfig || {};
+    res.json({
+        success: true,
+        pixelId: cfg.pixelId || process.env.META_PIXEL_ID || null,
+        hasAccessToken: Boolean(cfg.accessToken || process.env.META_ACCESS_TOKEN),
+        facehubWebhookUrl: cfg.facehubWebhookUrl || process.env.FACEHUB_WEBHOOK_URL || null
+    });
+});
+
+app.post('/api/meta/config', (req, res) => {
+    const { pixelId, accessToken, facehubWebhookUrl } = req.body || {};
+    store.metaConfig = store.metaConfig || {};
+    if (pixelId !== undefined) store.metaConfig.pixelId = pixelId;
+    if (accessToken !== undefined) store.metaConfig.accessToken = accessToken;
+    if (facehubWebhookUrl !== undefined) store.metaConfig.facehubWebhookUrl = facehubWebhookUrl;
+    saveStore(store);
+    res.json({ success: true, message: 'Configurações da Meta salvas com sucesso!' });
+});
+
+app.post('/api/funnels/simulate-pix', async (req, res) => {
+    try {
+        const { funnelId, amount, phone, name, campaignId, adId } = req.body || {};
+        const funnel = FUNNELS_CATALOG.find(f => f.id === funnelId) || FUNNELS_CATALOG[0];
+        const paidValue = Number(amount || funnel.expectedAmount);
+        const txId = 'tx_sim_' + Date.now();
+        const now = new Date();
+
+        const transactionRecord = {
+            id: txId,
+            timestamp: now.toISOString(),
+            timeFormatted: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+            dateFormatted: now.toLocaleDateString('pt-BR'),
+            botId: 'bot_whatsapp_principal',
+            funnelId: funnel.id,
+            funnelName: funnel.name,
+            amount: paidValue,
+            beneficiary: funnel.beneficiary,
+            userPhone: phone || '5511999999999',
+            pushName: name || 'Lead Simulado FaceHub',
+            campaignId: campaignId || '1202084910284',
+            adId: adId || '1202084910285',
+            adTag: `ref_${campaignId || '1202084910284'}_${adId || '1202084910285'}`,
+            isCtwa: true,
+            status: 'APROVADO_PIX',
+            capiStatus: 'PENDING'
+        };
+
+        const capiRes = await sendMetaCapiConversion(transactionRecord);
+        transactionRecord.capiStatus = capiRes.success ? 'ENVIADO_CAPI_OK' : (capiRes.skipped ? 'CAPI_CONFIG_PENDENTE' : 'ERRO_CAPI: ' + capiRes.error);
+
+        store.funnelTransactions = store.funnelTransactions || [];
+        store.funnelTransactions.unshift(transactionRecord);
+        store.funnelStats.convertedCount = (store.funnelStats.convertedCount || 0) + 1;
+        store.funnelStats.totalRevenue = Number(((store.funnelStats.totalRevenue || 0) + paidValue).toFixed(2));
+        saveStore(store);
+
+        notifyFaceHubWebhook(transactionRecord).catch(() => {});
+
+        res.json({ success: true, transaction: transactionRecord });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
             return;
         }
         const jid = toWhatsAppJid(to);
