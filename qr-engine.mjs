@@ -934,30 +934,37 @@ function scheduleFunil5Reminder(botId, remoteJid, userPhone) {
         }
     };
 
-    // Step 1: ~10 minutos (Print 03:32)
+    // Step 1: 10 minutos (Print 03:32 - 608s)
     timers.push(setTimeout(() => {
         sendFollowUp(1, ['Paz.. Fiquei aqui esperando o pagamento, confiei na sua palavra...']);
     }, 10 * 60 * 1000));
 
-    // Step 2: ~30 minutos (Print 03:52)
+    // Step 2: 30 minutos (Print 03:52 - 1816s)
     timers.push(setTimeout(() => {
         sendFollowUp(2, [
             'Você consegue fazer a sua contribuição agora? Se sim vou agradecer e muito! 🙏',
-            `Nosso PIX, só você copiar e colar 👇\n(CNPJ)`,
+            `Nosso PIX, só você copiar e colar 👇
+(CNPJ)`,
             '64158407000124',
             'Fico no aguardo amém ?',
         ]);
     }, 30 * 60 * 1000));
 
-    // Step 3: ~45 minutos (Print 04:07)
+    // Step 3: 45 minutos (Print 04:07 - 2753s)
     timers.push(setTimeout(() => {
         sendFollowUp(3, [
-            `Conforme combinamos, os materiais e os bônus já foram enviados, e você confirmou o recebimento.\n\nAgora estou aguardando apenas a contribuição combinada. Assim que realizar, me envie o comprovante por aqui. Deus abençoe.`,
-            `🔑 CHAVE PIX CNPJ : 64158407000124\n\nVALOR: R$19,90\n\nNOME: Vitor Bueno de Carvalho`,
+            `Conforme combinamos, os materiais e os bônus já foram enviados, e você *confirmou* o recebimento.
+
+Agora estou aguardando apenas a contribuição combinada. Assim que realizar, me envie o comprovante por aqui. Deus abençoe.`,
+            `🔑 CHAVE PIX *CNPJ* : 64158407000124
+
+*VALOR*: R$19,90
+
+*NOME:* Vitor Bueno de Carvalho`,
         ]);
     }, 45 * 60 * 1000));
 
-    // Step 4: ~1 hora (Print 04:58 - Áudio de cobrança)
+    // Step 4: 1h35 (~95 min - Print 04:58 - Áudio de cobrança)
     timers.push(setTimeout(async () => {
         try {
             const currentStore = loadStore();
@@ -976,23 +983,43 @@ function scheduleFunil5Reminder(botId, remoteJid, userPhone) {
         } catch (err) {
             console.error('[Funil 5 Audio Cobrança Error]:', err?.message);
         }
-    }, 60 * 60 * 1000));
+    }, 95 * 60 * 1000));
 
-    // Step 5: ~1h20 (Print 05:18)
+    // Step 5: ~1h56 (116 min - Print 05:18 - 6983s)
     timers.push(setTimeout(() => {
         sendFollowUp(5, [
-            `Oi ? está ai ? Consegue me enviar agora por favor ?\n\n🔑 CHAVE PIX CNPJ : 64158407000124\n\nNOME: Vitor Bueno de Carvalho\n\nVALOR : R$19,90\n\nMe envie o comprovante aqui por favor.`,
-        ]);
-    }, 80 * 60 * 1000));
+            `Oi ? está ai ? Consegue me enviar agora por favor ?`,
+            `🔑 CHAVE PIX *CNPJ* : 64158407000124
 
-    // Step 6: ~2 horas (Print 06:19 - Eclesiastes)
+*NOME:* Vitor Bueno de Carvalho
+
+*VALOR :* R$19,90
+
+Me envie o comprovante aqui por favor.`,
+        ]);
+    }, 116 * 60 * 1000));
+
+    // Step 6: ~2h56 (176 min - Print 06:18 - 10605s - Eclesiastes 5:4)
     timers.push(setTimeout(() => {
         sendFollowUp(6, [
-            `Preciso te lembrar de algo: diante de Deus, palavra e compromisso também são coisas sérias.\n\nA Bíblia diz em Eclesiastes 5:4:\n\n"Quando a Deus fizeres algum voto, não tardes em cumpri-lo."\n\nA contribuição simbólica não é apenas um valor. É uma forma de honrar aquilo que foi combinado e ajudar esse projeto continuar alcançando outros irmãos que também precisam desse material.\n\nSe você recebeu, acessou e o material chegou certinho, peço com carinho:\nhonre sua palavra e faça sua contribuição.\n\nQue Deus toque no seu coração e abençoe sua vida 🙏\n\n🔑 CHAVE PIX CNPJ : 64158407000124\n\nVALOR: R$ 19,90\n\nNOME: Vitor Bueno de Carvalho`,
-        ]);
-    }, 120 * 60 * 1000));
+            `Preciso te lembrar de algo: diante de Deus, palavra e compromisso também são testemunho.`,
+            `A Bíblia diz em *Eclesiastes 5:4*:
 
-    // Step 7: ~4 horas (Print 08:19 / 08:20 - Imagem Eclesiastes 5:5 + Cobrança)
+“Quando a Deus fizeres algum voto, não tardes em cumpri-lo; porque não se agrada de tolos; o que votares, paga-o.”`,
+            `A contribuição simbólica não é apenas um valor. É uma forma de *honrar a palavra* que você deu antes de receber o material.`,
+            `Se você recebeu, acessou e o material chegou certinho, peço com carinho que faça a sua parte agora, amém?`,
+            `Que Deus toque no seu coração e abençoe sua vida 🙏`,
+            `🔑 CHAVE PIX *CNPJ* : 64158407000124
+
+*VALOR*: R$ 19,90
+
+*NOME:* Vitor Bueno de Carvalho
+
+*BANCO:* CloudWalk I.P`,
+        ]);
+    }, 176 * 60 * 1000));
+
+    // Step 7: ~5 horas (298 min - Print 08:20 - 17882s - Foto Bíblia + Cobrança)
     timers.push(setTimeout(async () => {
         try {
             const currentStore = loadStore();
@@ -1003,44 +1030,57 @@ function scheduleFunil5Reminder(botId, remoteJid, userPhone) {
                     const ecImgPath = path.join(__dirname, 'public', 'funil5', 'eclesiastes.jpeg');
                     if (fs.existsSync(ecImgPath)) {
                         const imgBuf = fs.readFileSync(ecImgPath);
-                        await sock.sendMessage(remoteJid, { image: imgBuf });
+                        await sock.sendMessage(remoteJid, { image: imgBuf, caption: `Por favor, precisamos do seu pagamento
+
+Nosso trabalho está ficando prejudicado, confiei na sua palavra...` });
+                    } else {
+                        await sock.sendMessage(remoteJid, { text: `Por favor, precisamos do seu pagamento
+
+Nosso trabalho está ficando prejudicado, confiei na sua palavra...` });
                     }
-                    await sock.sendMessage(remoteJid, {
-                        text: `Por favor, precisamos do seu pagamento\n\nNosso trabalho está ficando prejudicado. Você aceitou o envio do nosso material e avisamos que o valor era R$19,90\n\nPIX: 64158407000124\nNOME: Vitor Bueno`,
-                    });
-                    await new Promise((r) => setTimeout(r, 800));
-                    await sock.sendMessage(remoteJid, {
-                        text: `Me envie o comprovante para dar baixa por favor 🙏`,
-                    });
+                    await sock.sendMessage(remoteJid, { text: `*PIX:* 64158407000124
+*NOME*: Vitor Bueno` });
+                    await sock.sendMessage(remoteJid, { text: `Me envie o comprovante para dar baixa por favor 🙏` });
+                    logConversation(botId, userPhone, 'BOT', 'REMINDER', 'Por favor, precisamos do seu pagamento');
                 }
             }
         } catch (err) {
             console.error('[Funil 5 Step 7 Error]:', err?.message);
         }
-    }, 240 * 60 * 1000));
+    }, 298 * 60 * 1000));
 
-    // Step 8: ~6 horas (Print 10:20 - Confirmação e dados PIX)
+    // Step 8: ~7 horas (418 min - Print 10:20 - 25109s)
     timers.push(setTimeout(() => {
         sendFollowUp(8, [
-            `A paz do Senhor!\n\nPassando aqui só para confirmar se você conseguiu acessar todo o material que te enviei 📖✨\n\nFico no aguardo da sua contribuição via Pix, conforme combinamos 🙏\n\nQue Deus continue te guiando e te usando poderosamente!\n\nChave PIX CNPJ : 64158407000124\n\nNOME: Vitor Bueno de Carvalho\n\nVALOR : R$19,90`,
-        ]);
-    }, 360 * 60 * 1000));
+            `A paz do Senhor!
 
-    // Step 9: ~9 horas (Print 13:21 - Desabafo confiança)
+Passando aqui só para confirmar se você conseguiu acessar todos os materiais certinho.`,
+            `Fico no aguardo do envio da contribuição de R$ 19,90 que você combinou, tá bom?
+
+Deus abençoe seu dia!`,
+            `*Chave PIX CNPJ* : 64158407000124
+
+*NOME*: Vitor Bueno de Carvalho
+
+VALOR: R$ 19,90`,
+        ]);
+    }, 418 * 60 * 1000));
+
+    // Step 9: ~10 horas (599 min - Print 13:21 - 35943s)
     timers.push(setTimeout(() => {
         sendFollowUp(9, [
-            `Poxa, irmão... fico triste que você aproveitou o material, mas não retribuiu minha confiança. 😔 Enviei tudo com muito carinho. Se ainda puder ser honesto comigo, mande o comprovante agora.`,
+            `Poxa, irmão... fico triste que você aproveitou o material, mas não retornou mais para cumprir o que combinou. Confiei na sua palavra. Que Deus te abençoe.`,
         ]);
-    }, 540 * 60 * 1000));
+    }, 599 * 60 * 1000));
 
-    // Step 10: ~9h30 (Print 13:52 - Deixaram na mão)
+    // Step 10: ~10h30 (630 min - Print 13:52 - 37833s)
     timers.push(setTimeout(() => {
         sendFollowUp(10, [
-            `Muitas pessoas já me deixaram na mão...\nEspero de coração que você não faça o mesmo. 😔💔`,
+            `Muitas pessoas já me deixaram na mão... Espero de coração que você não seja mais uma delas. Ainda estou aguardando.`,
         ]);
-    }, 570 * 60 * 1000));
+    }, 630 * 60 * 1000));
 
-    // Step 11: ~15 horas (Print 18:56 - Áudio Noite Dia 1 + PIX)
+    // Step 11: ~15h35 (935 min - Noite 18:56 - 56097s - Áudio)
     timers.push(setTimeout(async () => {
         try {
             const currentStore = loadStore();
@@ -1052,17 +1092,20 @@ function scheduleFunil5Reminder(botId, remoteJid, userPhone) {
                     if (fs.existsSync(mp3Path)) {
                         const mp3Buf = fs.readFileSync(mp3Path);
                         await sock.sendMessage(remoteJid, { audio: mp3Buf, mimetype: 'audio/mpeg', ptt: true });
-                        logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Lembrete Dia 1 18h56]');
                     }
-                    await sock.sendMessage(remoteJid, { text: `PIX: 64158407000124\n(CNPJ)\nR$19,90` });
+                    await sock.sendMessage(remoteJid, { text: `*PIX*: 64158407000124
+(*CNPJ*)
+
+*R$19,90*` });
+                    logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Lembrete Dia 1 18h56]');
                 }
             }
         } catch (err) {
             console.error('[Funil 5 Step 11 Error]:', err?.message);
         }
-    }, 900 * 60 * 1000));
+    }, 935 * 60 * 1000));
 
-    // Step 12: ~17 horas (Print 20:57 - Áudio Noite Dia 1 + PIX)
+    // Step 12: ~17h35 (1055 min - Noite 20:57 - 63321s - Áudio)
     timers.push(setTimeout(async () => {
         try {
             const currentStore = loadStore();
@@ -1074,24 +1117,28 @@ function scheduleFunil5Reminder(botId, remoteJid, userPhone) {
                     if (fs.existsSync(mp3Path)) {
                         const mp3Buf = fs.readFileSync(mp3Path);
                         await sock.sendMessage(remoteJid, { audio: mp3Buf, mimetype: 'audio/mpeg', ptt: true });
-                        logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Lembrete Dia 1 20h57]');
                     }
-                    await sock.sendMessage(remoteJid, { text: `CHAVE PIX : 64158407000124\nVALOR: R$19,90\nMe envie o comprovante para dar baixa por favor 🙏` });
+                    await sock.sendMessage(remoteJid, { text: `*CHAVE PIX* : 64158407000124
+*VALOR*: R$19,90
+
+Me envie o comprovante por favor para eu confirmar no sistema!` });
+                    logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Lembrete Dia 1 20h57]');
                 }
             }
         } catch (err) {
             console.error('[Funil 5 Step 12 Error]:', err?.message);
         }
-    }, 1020 * 60 * 1000));
+    }, 1055 * 60 * 1000));
 
-    // Step 13: ~23 horas (Dia 2 - 02:57)
+    // Step 13: ~23h35 (1415 min - Dia 2 02:57 - 84934s)
     timers.push(setTimeout(() => {
         sendFollowUp(13, [
-            `Porque você fez isso? 🙏\nEu te enviei tudo antes justamente na confiança…\n\nAvisamos que seria necessário fazer o Pix hoje após receber os materiais!\nVocê aceitou o envio dos materiais, peço que por favor, não deixe nosso trabalho prejudicado.\n\n🙏Precisamos do Pix de R$19,90 para não ficarmos no prejuízo\n\nChave Pix CNPJ: 👇\n- 64158407000124`
+            `Porque você fez isso? 🙏 Eu te enviei tudo antes justamente na confiança, e você sumiu depois que recebeu os materiais.`,
+            `Avisamos que seria necessário fazer o Pix hoje após receber os materiais e você concordou...`,
         ]);
-    }, 1380 * 60 * 1000));
+    }, 1415 * 60 * 1000));
 
-    // Step 14: ~24 horas (Dia 2 - 03:58 - Foto Eclesiastes)
+    // Step 14: ~24h36 (1476 min - Dia 2 03:58 - 88560s - Foto Eclesiastes 5:5)
     timers.push(setTimeout(async () => {
         try {
             const currentStore = loadStore();
@@ -1099,76 +1146,185 @@ function scheduleFunil5Reminder(botId, remoteJid, userPhone) {
             if (sess && sess.waitingFor === 'PIX_RECEIPT_FUNIL5') {
                 const sock = activeSockets.get(botId);
                 if (sock) {
-                    await sock.sendMessage(remoteJid, { text: `Eclesiastes 5:5\n“É melhor não fazer promessa do que fazer e não cumprir.”` });
+                    await sock.sendMessage(remoteJid, { text: `Eclesiastes 5:5
+“É melhor não fazer promessa do que fazer e não cumprir.”` });
                     const imgP = path.join(__dirname, 'public', 'funil5', 'eclesiastes_dia2.jpeg');
                     if (fs.existsSync(imgP)) {
-                        const imgBuf = fs.readFileSync(imgP);
-                        await sock.sendMessage(remoteJid, { image: imgBuf });
+                        const buf = fs.readFileSync(imgP);
+                        await sock.sendMessage(remoteJid, { image: buf, caption: `Precisamos da contribuição combinada 🙏
+
+Chave PIX (CNPJ) : 64158407000124` });
+                    } else {
+                        await sock.sendMessage(remoteJid, { text: `Precisamos da contribuição combinada 🙏
+
+Chave PIX (CNPJ) : 64158407000124` });
                     }
-                    await sock.sendMessage(remoteJid, { text: `Precisamos da contribuição combinada 🙏\nChave PIX (CNPJ) : 64158407000124` });
+                    logConversation(botId, userPhone, 'BOT', 'REMINDER', 'Eclesiastes 5:5 Foto Dia 2');
                 }
             }
         } catch (err) {
             console.error('[Funil 5 Step 14 Error]:', err?.message);
         }
-    }, 1440 * 60 * 1000));
+    }, 1476 * 60 * 1000));
 
-    // Step 15: ~26 horas (Dia 2 - 05:58)
+    // Step 15: ~26h36 (1596 min - Dia 2 05:58 - 95791s)
     timers.push(setTimeout(() => {
         sendFollowUp(15, [
-            `Confiei em você e já te enviei todo o material completo junto com os bônus.... 🎁\n\nEsse acervo tem ajudado muitos pastores, líderes e servos de Deus que precisam de direção e apoio na preparação das mensagens… e é justamente essa contribuição simbólica que mantém esse ministério ativo e alcançando outras vidas.\n\nPor isso, peço com carinho que não faça como algumas pessoas que recebem e não retornam 🙏\n\nA contribuição é de apenas R$19,90 pelo acervo completo.\n\nConto com a sua honestidade e apoio para continuarmos abençoando mais pessoas através da Palavra 📖✨`
-        ]);
-    }, 1560 * 60 * 1000));
+            `Confiei em você e já te enviei todo o material completo junto com os bônus.
 
-    // Step 16: ~27 horas (Dia 2 - 06:58)
+Agora estou aqui aguardando você cumprir a sua parte que combinou comigo.`,
+        ]);
+    }, 1596 * 60 * 1000));
+
+    // Step 16: ~27h36 (1656 min - Dia 2 06:58 - 99404s)
     timers.push(setTimeout(() => {
         sendFollowUp(16, [
-            `Por que você visualiza a mensagem e não responde ?? depositei minha confiança em você`,
-            `Para facilitar, vou te enviar a chave Pix separada para você só copiar e colar 👇👇`,
+            `Por que você visualiza a mensagem e não responde ?? depositei minha confiança em você...`,
+            `Para facilitar, vou te enviar a chave Pix separada para você só copiar e colar`,
             `64158407000124`,
-            `(CHAVE PIX É CNPJ)\nMe envie o comprovante por favor 🙏`
+            `*(CHAVE PIX É CNPJ)*
+Me envie o comprovante por favor 🙏`,
         ]);
-    }, 1620 * 60 * 1000));
+    }, 1656 * 60 * 1000));
 
-    // Step 17: ~35 horas (Dia 2 - 14:59)
+    // Step 17: ~35h37 (2137 min - Dia 2 14:59 - 128254s)
     timers.push(setTimeout(() => {
         sendFollowUp(17, [
-            `A paz querido irmão(a), responde por favor 😢🙏🏻`
+            `A paz querido irmão(a), responde por favor 😢🙏🏻`,
         ]);
-    }, 2100 * 60 * 1000));
+    }, 2137 * 60 * 1000));
 
-    // Step 18: ~38 horas (Dia 2 - 17:59)
+    // Step 18: ~38h37 (2317 min - Dia 2 17:59 - 139065s)
     timers.push(setTimeout(() => {
         sendFollowUp(18, [
-            `Irmão(ã), preciso ser sincero com você…\n\nIsso acaba sendo uma falta de respeito com o trabalho que foi feito com tanto zelo e dedicação.\n\nDepositamos nossa confiança em você, liberamos todo o material primeiro, acreditando no compromisso entre irmãos.\n\nNosso propósito nunca foi vender apenas um conteúdo, mas fortalecer vidas e ministérios através da Palavra.\n\nContamos com a sua honestidade para cumprir o que foi combinado 🙏\n\nAssim que realizar a contribuição simbólica, me envie o comprovante para que eu possa liberar os bônus prometidos.\n\nSeguimos juntos na obra.`
-        ]);
-    }, 2280 * 60 * 1000));
+            `Irmão(ã), preciso ser sincero com você…
 
-    // Step 19: ~45 horas (Dia 3 - 00:00)
+Isso acaba sendo uma falta de consideração comigo e com a obra.
+
+Eu não vendo material para enriquecer. Esse valor é apenas uma contribuição simbólica para manter os custos da página, das ferramentas e continuar abençoando outros irmãos que também precisam.
+
+Quando você disse que faria o envio após receber, eu confiei na sua palavra e enviei tudo imediatamente.
+
+Sei que imprevistos acontecem, mas o silêncio machuca quem agiu de boa-fé com você.
+
+Se houver qualquer dificuldade, apenas me responda e seja sincero(a). O que não podemos é deixar a palavra dada cair por terra.
+
+Ainda acredito no seu coração e na sua honestidade.
+
+Que Deus te abençoe.`,
+        ]);
+    }, 2317 * 60 * 1000));
+
+    // Step 19: ~44h38 (2678 min - Dia 3 00:00 - 160676s)
     timers.push(setTimeout(() => {
         sendFollowUp(19, [
-            `Quando for possível para você, peço que efetue o pagamento dos materiais enviados, honrando o compromisso que assumimos entre irmãos 🙏\n\nFico no aguardo.`,
-            `Valor: R$19,00`,
-            `Chave PIX CNPJ : 64158407000124`
-        ]);
-    }, 2700 * 60 * 1000));
+            `Quando for possível para você, peço que efetue o pagamento dos materiais enviados, honrando o compromisso que assumimos entre irmãos 🙏
 
-    // Step 20: ~50 horas (Dia 3 - 05:00)
+Fico no aguardo.`,
+            `*Valor: R$19,00*`,
+            `*Chave PIX CNPJ* : 64158407000124`,
+        ]);
+    }, 2678 * 60 * 1000));
+
+    // Step 20: ~49h38 (2978 min - Dia 3 05:00 - 178711s)
     timers.push(setTimeout(() => {
         sendFollowUp(20, [
-            `Não faça igual outras pessoas, enviei os estudos com carinho e na confiança, que Deus possa tocar no seu coração e você enviar a contrbuição de R$19,90 AMÉM ?`,
-            `PIX CNPJ : 64158407000124\nVALOR : R$19,90`
+            `Não faça igual outras pessoas, enviei os estudos com carinho e na confiança, que Deus possa tocar no seu coração e você enviar a contrbuição de *R$19,90* AMÉM ?`,
+            `*PIX CNPJ* : 64158407000124
+*VALOR* : R$19,90`,
         ]);
-    }, 3000 * 60 * 1000));
+    }, 2978 * 60 * 1000));
 
-    // Step 21: ~62 horas (Dia 3 - 17:00)
+    // Step 21: ~61h38 (3698 min - Dia 3 17:00 - 221926s)
     timers.push(setTimeout(() => {
         sendFollowUp(21, [
             `A Paz você ainda está ai?`,
             `me da um retorno, por favor... 🙏`,
-            `Precisamos da conntrbuição de R$19,90 para nãao ficarmos no prejuizo, confiei em você e liberei todos os materiais, agora por favor me envie o comprovante 🙏`
+            `Precisamos da conntrbuição de *R$19,90* para nãao ficarmos no prejuizo, confiei em você e liberei todos os materiais, agora por favor me envie o comprovante 🙏`,
         ]);
-    }, 3720 * 60 * 1000));
+    }, 3698 * 60 * 1000));
+
+    // Step 22: ~85h39 (5139 min - Dia 4 17:01 - 308355s)
+    timers.push(setTimeout(() => {
+        sendFollowUp(22, [
+            `Boa tarde Olá irmão, tudo bem? 🙏
+
+Passando aqui porque vi que você recebeu todo o material dos esboços, mas talvez na correria ainda não conseguiu olhar com calma.
+
+E como combinamos, eu te enviei tudo primeiro pela confiança 🤝
+
+
+Ela me ajuda a continuar mantendo esse trabalho e abençoando outras vidas através da Palavra.`,
+            `CHAVE PIX *CNPJ*: 64158407000124
+
+Que Deus te abençoe grandemente 🙏`,
+            `Me envie o comprovante por favor.`,
+        ]);
+    }, 5139 * 60 * 1000));
+
+    // Step 23: ~86h19 (5179 min - Dia 4 17:41 - 310793s - Novo Áudio 53s Vitor Bueno)
+    timers.push(setTimeout(async () => {
+        try {
+            const currentStore = loadStore();
+            const sess = currentStore.userSessions[key];
+            if (sess && sess.waitingFor === 'PIX_RECEIPT_FUNIL5') {
+                const sock = activeSockets.get(botId);
+                if (sock) {
+                    const mp3Path = path.join(__dirname, 'public', 'funil5', 'audio_lembrete_dia4_17h41.mp3');
+                    if (fs.existsSync(mp3Path)) {
+                        const mp3Buf = fs.readFileSync(mp3Path);
+                        await sock.sendMessage(remoteJid, { audio: mp3Buf, mimetype: 'audio/mpeg', ptt: true });
+                    }
+                    await sock.sendMessage(remoteJid, {
+                        text: `🔑 *Chave PIX* : Chave Pix: 64158407000124
+
+VALOR: R$19,90
+
+Me envie o comprovante por favor para dar baixa no sistema🙏`
+                    });
+                    logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Lembrete Dia 4 17h41 53s]');
+                }
+            }
+        } catch (err) {
+            console.error('[Funil 5 Step 23 Error]:', err?.message);
+        }
+    }, 5179 * 60 * 1000));
+
+    // Step 24: ~88h20 (5300 min - Dia 4 19:42 - 318007s)
+    timers.push(setTimeout(() => {
+        sendFollowUp(24, [
+            `POXA, é dificil acreditar nas pessoas hoje em dia! QUE MALDADE.
+
+Deus não se agrada com isso.`,
+            `Nao esperava ser enganado!😪`,
+        ]);
+    }, 5300 * 60 * 1000));
+
+    // Step 25: ~112h20 (6740 min - Dia 5 19:42 - 404435s - Reflexão Final)
+    timers.push(setTimeout(() => {
+        sendFollowUp(25, [
+            `Desculpa te incomodar…
+
+*Mas enquanto orava, Deus me lembrou do verdadeiro propósito disso tudo.*
+
+Esse material não foi criado apenas para ser mais um PDF no celular.
+
+Ele foi preparado para ajudar pessoas que pregam a Palavra, que muitas vezes estão cansadas, sem tempo, mas ainda assim querem entregar uma mensagem com zelo, direção e temor a Deus.
+
+Eu te enviei os materiais confiando que eles poderiam abençoar seu ministério.
+
+E se eles chegaram até você, talvez não tenha sido por acaso.
+
+A contribuição simbólica é apenas para ajudar esse projeto continuar alcançando mais pregadores e líderes que também precisam desse apoio.
+
+Se você ainda puder fazer sua contribuição, vai me ajudar muito a manter esse trabalho de pé.
+
+Que Deus abençoe sua vida, sua casa e seu ministério. 🙏`,
+            `Quando der faça o PIX por favor...
+
+CHAVE CNPJ: 64158407000124`,
+        ]);
+    }, 6740 * 60 * 1000));
 
     funil5ReminderTimers.set(key, timers);
 }
