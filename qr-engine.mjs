@@ -5646,6 +5646,15 @@ app.post('/api/bots/:botId/whatsapp/qr/test-message', async (req, res) => {
         const sock = activeSockets.get(botId);
         if (!sock) {
             res.status(400).json({ success: false, error: 'Escaneie o QR Code primeiro' });
+            return;
+        }
+        const jid = toWhatsAppJid(to);
+        await sendRealisticText(botId, sock, jid, to, text || '✅ Teste de conexão OK!');
+        res.json({ success: true, message: 'Enviado!' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err?.message || 'Erro no envio' });
+    }
+});
 
 // ─── ROTAS DE INTEGRAÇÃO COM O FACEHUB (META ADS MULTI-CONTAS) ───
 app.get('/api/funnels', (_req, res) => {
@@ -5769,16 +5778,6 @@ app.post('/api/funnels/simulate-pix', async (req, res) => {
         res.json({ success: true, transaction: transactionRecord });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
-    }
-});
-
-            return;
-        }
-        const jid = toWhatsAppJid(to);
-        await sendRealisticText(botId, sock, jid, to, text || '✅ Teste de conexão OK!');
-        res.json({ success: true, message: 'Enviado!' });
-    } catch (err) {
-        res.status(500).json({ success: false, error: err?.message || 'Erro no envio' });
     }
 });
 
