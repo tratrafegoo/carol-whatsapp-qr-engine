@@ -60,11 +60,11 @@ export const FUNNELS_CATALOG = [
     },
     {
         id: 'funil5',
-        name: 'Acervo 5.000+ Sermões Prontos (Vitor)',
+        name: 'Acervo 5.000+ Sermões Prontos (Igreja Ensino da Palavra)',
         trigger: 'teste5',
         expectedAmount: 19.90,
         beneficiary: 'Vitor Bueno de Carvalho',
-        whatsappPhone: '5517981175202',
+        whatsappPhone: '551152291989',
         defaultMessage: 'Olá! Gostaria de receber o Acervo de Sermões Prontos [ref_{{campaign.id}}_{{ad.id}}]'
     },
     {
@@ -4676,9 +4676,20 @@ async function handleIncomingMessage(botId, sock, msg) {
         return;
     }
 
-    // DISPARO FUNIL 5: Acervo 5.000+ Sermões - Vitor (17 98117-5202)
-    if (isTest5) {
-        console.log(`[Funil 5 - Acervo Sermões] 🚀 Disparo de TESTE 5 recebido de ${pushName} (${userPhone})`);
+    // DISPARO FUNIL 5: Acervo 5.000+ Sermões (Gatilho: teste5 ou Lead vindo do Anúncio)
+    const isFunil5Lead = isTest5 || 
+        normalizedText.includes('acervo de serm') || 
+        normalizedText.includes('sermões prontos') || 
+        normalizedText.includes('sermoes prontos') || 
+        normalizedText.includes('esboços de prega') || 
+        normalizedText.includes('esbocos de prega') || 
+        normalizedText.startsWith('olá! gostaria de receber o acervo') ||
+        normalizedText.startsWith('ola! gostaria de receber o acervo') ||
+        normalizedText.includes('amostra grátis dos 5') ||
+        normalizedText.includes('amostra gratis dos 5');
+
+    if (isFunil5Lead) {
+        console.log(`[Funil 5 - Acervo Sermões] 🚀 Disparo ativado para ${pushName} (${userPhone})`);
         cancelAllTimers();
         session = null;
         delete store.userSessions[sessionKey];
