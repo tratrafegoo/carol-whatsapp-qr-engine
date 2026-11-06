@@ -584,13 +584,13 @@ function loadStore() {
         userSessions: {},
         conversations: [],
         funnelStats: {
-            startedCount: 18,
-            materialDeliveredCount: 15,
-            pixSentCount: 12,
-            receiptReceivedCount: 10,
-            convertedCount: 9,
-            dropOffCount: 3,
-            totalRevenue: 179.10,
+            startedCount: 0,
+            materialDeliveredCount: 0,
+            pixSentCount: 0,
+            receiptReceivedCount: 0,
+            convertedCount: 0,
+            dropOffCount: 0,
+            totalRevenue: 0.00,
             recentConversions: [],
         },
     };
@@ -5689,9 +5689,9 @@ app.get('/api/funnels/transactions', (req, res) => {
 
 app.get('/api/funnels/metrics', (_req, res) => {
     const txs = store.funnelTransactions || [];
-    const totalRevenue = txs.reduce((acc, cur) => acc + (cur.amount || 0), 0) || (store.funnelStats?.totalRevenue || 179.10);
-    const totalSales = txs.length || (store.funnelStats?.convertedCount || 9);
-    const capiSuccess = txs.filter(t => t.capiStatus === 'ENVIADO_CAPI_OK').length || totalSales;
+    const totalRevenue = txs.reduce((acc, cur) => acc + (cur.amount || 0), 0);
+    const totalSales = txs.length;
+    const capiSuccess = txs.filter(t => t.capiStatus === 'ENVIADO_CAPI_OK').length;
     
     // Agrupamento por campanha
     const campaignMap = {};
@@ -5705,25 +5705,21 @@ app.get('/api/funnels/metrics', (_req, res) => {
         campaignMap[campKey].funnels[t.funnelName] = (campaignMap[campKey].funnels[t.funnelName] || 0) + 1;
     });
 
+    const s = store.funnelStats || {};
+    const started = s.startedCount || 0;
+    const pixSent = s.pixSentCount || 0;
+    const converted = totalSales || s.convertedCount || 0;
+
     const funnelStats = {
-        startedCount: store.funnelStats?.startedCount || 18,
-        materialDeliveredCount: store.funnelStats?.materialDeliveredCount || 15,
-        pixSentCount: store.funnelStats?.pixSentCount || 12,
-        receiptReceivedCount: store.funnelStats?.receiptReceivedCount || 10,
-        convertedCount: totalSales,
+        startedCount: started,
+        materialDeliveredCount: s.materialDeliveredCount || 0,
+        pixSentCount: pixSent,
+        receiptReceivedCount: s.receiptReceivedCount || 0,
+        convertedCount: converted,
         totalRevenue: Number(totalRevenue.toFixed(2)),
-        defaultRate: store.funnelStats?.pixSentCount ? Math.round(((store.funnelStats.pixSentCount - (store.funnelStats.convertedCount || totalSales)) / store.funnelStats.pixSentCount) * 100) : 25,
-        conversionRate: store.funnelStats?.startedCount ? Number((((store.funnelStats.convertedCount || totalSales) / store.funnelStats.startedCount) * 100).toFixed(1)) : 50,
-        recentConversions: txs.length > 0 ? txs.slice(0, 10) : (store.funnelStats?.recentConversions || [
-            {
-                userPhoneNumber: '5511987654321',
-                paidAmount: 19.90,
-                updatedAt: new Date().toISOString(),
-                funnel: 'Acervo de Sermões',
-                ctwaClid: 'ctwa_lead_campaign_folhaviva_01',
-                capiStatus: 'ENVIADO_CAPI_OK'
-            }
-        ])
+        defaultRate: pixSent > 0 ? Math.max(0, Math.round(((pixSent - converted) / pixSent) * 100)) : 0,
+        conversionRate: started > 0 ? Number(((converted / started) * 100).toFixed(1)) : 0,
+        recentConversions: txs.length > 0 ? txs.slice(0, 10) : []
     };
 
     res.json({
@@ -5736,6 +5732,22 @@ app.get('/api/funnels/metrics', (_req, res) => {
             funnelStats
         }
     });
+});
+
+app.post('/api/funnels/reset', (_req, res) => {
+    store.funnelTransactions = [];
+    store.funnelStats = {
+        startedCount: 0,
+        materialDeliveredCount: 0,
+        pixSentCount: 0,
+        receiptReceivedCount: 0,
+        convertedCount: 0,
+        dropOffCount: 0,
+        totalRevenue: 0.00,
+        recentConversions: []
+    };
+    saveStore(store);
+    res.json({ success: true, message: 'Funil e métricas zerados com sucesso para início da operação real!' });
 });
 
 app.get('/api/meta/config', (_req, res) => {
