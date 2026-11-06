@@ -230,7 +230,16 @@ async function sendMetaCapiConversion(transactionRecord) {
         };
 
         const capiUrl = `https://graph.facebook.com/v21.0/${metaPixelId}/events?access_token=${metaAccessToken}`;
-        const res = await axios.post(capiUrl, payload, { timeout: 10000 });
+        let res;
+        try {
+            res = await axios.post(capiUrl, payload, { timeout: 10000 });
+        } catch (messagingErr) {
+            console.log(`[Meta CAPI] Fallback inteligente para action_source: website (wa.me)...`);
+            payload.data[0].action_source = 'website';
+            delete payload.data[0].messaging_channel;
+            payload.data[0].event_source_url = `https://wa.me/551152291989`;
+            res = await axios.post(capiUrl, payload, { timeout: 10000 });
+        }
         console.log(`[Meta CAPI] ✅ Evento Purchase enviado com sucesso para a Meta! Eventos recebidos: ${res.data?.events_received || 1}`);
         return { success: true, data: res.data };
     } catch (err) {
