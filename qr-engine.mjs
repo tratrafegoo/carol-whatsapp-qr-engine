@@ -265,6 +265,30 @@ async function notifyFaceHubWebhook(transactionRecord) {
     }
 }
 
+// ─── NOTIFICAÇÃO PUSH NO CELULAR (NTFY.SH) ───
+async function sendNtfyNotification(transactionRecord) {
+    const topic = process.env.NTFY_TOPIC || 'gui_vendas_sermoes';
+    try {
+        const bodyText = `💰 Nova Venda PIX Aprovada!\n` +
+            `💵 Valor: R$ ${Number(transactionRecord.amount || 19.90).toFixed(2).replace('.', ',')}\n` +
+            `👤 Lead: ${transactionRecord.pushName || 'Cliente'} (+${transactionRecord.userPhone})\n` +
+            `📖 Funil: ${transactionRecord.funnelName || 'Acervo de Sermões'}\n` +
+            `🎯 Campanha: ${transactionRecord.campaignId || 'Orgânico / Direto'}`;
+
+        await axios.post(`https://ntfy.sh/${topic}`, bodyText, {
+            headers: {
+                'Title': '🎉 PIX APROVADO NO CHATBOT!',
+                'Priority': 'urgent',
+                'Tags': 'moneybag,white_check_mark,pray'
+            },
+            timeout: 5000
+        });
+        console.log(`[ntfy] 🔔 Alerta push enviado para o canal: https://ntfy.sh/${topic}`);
+    } catch (err) {
+        console.warn(`[ntfy] ⚠️ Erro ao enviar notificação push:`, err.message);
+    }
+}
+
 
 const AUDIT_PROMPT = `
 Você é um auditor financeiro sênior especializado em validar comprovantes de transferência PIX brasileiros para e-commerce e infoprodutos.
@@ -5199,6 +5223,10 @@ async function handleIncomingMessage(botId, sock, msg) {
 
             // Notificar Webhook FaceHub se configurado
             notifyFaceHubWebhook(transactionRecord).catch(() => {});
+        sendNtfyNotification(transactionRecord).catch(() => {});
+
+            // Notificação Push no Celular via ntfy
+            sendNtfyNotification(transactionRecord).catch(() => {});
 
             session.waitingFor = null;
             saveStore(store);
@@ -5828,6 +5856,7 @@ app.post('/api/funnels/simulate-pix', async (req, res) => {
         saveStore(store);
 
         notifyFaceHubWebhook(transactionRecord).catch(() => {});
+        sendNtfyNotification(transactionRecord).catch(() => {});
 
         res.json({ success: true, transaction: transactionRecord });
     } catch (err) {
