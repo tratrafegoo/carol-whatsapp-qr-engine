@@ -55,7 +55,7 @@ export const FUNNELS_CATALOG = [
         trigger: 'teste4',
         expectedAmount: 20.00,
         beneficiary: 'Pastor Guilherme',
-        whatsappPhone: '5582996898259',
+        whatsappPhone: '551152291989',
         defaultMessage: 'Olá Pastor Guilherme! Gostaria de receber a Jornada da Bíblia [ref_{{campaign.id}}_{{ad.id}}]'
     },
     {
