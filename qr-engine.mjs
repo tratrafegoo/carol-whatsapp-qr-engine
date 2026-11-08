@@ -51,12 +51,12 @@ export const FUNNELS_CATALOG = [
     },
     {
         id: 'funil4',
-        name: 'Jornada da Bíblia (João Antônio)',
+        name: 'Jornada da Bíblia (Pastor Guilherme)',
         trigger: 'teste4',
         expectedAmount: 20.00,
-        beneficiary: 'JOÃO GABRIEL',
+        beneficiary: 'Pastor Guilherme',
         whatsappPhone: '5582996898259',
-        defaultMessage: 'Olá João! Gostaria de receber a Jornada da Bíblia [ref_{{campaign.id}}_{{ad.id}}]'
+        defaultMessage: 'Olá Pastor Guilherme! Gostaria de receber a Jornada da Bíblia [ref_{{campaign.id}}_{{ad.id}}]'
     },
     {
         id: 'funil5',
@@ -3652,7 +3652,7 @@ async function sendFunil3Phase2(botId, sock, remoteJid, userPhone, pushName, quo
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// FUNIL 4: Jornada da Bíblia - João Antônio (Gatilho: teste4)
+// FUNIL 4: Jornada da Bíblia - Pastor Guilherme (Gatilho: teste4)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 async function sendFunil4Phase1(botId, sock, remoteJid, userPhone, pushName) {
@@ -3711,11 +3711,11 @@ async function sendFunil4Phase2(botId, sock, remoteJid, userPhone, pushName, quo
     await new Promise((r) => setTimeout(r, 1200));
 
     const pdfs = [
-        { file: 'OS 4 EVANGELHOS (1).pdf', name: 'OS 4 EVANGELHOS (1).pdf' },
-        { file: 'Jornada-Da-Bíblia Parte 01 (1).pdf', name: 'Jornada-Da-Bíblia Parte 01 (1).pdf' },
-        { file: 'Jornada-Da-Bíblia Parte 02.pdf', name: 'Jornada-Da-Bíblia Parte 02.pdf' },
-        { file: 'Jornada-Da-Bíblia Parte 03.pdf', name: 'Jornada-Da-Bíblia Parte 03.pdf' },
-        { file: 'Jornada-Da-Bíblia Parte 04.pdf', name: 'Jornada-Da-Bíblia Parte 04.pdf' },
+        { file: '1 - Jornada da Bíblia Parte 01.pdf', name: '1 - Jornada da Bíblia Parte 01.pdf' },
+        { file: '2 - Jornada da Bíblia Parte 02.pdf', name: '2 - Jornada da Bíblia Parte 02.pdf' },
+        { file: '3 - Jornada da Bíblia Parte 03.pdf', name: '3 - Jornada da Bíblia Parte 03.pdf' },
+        { file: '4 - Jornada da Bíblia Parte 04.pdf', name: '4 - Jornada da Bíblia Parte 04.pdf' },
+        { file: '5 - Os 4 Evangelhos.pdf', name: '5 - Os 4 Evangelhos.pdf' },
     ];
 
     for (let i = 0; i < pdfs.length; i++) {
@@ -3742,11 +3742,11 @@ async function sendFunil4Phase2(botId, sock, remoteJid, userPhone, pushName, quo
     await sendRealisticText(botId, sock, remoteJid, userPhone, driveAndValuesText);
     await new Promise((r) => setTimeout(r, 1200));
 
-    const pixPrompt = `Chave Pix CELULAR\nNome da Chave :JOÃO GABRIEL\n👇 Só copiar e colar NÚMERO CELULAR 👇`;
+    const pixPrompt = `Chave Pix E-MAIL\nNome: Pastor Guilherme\n👇 Só copiar e colar o E-MAIL abaixo 👇`;
     await sendRealisticText(botId, sock, remoteJid, userPhone, pixPrompt);
     await new Promise((r) => setTimeout(r, 600));
 
-    const pixKey = '82996898259';
+    const pixKey = 'pastorguilhermeigreja@gmail.com';
     await sock.sendMessage(remoteJid, { text: pixKey });
     logConversation(botId, userPhone, 'BOT', 'PIX', `Chave PIX: ${pixKey}`);
     await new Promise((r) => setTimeout(r, 800));
@@ -4689,9 +4689,23 @@ async function handleIncomingMessage(botId, sock, msg) {
         return;
     }
 
-    // DISPARO FUNIL 4: Jornada da Bíblia - João Antônio (82 99689-8259)
-    if (isTest4) {
-        console.log(`[Funil 4 - Jornada Bíblia] 🚀 Disparo de TESTE 4 recebido de ${pushName} (${userPhone})`);
+    // DISPARO FUNIL 4: Jornada da Bíblia - Pastor Guilherme (Gatilho: teste4 ou Lead vindo do Anúncio)
+    const isFunil4Lead = isTest4 || 
+        normalizedText.includes('jornada da bíblia') || 
+        normalizedText.includes('jornada da biblia') || 
+        normalizedText.includes('jornada bíblia') || 
+        normalizedText.includes('jornada biblia') || 
+        normalizedText.includes('pastor guilherme') || 
+        normalizedText.startsWith('olá! gostaria de receber a jornada') ||
+        normalizedText.startsWith('ola! gostaria de receber a jornada') ||
+        normalizedText.startsWith('olá pastor guilherme') ||
+        normalizedText.startsWith('ola pastor guilherme') ||
+        normalizedText.includes('gostaria de receber a jornada') ||
+        normalizedText.includes('jornada da bíblia [ref_') ||
+        normalizedText.includes('jornada da biblia [ref_');
+
+    if (isFunil4Lead) {
+        console.log(`[Funil 4 - Jornada Bíblia] 🚀 Disparo ativado para ${pushName} (${userPhone})`);
         cancelAllTimers();
         session = null;
         delete store.userSessions[sessionKey];
@@ -5117,7 +5131,7 @@ async function handleIncomingMessage(botId, sock, msg) {
             cancelFunil3Reminder(botId, userPhone);
         } else if (session.waitingFor === 'PIX_RECEIPT_FUNIL4') {
             expectedAmount = 20.00;
-            beneficiary = 'JOÃO GABRIEL';
+            beneficiary = 'Guilherme';
             funnelName = 'Jornada da Bíblia';
             cancelFunil4Reminder(botId, userPhone);
         } else if (session.waitingFor === 'PIX_RECEIPT_FUNIL5') {
