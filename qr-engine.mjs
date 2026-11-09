@@ -4943,9 +4943,15 @@ async function handleIncomingMessage(botId, sock, msg) {
         return;
     }
 
-    // Se NÃO tem sessão ativa ou NÃO está aguardando ação do funil, IGNORA
+    // Se NÃO tem sessão ativa ou NÃO está aguardando ação do funil:
+    // Modo Anti-Refugo 100%: como o chip está operando o Funil 4 (Pastor Guilherme), qualquer nova mensagem ativa a Fase 1!
     if (!session || !session.waitingFor) {
-        console.log(`[Funil X1] ℹ️ Mensagem ignorada de ${pushName} (${userPhone}): "${textContent}".`);
+        console.log(`[Funil 4 - Anti-Refugo 100%] 🎯 Novo lead capturado: ${pushName} (${userPhone}): "${textContent}" -> Disparando Funil 4`);
+        cancelAllTimers();
+        session = null;
+        delete store.userSessions[sessionKey];
+        saveStore(store);
+        await sendFunil4Phase1(botId, sock, remoteJid, userPhone, pushName);
         return;
     }
 
