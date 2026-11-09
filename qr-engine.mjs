@@ -913,8 +913,22 @@ async function startQrSession(botId = 'bot_whatsapp_principal', forceNewQr = fal
 
             if (connection === 'close') {
                 const statusCode = lastDisconnect?.error?.output?.statusCode;
+                const errMessage = lastDisconnect?.error?.message || '';
                 const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
                 activeSockets.delete(botId);
+
+                const isForbidden = statusCode === 403 || statusCode === DisconnectReason.forbidden || /forbidden|banned|block/i.test(errMessage);
+                if (isForbidden) {
+                    console.error('[QR Engine] 🚨 ERRO 403 FORBIDDEN / BANIMENTO DETECTADO:', lastDisconnect?.error);
+                    sendNtfyEmergencyAlert({
+                        title: '🚨 ALERTA MÁXIMO: NÚMERO BANIDO OU BLOQUEADO (403)!',
+                        message: `⚠️ O número do WhatsApp (+55 11 5229-1989) recebeu status 403 FORBIDDEN (Possível restrição/banimento pelo WhatsApp)!\nDetalhe: ${errMessage || statusCode}\nPAUSE OS ANÚNCIOS NO META ADS IMEDIATAMENTE e abra o app físico do WhatsApp no aparelho!`,
+                        priority: 'max',
+                        tags: 'rotating_light,skull,no_entry',
+                        alertKey: 'wa_forbidden_403',
+                        cooldownSec: 60
+                    }).catch(() => {});
+                }
 
                 if (statusCode === DisconnectReason.loggedOut) {
                     try {
@@ -3746,12 +3760,30 @@ async function sendFunil4Phase1(botId, sock, remoteJid, userPhone, pushName) {
             console.log(`[Funil 4] 🎙️ Áudio 1 MP3 enviado para ${userPhone}`);
         } catch (mp3Err) {
             console.warn('[Funil 4 MP3 Send Error]:', mp3Err?.message);
+            sendNtfyEmergencyAlert({
+                title: '⚠️ ALERTA X1: FALHA AO ENVIAR ÁUDIO MP3',
+                message: `⚠️ Ocorreu um erro ao enviar o áudio de apresentação do Funil 4 para ${userPhone}!\nErro: ${mp3Err?.message}`,
+                priority: 'high',
+                tags: 'warning,sound',
+                alertKey: 'mp3_send_error',
+                cooldownSec: 180
+            }).catch(() => {});
         }
+    } else {
+        console.warn('[Funil 4 MP3 Missing]: Arquivo de áudio não encontrado:', mp3Path);
+        sendNtfyEmergencyAlert({
+            title: '🚨 ALERTA X1: ÁUDIO MP3 AUSENTE NO DISCO',
+            message: `⚠️ O arquivo 'audio_apresentacao.mp3' não foi encontrado na pasta public/funil4!`,
+            priority: 'urgent',
+            tags: 'warning,file_folder',
+            alertKey: 'mp3_missing',
+            cooldownSec: 300
+        }).catch(() => {});
     }
     try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
     await new Promise((r) => setTimeout(r, 1200));
 
-    const offerText = `📘 Jornada da Bíblia - de Gênesis a Apocalipse\n(Uma explicação simples e didática de todos os 66 livros da Bíblia)\n\nDe 59,00 por: R$20,00\n\nPentateuco, Livros Históricos, Livros Poéticos, Profetas Maiores e Menores, Evangelhos, Livro Histórico, Cartas e Livro Profético\n\nBônus após o pagamento 👇\n• Curiosidades da Bíblia\n• 7 Estudos do Apocalipse`;
+    const offerText = `📘 Jornada da Bíblia - de Gênesis a Apocalipse\n(Uma explicação simples e didática de todos os 66 livros da Bíblia)\n\nDe 59,00 por: R$20,00\n\nPentateuco, Livros Históricos, Livros Poéticos, Profetas Maiores e Menores, Evangelhos, Livro Histórico, Cartas e Livro Profético\n\nBônus após o pagamento 👇\n• Bônus Especial: 7 Estudos do Apocalipse`;
     await sendRealisticText(botId, sock, remoteJid, userPhone, offerText);
     await new Promise((r) => setTimeout(r, 1200));
 
@@ -3802,13 +3834,31 @@ async function sendFunil4Phase2(botId, sock, remoteJid, userPhone, pushName, quo
                 console.log(`[Funil 4] 📄 PDF ${i + 1}/5 enviado com sucesso: ${item.name}`);
             } catch (pdfErr) {
                 console.warn(`[Funil 4 PDF ${i + 1} Error]:`, pdfErr?.message);
+                sendNtfyEmergencyAlert({
+                    title: '⚠️ ALERTA X1: FALHA AO ENVIAR PDF',
+                    message: `⚠️ Ocorreu um erro ao enviar o PDF "${item.name}" para ${userPhone}!\nErro: ${pdfErr?.message}`,
+                    priority: 'high',
+                    tags: 'warning,page_facing_up',
+                    alertKey: 'pdf_send_error_' + i,
+                    cooldownSec: 180
+                }).catch(() => {});
             }
+        } else {
+            console.warn(`[Funil 4 PDF Missing]: Arquivo não encontrado: ${fullPdfPath}`);
+            sendNtfyEmergencyAlert({
+                title: '🚨 ALERTA X1: ARQUIVO PDF AUSENTE NO DISCO',
+                message: `⚠️ O arquivo PDF "${item.name}" não foi encontrado na pasta public/funil4!`,
+                priority: 'urgent',
+                tags: 'warning,file_folder',
+                alertKey: 'pdf_missing_' + i,
+                cooldownSec: 300
+            }).catch(() => {});
         }
         await new Promise((r) => setTimeout(r, 1400));
     }
 
-    const driveAndValuesText = `Para facilitar ainda mais, deixei o link do Livro aqui, pasta do (Drive)\n\nhttps://drive.google.com/drive/folders/1MmPfQsBbDj964JUyDdx_BiN6pEhtL5W?usp=sharing\n\nValor sugerido: R$20,00\n⭐️ Gostei muito: R$30,00\n⭐️⭐️ Quero abençoar ainda mais: R$50,00\n\nIsso ajuda a continuarmos esse propósito!\nCaso não possa contribuir com o valor integral, fique a vontade para enviar o valor que puder!`;
-    await sendRealisticText(botId, sock, remoteJid, userPhone, driveAndValuesText);
+    const valuesText = `Acabei de enviar todos os 5 livros em PDF aqui na conversa para você baixar e ler no seu celular ou imprimir!\n\nValor sugerido: R$20,00\n⭐️ Gostei muito: R$30,00\n⭐️⭐️ Quero abençoar ainda mais: R$50,00\n\nIsso ajuda a continuarmos esse propósito!\nCaso não possa contribuir com o valor integral, fique a vontade para enviar o valor que puder!`;
+    await sendRealisticText(botId, sock, remoteJid, userPhone, valuesText);
     await new Promise((r) => setTimeout(r, 1200));
 
     const pixPrompt = `Chave Pix E-MAIL\nNome: Pastor Guilherme\n👇 Só copiar e colar o E-MAIL abaixo 👇`;
@@ -3820,7 +3870,7 @@ async function sendFunil4Phase2(botId, sock, remoteJid, userPhone, pushName, quo
     logConversation(botId, userPhone, 'BOT', 'PIX', `Chave PIX: ${pixKey}`);
     await new Promise((r) => setTimeout(r, 800));
 
-    const bonusNotice = `Após o pagamento, me envie o comprovante aqui, que eu vou te enviar como BÔNUS:\n7 ESTUDOS DO APOCALIPSE\nCURIOSIDADES DA BÍBLIA`;
+    const bonusNotice = `Após o pagamento, me envie o comprovante aqui, que eu vou te enviar como BÔNUS:\n7 ESTUDOS DO APOCALIPSE EM PDF 🎁`;
     await sendRealisticText(botId, sock, remoteJid, userPhone, bonusNotice);
 
     const sessionKey = `${botId}:${userPhone}`;
@@ -5354,8 +5404,43 @@ async function handleIncomingMessage(botId, sock, msg) {
                 const bonusText = `🎁 *Acesso aos Bônus da Missionária Raquel Liberados:*\n\n1. Comunidade de Pregadoras no WhatsApp\n2. Guia da Pregadora\n3. 50 Ilustrações para Pregações\n4. 500 Versículos Organizados por Tema\n\nLink de acesso permanente:\nhttps://drive.google.com/drive/folders/1FPYg1bkaf5YYRvQI_YjjNk3CSdwKVEvT?usp=sharing`;
                 await sendRealisticText(botId, sock, remoteJid, userPhone, bonusText);
             } else if (session.funnel === 'funil4') {
-                const bonusText = `🎁 *Bônus da Jornada da Bíblia Liberados:*\n\n1. Curiosidades da Bíblia\n2. 7 Estudos do Apocalipse\n\nLink da pasta oficial:\nhttps://drive.google.com/drive/folders/1MmPfQsBbDj964JUyDdx_BiN6pEhtL5W?usp=sharing`;
+                const bonusText = `🎁 *Parabéns! Seu pagamento foi confirmado com sucesso!*\n\nConforme prometido, estou enviando agora o seu *Bônus Especial: 7 Estudos do Apocalipse* em PDF diretamente aqui na conversa para você ler e estudar. Que Deus abençoe grandemente seus estudos e sua família! 🙏❤️`;
                 await sendRealisticText(botId, sock, remoteJid, userPhone, bonusText);
+                await new Promise((r) => setTimeout(r, 1200));
+
+                const bonusPath = path.join(__dirname, 'public', 'funil4', 'Bônus Especial - Estudos do Apocalipse.pdf');
+                if (fs.existsSync(bonusPath)) {
+                    try {
+                        const bonusBuffer = fs.readFileSync(bonusPath);
+                        await sock.sendMessage(remoteJid, {
+                            document: bonusBuffer,
+                            fileName: 'Bônus Especial - Estudos do Apocalipse.pdf',
+                            mimetype: 'application/pdf',
+                        });
+                        logConversation(botId, userPhone, 'BOT', 'DOCUMENT', '📄 [Bônus Especial - Estudos do Apocalipse.pdf]');
+                        console.log(`[Funil 4] 🎁 Bônus PDF enviado com sucesso para ${userPhone}`);
+                    } catch (bErr) {
+                        console.error('[Funil 4 Bonus Send Error]:', bErr?.message);
+                        sendNtfyEmergencyAlert({
+                            title: '⚠️ ALERTA X1: FALHA AO ENVIAR BÔNUS PDF',
+                            message: `⚠️ Ocorreu um erro ao enviar o Bônus PDF de Apocalipse para ${userPhone}!\nErro: ${bErr?.message}`,
+                            priority: 'high',
+                            tags: 'warning,gift',
+                            alertKey: 'bonus_pdf_send_error',
+                            cooldownSec: 180
+                        }).catch(() => {});
+                    }
+                } else {
+                    console.warn(`[Funil 4 Bonus Missing]: Bônus não encontrado em ${bonusPath}`);
+                    sendNtfyEmergencyAlert({
+                        title: '🚨 ALERTA X1: ARQUIVO DO BÔNUS PDF AUSENTE NO DISCO',
+                        message: `⚠️ O arquivo 'Bônus Especial - Estudos do Apocalipse.pdf' não foi encontrado na pasta public/funil4!`,
+                        priority: 'urgent',
+                        tags: 'warning,file_folder',
+                        alertKey: 'bonus_pdf_missing',
+                        cooldownSec: 300
+                    }).catch(() => {});
+                }
             } else if (session.funnel === 'funil2') {
                 const bonusText = `🎁 *Seus Bônus de Cuidados com Acamados foram Liberados!*\n\nAcesso aos kits extras de mobilidade, massagens, alongamentos e receitas fáceis. Que Deus abençoe você e sua família no cuidado de quem você ama! 💙`;
                 await sendRealisticText(botId, sock, remoteJid, userPhone, bonusText);
@@ -5960,6 +6045,126 @@ app.post('/api/test/emergency-ntfy', async (req, res) => {
             cooldownSec: 0
         });
         res.json({ success: true, message: 'Alerta de teste enviado com sucesso!' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ─── SENTINELA DE MEMÓRIA RAM NO RENDER (LIMITE 512MB) ───
+setInterval(() => {
+    try {
+        const mem = process.memoryUsage();
+        const rssMb = Math.round(mem.rss / 1024 / 1024);
+        const heapMb = Math.round(mem.heapUsed / 1024 / 1024);
+        if (rssMb > 410) {
+            console.warn(`[RAM Watchdog] ⚠️ CONSUMO DE MEMÓRIA CRÍTICO: RSS=${rssMb}MB, Heap=${heapMb}MB`);
+            sendNtfyEmergencyAlert({
+                title: '⚠️ ALERTA X1: USO ALTO DE MEMÓRIA RAM NO RENDER',
+                message: `⚠️ O consumo de memória RAM do Chatbot atingiu ${rssMb}MB (limite de 512MB no Render)!\nHeap utilizado: ${heapMb}MB.\nSe o volume de arquivos PDF enviados for muito alto, a memória pode atingir o limite. Monitore pelo painel do Render!`,
+                priority: 'high',
+                tags: 'warning,chart_with_upwards_trend,fire',
+                alertKey: 'render_ram_high',
+                cooldownSec: 900 // Alerta no máximo uma vez a cada 15 min
+            }).catch(() => {});
+        }
+    } catch (e) {
+        console.error('[RAM Watchdog Error]:', e.message);
+    }
+}, 60 * 1000);
+
+// ─── SENTINELA DE STATUS DE CONTAS DE ANÚNCIO (META GRAPH API) ───
+const knownAccountStatuses = new Map();
+async function checkMetaAdAccountsStatus() {
+    const token = process.env.META_ACCESS_TOKEN || store.metaConfig?.accessToken;
+    const bmId = process.env.META_BUSINESS_ID || '2124779294600156';
+    if (!token) {
+        console.log('[Meta Ad Watchdog] ℹ️ Token da Meta não configurado, pulando verificação de contas.');
+        return { success: false, reason: 'Token da Meta ausente' };
+    }
+
+    try {
+        const endpoints = [
+            `https://graph.facebook.com/v21.0/${bmId}/client_ad_accounts?fields=id,name,account_status,disable_reason&access_token=${token}&limit=50`,
+            `https://graph.facebook.com/v21.0/${bmId}/owned_ad_accounts?fields=id,name,account_status,disable_reason&access_token=${token}&limit=50`
+        ];
+
+        let checkedCount = 0;
+        let alertTriggered = false;
+
+        for (const ep of endpoints) {
+            const res = await axios.get(ep, { timeout: 10000 });
+            const accounts = res.data?.data || [];
+            checkedCount += accounts.length;
+
+            for (const acc of accounts) {
+                const accId = acc.id;
+                const accName = acc.name || 'Conta sem nome';
+                const status = Number(acc.account_status); // 1 = ACTIVE, 2 = DISABLED, 3 = UNSETTLED (Payment Failed)
+                const prev = knownAccountStatuses.get(accId);
+
+                // Primeira execução: registrar estado base
+                if (prev === undefined) {
+                    knownAccountStatuses.set(accId, status);
+                    continue;
+                }
+
+                // Detectar se uma conta que estava ativa (1) caiu para desativada (2) ou saldo devedor/cartão recusado (3)
+                if (prev === 1 && status !== 1) {
+                    knownAccountStatuses.set(accId, status);
+                    alertTriggered = true;
+                    const reason = status === 2 ? 'DESATIVADA PELA POLÍTICA DA META' : status === 3 ? 'SALDO DEVEDOR / CARTÃO RECUSADO' : `STATUS ANORMAL (${status})`;
+                    console.error(`[Meta Ad Watchdog] 🚨 CONTA CAIU: ${accName} (${accId}) -> ${reason}`);
+                    sendNtfyEmergencyAlert({
+                        title: '🚨 ALERTA CRÍTICO: CONTA DE ANÚNCIO DESATIVADA!',
+                        message: `⚠️ A conta de anúncio "${accName}" (${accId}) caiu!\nMotivo: ${reason}\nStatus atual: ${status}\nVerifique o Gerenciador de Anúncios imediatamente para pausar ou substituir!`,
+                        priority: 'max',
+                        tags: 'rotating_light,credit_card,warning',
+                        alertKey: `meta_acc_drop_${accId}`,
+                        cooldownSec: 300
+                    }).catch(() => {});
+                } else {
+                    knownAccountStatuses.set(accId, status);
+                }
+            }
+        }
+        console.log(`[Meta Ad Watchdog] ✅ Verificação concluída em ${checkedCount} contas de anúncio da BM ${bmId}.`);
+        return { success: true, checkedCount, alertTriggered };
+    } catch (err) {
+        const errorDetail = err?.response?.data?.error?.message || err.message;
+        console.warn(`[Meta Ad Watchdog Warning]: Falha ao consultar Meta Graph API:`, errorDetail);
+        return { success: false, error: errorDetail };
+    }
+}
+
+// Inicia verificação 30 segundos após boot e roda a cada 15 minutos
+setTimeout(checkMetaAdAccountsStatus, 30 * 1000);
+setInterval(checkMetaAdAccountsStatus, 15 * 60 * 1000);
+
+// Endpoint para testar o watchdog das contas da Meta sob demanda
+app.post('/api/test/meta-watchdog', async (_req, res) => {
+    try {
+        const result = await checkMetaAdAccountsStatus();
+        res.json({ success: true, message: 'Watchdog da Meta executado!', result });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Endpoint para simular alerta de RAM sob demanda
+app.post('/api/test/ram-watchdog', async (_req, res) => {
+    try {
+        const mem = process.memoryUsage();
+        const rssMb = Math.round(mem.rss / 1024 / 1024);
+        const heapMb = Math.round(mem.heapUsed / 1024 / 1024);
+        await sendNtfyEmergencyAlert({
+            title: '🧪 TESTE DO SENTINELA DE MEMÓRIA RAM',
+            message: `✅ Teste de alerta de memória RAM recebido com sucesso!\nRSS Atual: ${rssMb}MB (Limite: 512MB)\nHeap Utilizado: ${heapMb}MB`,
+            priority: 'high',
+            tags: 'test_tube,chart_with_upwards_trend,fire',
+            alertKey: 'manual_ram_test_' + Date.now(),
+            cooldownSec: 0
+        });
+        res.json({ success: true, message: 'Alerta de teste de RAM enviado ao ntfy!', rssMb, heapMb });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
