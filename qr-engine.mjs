@@ -3861,12 +3861,108 @@ async function sendFunil4Phase2(botId, sock, remoteJid, userPhone, pushName, quo
     await sendRealisticText(botId, sock, remoteJid, userPhone, valuesText);
     await new Promise((r) => setTimeout(r, 1200));
 
-    const pixPrompt = `Chave Pix E-MAIL\nNome: Pastor Guilherme\n👇 Só copiar e colar o E-MAIL abaixo 👇`;
+    const pixKey = 'pastorguilhermeigreja@gmail.com';
+    const beneficiaryName = 'Pastor Guilherme';
+
+    // 1. Botão Nativo Interativo do WhatsApp (cta_copy: [ Copiar Chave Pix ])
+    if (generateWAMessageFromContent && proto) {
+        try {
+            const buttonParams = {
+                display_text: 'Copiar chave Pix',
+                id: 'copy_pix_funil4',
+                copy_code: pixKey,
+            };
+
+            const interactiveMessage = proto.Message?.InteractiveMessage?.create
+                ? proto.Message.InteractiveMessage.create({
+                      body: proto.Message.InteractiveMessage.Body?.create
+                          ? proto.Message.InteractiveMessage.Body.create({ text: 'Toque no botão abaixo para copiar a chave Pix:' })
+                          : { text: 'Toque no botão abaixo para copiar a chave Pix:' },
+                      footer: proto.Message.InteractiveMessage.Footer?.create
+                          ? proto.Message.InteractiveMessage.Footer.create({ text: 'Pastor Guilherme' })
+                          : { text: 'Pastor Guilherme' },
+                      header: proto.Message.InteractiveMessage.Header?.create
+                          ? proto.Message.InteractiveMessage.Header.create({
+                                title: 'Chave Pix E-MAIL',
+                                subtitle: pixKey,
+                                hasMediaAttachment: false,
+                            })
+                          : {
+                                title: 'Chave Pix E-MAIL',
+                                subtitle: pixKey,
+                                hasMediaAttachment: false,
+                            },
+                      nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage?.create
+                          ? proto.Message.InteractiveMessage.NativeFlowMessage.create({
+                                buttons: [{ name: 'cta_copy', buttonParamsJson: JSON.stringify(buttonParams) }],
+                            })
+                          : {
+                                buttons: [{ name: 'cta_copy', buttonParamsJson: JSON.stringify(buttonParams) }],
+                            },
+                  })
+                : {
+                      body: { text: 'Toque no botão abaixo para copiar a chave Pix:' },
+                      footer: { text: 'Pastor Guilherme' },
+                      header: {
+                          title: 'Chave Pix E-MAIL',
+                          subtitle: pixKey,
+                          hasMediaAttachment: false,
+                      },
+                      nativeFlowMessage: {
+                          buttons: [{ name: 'cta_copy', buttonParamsJson: JSON.stringify(buttonParams) }],
+                      },
+                  };
+
+            const waMessage = generateWAMessageFromContent(
+                remoteJid,
+                {
+                    messageContextInfo: {
+                        deviceListMetadata: {},
+                        deviceListMetadataVersion: 2,
+                        messageSecret: crypto.randomBytes(32),
+                    },
+                    interactiveMessage,
+                },
+                {}
+            );
+
+            await sock.relayMessage(remoteJid, waMessage.message, {
+                messageId: waMessage.key.id,
+                additionalNodes: [
+                    {
+                        tag: 'biz',
+                        attrs: {
+                            actual_actors: '2',
+                            host_storage: '2',
+                            privacy_mode_ts: String(Math.floor(Date.now() / 1000)),
+                        },
+                        content: [
+                            {
+                                tag: 'interactive',
+                                attrs: { type: 'native_flow', v: '1' },
+                                content: [{ tag: 'native_flow', attrs: { v: '9', name: 'mixed' } }],
+                            },
+                        ],
+                    },
+                ],
+            });
+            logConversation(botId, userPhone, 'BOT', 'PIX', `[Botão Nativo PIX cta_copy]: ${pixKey}`);
+            console.log(`[Funil 4] 🔘 Botão nativo cta_copy enviado com sucesso para ${userPhone}`);
+        } catch (btnErr) {
+            console.error('[Funil 4 Button Error]:', btnErr?.message);
+        }
+    }
+
+    await new Promise((r) => setTimeout(r, 600));
+
+    // 2. Mensagem com instrução e formato de código (```):
+    // Impede que o WhatsApp converta em link azul de e-mail e permite clicar/copiar facilmente
+    const pixPrompt = `Chave Pix E-MAIL\nNome: Pastor Guilherme\n👇 Só clicar no botão ou copiar a chave abaixo 👇`;
     await sendRealisticText(botId, sock, remoteJid, userPhone, pixPrompt);
     await new Promise((r) => setTimeout(r, 600));
 
-    const pixKey = 'pastorguilhermeigreja@gmail.com';
-    await sock.sendMessage(remoteJid, { text: pixKey });
+    const codeBlockPix = '```' + pixKey + '```';
+    await sock.sendMessage(remoteJid, { text: codeBlockPix });
     logConversation(botId, userPhone, 'BOT', 'PIX', `Chave PIX: ${pixKey}`);
     await new Promise((r) => setTimeout(r, 800));
 
