@@ -6088,6 +6088,139 @@ app.post('/api/meta/config', (req, res) => {
     res.json({ success: true, message: 'Configurações da Meta salvas com sucesso!' });
 });
 
+// ============================================================
+// PROXY DE ALTA VELOCIDADE ANTI-BLOQUEIO PARA META ADS HUB
+// ============================================================
+let metaAccountsCache = { timestamp: 0, data: [] };
+let metaBillingCache = { timestamp: 0, data: [], totals: {} };
+
+async function fetchMetaAccountsFromApi() {
+    const token = process.env.META_ACCESS_TOKEN || 'EAAUO1JVtzLgBS9gj3E8dtMiX2KkICYQyjZAUuy0SJJmzWPZCZABlSDFUllmoDfB5h1lt7xHJ3ifoY5jOMuLRKG9Bkq7Ulw9V3vOG3PgXEWqZByjMrv1ZCozA2hnjKCWyjlcHAsm4hxzFZCptbgtD3WbzZBxzg8ZBWncHbjBVjOdRON9xfxhX9EoYMQj0Yf7XbG3FDQZDZD';
+    const bmId = process.env.META_BUSINESS_ID || '2124779294600156';
+    const fields = 'id,account_id,name,account_status,disable_reason,currency,amount_spent,balance,funding_source_details,timezone_name';
+    const version = 'v21.0';
+
+    const endpoints = [
+        `https://graph.facebook.com/${version}/me/adaccounts?fields=${fields}&limit=100&access_token=${token}`,
+        `https://graph.facebook.com/${version}/${bmId}/client_ad_accounts?fields=${fields}&limit=100&access_token=${token}`,
+        `https://graph.facebook.com/${version}/${bmId}/owned_ad_accounts?fields=${fields}&limit=100&access_token=${token}`
+    ];
+
+    const accountsMap = new Map();
+    const results = await Promise.allSettled(
+        endpoints.map(async (url) => {
+            const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+            const json = await r.json();
+            return json.data || [];
+        })
+    );
+
+    results.forEach(res => {
+        if (res.status === 'fulfilled' && Array.isArray(res.value)) {
+            res.value.forEach(acc => {
+                const cleanId = acc.account_id || acc.id.replace('act_', '');
+                accountsMap.set(cleanId, acc);
+            });
+        }
+    });
+
+    return Array.from(accountsMap.values());
+}
+
+app.get('/api/meta/adaccounts', async (_req, res) => {
+    try {
+        const now = Date.now();
+        if (metaAccountsCache.data.length > 0 && now - metaAccountsCache.timestamp < 30000) {
+            return res.json({ success: true, accounts: metaAccountsCache.data, count: metaAccountsCache.data.length, cached: true });
+        }
+
+        const accounts = await fetchMetaAccountsFromApi();
+        if (accounts.length > 0) {
+            metaAccountsCache = { timestamp: now, data: accounts };
+        }
+        res.json({ success: true, accounts, count: accounts.length });
+    } catch (err) {
+        console.error('[API Proxy Meta Accounts Error]:', err?.message);
+        res.status(500).json({ success: false, error: err?.message, accounts: metaAccountsCache.data });
+    }
+});
+
+app.get('/api/meta/billing', async (_req, res) => {
+    try {
+        const now = Date.now();
+        if (metaBillingCache.data.length > 0 && now - metaBillingCache.timestamp < 30000) {
+            return res.json({ success: true, charges: metaBillingCache.data, totals: metaBillingCache.totals, cached: true });
+        }
+
+        const token = process.env.META_ACCESS_TOKEN || 'EAAUO1JVtzLgBS9gj3E8dtMiX2KkICYQyjZAUuy0SJJmzWPZCZABlSDFUllmoDfB5h1lt7xHJ3ifoY5jOMuLRKG9Bkq7Ulw9V3vOG3PgXEWqZByjMrv1ZCozA2hnjKCWyjlcHAsm4hxzFZCptbgtD3WbzZBxzg8ZBWncHbjBVjOdRON9xfxhX9EoYMQj0Yf7XbG3FDQZDZD';
+        let accounts = metaAccountsCache.data;
+        if (!accounts || accounts.length === 0) {
+            accounts = await fetchMetaAccountsFromApi();
+            if (accounts.length > 0) metaAccountsCache = { timestamp: now, data: accounts };
+        }
+
+        const allCharges = [];
+        let totalPendingBalanceCents = 0;
+
+        accounts.forEach(acc => {
+            const bal = parseInt(acc.balance || 0, 10);
+            if (bal > 0) totalPendingBalanceCents += bal;
+        });
+
+        await Promise.allSettled(
+            accounts.map(async (acc) => {
+                const rawId = acc.account_id || (acc.id ? acc.id.replace('act_', '') : '');
+                const url = `https://graph.facebook.com/v21.0/act_${rawId}/activities?fields=actor_name,event_time,event_type,extra_data,translated_event_type&limit=20&access_token=${token}`;
+                try {
+                    const r = await fetch(url, { signal: AbortSignal.timeout(6000) });
+                    const data = await r.json();
+                    if (data.data && Array.isArray(data.data)) {
+                        data.data.forEach(ev => {
+                            if (ev.event_type === 'ad_account_billing_charge') {
+                                let extra = ev.extra_data;
+                                if (typeof extra === 'string') {
+                                    try { extra = JSON.parse(extra); } catch (e) {}
+                                }
+                                const cardStr = acc.funding_source_details?.display_string || 'Mastercard *2017';
+                                allCharges.push({
+                                    accountId: rawId,
+                                    accountName: acc.name,
+                                    eventTime: ev.event_time,
+                                    currency: extra?.currency || 'BRL',
+                                    rawValue: extra?.new_value || 0,
+                                    transactionId: extra?.transaction_id || '',
+                                    card: cardStr,
+                                });
+                            }
+                        });
+                    }
+                } catch (e) {}
+            })
+        );
+
+        allCharges.sort((a, b) => new Date(b.eventTime) - new Date(a.eventTime));
+
+        let totalDebitedReal = 0;
+        allCharges.forEach(charge => {
+            const netValue = (charge.rawValue || 0) / 100;
+            const debitedValue = netValue > 0 ? (netValue / (1 - 0.122)) : 0;
+            totalDebitedReal += debitedValue;
+        });
+
+        const totals = {
+            totalDebitedReal,
+            totalPendingReal: totalPendingBalanceCents / 100,
+            count: allCharges.length
+        };
+
+        metaBillingCache = { timestamp: now, data: allCharges, totals };
+        res.json({ success: true, charges: allCharges, totals });
+    } catch (err) {
+        console.error('[API Proxy Meta Billing Error]:', err?.message);
+        res.status(500).json({ success: false, error: err?.message });
+    }
+});
+
 app.post('/api/funnels/simulate-pix', async (req, res) => {
     try {
         const { funnelId, amount, phone, name, campaignId, adId } = req.body || {};
