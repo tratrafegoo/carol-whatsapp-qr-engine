@@ -814,6 +814,87 @@ function logConversation(botId, userPhoneNumber, sender, messageType, messageCon
     pushCloudHeartbeat(botId).catch(() => {});
 }
 
+// ============================================================
+// HELPER UNIVERSAL: ENVIO DE NOTA DE VOZ (PTT) COMPATÍVEL COM iOS & ANDROID
+// ============================================================
+// No WhatsApp iOS (iPhone), notas de voz PTT EXIGEM estritamente OGG Opus (audio/ogg; codecs=opus).
+// O envio de áudio MP3 com mimetype 'audio/mpeg' e ptt: true causa o erro:
+// "Não foi possível baixar o áudio. Tente novamente." no WhatsApp do iPhone.
+async function sendPttVoiceNote(sock, remoteJid, filePath, botId = null, userPhone = null, label = 'Áudio PTT', quoteOptions = {}) {
+    const baseWithoutExt = filePath.replace(/\.(mp3|ogg)$/i, '');
+    const oggPath = `${baseWithoutExt}.ogg`;
+    const mp3Path = `${baseWithoutExt}.mp3`;
+
+    let targetPath = null;
+    let mimetype = 'audio/ogg; codecs=opus';
+
+    if (fs.existsSync(oggPath)) {
+        targetPath = oggPath;
+        mimetype = 'audio/ogg; codecs=opus';
+    } else if (fs.existsSync(mp3Path)) {
+        targetPath = mp3Path;
+        mimetype = 'audio/mpeg';
+    } else if (fs.existsSync(filePath)) {
+        targetPath = filePath;
+        mimetype = filePath.endsWith('.ogg') ? 'audio/ogg; codecs=opus' : 'audio/mpeg';
+    }
+
+    if (!targetPath) {
+        console.warn(`[sendPttVoiceNote] ⚠️ Arquivo de áudio não encontrado: ${filePath}`);
+        return false;
+    }
+
+    const audioBuffer = fs.readFileSync(targetPath);
+    await sock.sendMessage(remoteJid, {
+        audio: audioBuffer,
+        mimetype,
+        ptt: true
+    }, quoteOptions);
+
+    const isOgg = targetPath.endsWith('.ogg');
+    if (botId && userPhone) {
+        logConversation(botId, userPhone, 'BOT', 'AUDIO', `🎙️ [${label} (${isOgg ? 'OGG Opus' : 'MP3'})]`);
+    }
+    console.log(`[sendPttVoiceNote] 🎙️ ${label} enviado com sucesso (${isOgg ? 'OGG Opus 100% iOS/Android' : 'MP3'}) para ${userPhone || remoteJid}`);
+    return true;
+}
+
+function resolvePttAudio(audioPath) {
+    if (!audioPath) return null;
+    const base = audioPath.replace(/\.(mp3|ogg)$/i, '');
+    const oggPath = `${base}.ogg`;
+    const mp3Path = `${base}.mp3`;
+    if (fs.existsSync(oggPath)) {
+        return {
+            buffer: fs.readFileSync(oggPath),
+            mimetype: 'audio/ogg; codecs=opus',
+            path: oggPath,
+            isOgg: true
+        };
+    }
+    if (fs.existsSync(mp3Path)) {
+        return {
+            buffer: fs.readFileSync(mp3Path),
+            mimetype: 'audio/mpeg',
+            path: mp3Path,
+            isOgg: false
+        };
+    }
+    if (fs.existsSync(audioPath)) {
+        return {
+            buffer: fs.readFileSync(audioPath),
+            mimetype: audioPath.endsWith('.ogg') ? 'audio/ogg; codecs=opus' : 'audio/mpeg',
+            path: audioPath,
+            isOgg: audioPath.endsWith('.ogg')
+        };
+    }
+    return null;
+}
+
+
+
+
+
 async function startQrSession(botId = 'bot_whatsapp_principal', forceNewQr = false) {
     const sessionFolder = path.join(SESSIONS_DIR, botId);
 
@@ -1327,8 +1408,8 @@ Agora estou aguardando apenas a contribuição combinada. Assim que realizar, me
                 if (sock) {
                     const mp3Path = path.join(__dirname, 'public', 'funil5', 'audio_cobranca.mp3');
                     if (fs.existsSync(mp3Path)) {
-                        const mp3Buf = fs.readFileSync(mp3Path);
-                        await sock.sendMessage(remoteJid, { audio: mp3Buf, mimetype: 'audio/mpeg', ptt: true });
+                        const audioData = resolvePttAudio(mp3Path);
+                        if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
                         logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Cobrança Funil 5]');
                     }
                 }
@@ -1443,8 +1524,8 @@ VALOR: R$ 19,90`,
                 if (sock) {
                     const mp3Path = path.join(__dirname, 'public', 'funil5', 'audio_lembrete_dia1_18h56.mp3');
                     if (fs.existsSync(mp3Path)) {
-                        const mp3Buf = fs.readFileSync(mp3Path);
-                        await sock.sendMessage(remoteJid, { audio: mp3Buf, mimetype: 'audio/mpeg', ptt: true });
+                        const audioData = resolvePttAudio(mp3Path);
+                        if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
                     }
                     await sock.sendMessage(remoteJid, { text: `*PIX*: 64158407000124
 (*CNPJ*)
@@ -1468,8 +1549,8 @@ VALOR: R$ 19,90`,
                 if (sock) {
                     const mp3Path = path.join(__dirname, 'public', 'funil5', 'audio_lembrete_dia1_20h57.mp3');
                     if (fs.existsSync(mp3Path)) {
-                        const mp3Buf = fs.readFileSync(mp3Path);
-                        await sock.sendMessage(remoteJid, { audio: mp3Buf, mimetype: 'audio/mpeg', ptt: true });
+                        const audioData = resolvePttAudio(mp3Path);
+                        if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
                     }
                     await sock.sendMessage(remoteJid, { text: `*CHAVE PIX* : 64158407000124
 *VALOR*: R$19,90
@@ -1625,8 +1706,8 @@ Que Deus te abençoe grandemente 🙏`,
                 if (sock) {
                     const mp3Path = path.join(__dirname, 'public', 'funil5', 'audio_lembrete_dia4_17h41.mp3');
                     if (fs.existsSync(mp3Path)) {
-                        const mp3Buf = fs.readFileSync(mp3Path);
-                        await sock.sendMessage(remoteJid, { audio: mp3Buf, mimetype: 'audio/mpeg', ptt: true });
+                        const audioData = resolvePttAudio(mp3Path);
+                        if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
                     }
                     await sock.sendMessage(remoteJid, {
                         text: `🔑 *Chave PIX* : Chave Pix: 64158407000124
@@ -1803,8 +1884,8 @@ function scheduleFunil6Reminder(botId, remoteJid, userPhone) {
                     await sock.sendMessage(remoteJid, { text: `A paz do Senhor, minha irmã! ✨` });
                     const audioP = path.join(__dirname, 'public', 'funil6', 'audio_oracao_dia2.mp3');
                     if (fs.existsSync(audioP)) {
-                        const audioBuf = fs.readFileSync(audioP);
-                        await sock.sendMessage(remoteJid, { audio: audioBuf, mimetype: 'audio/mpeg', ptt: true });
+                        const audioData = resolvePttAudio(audioP);
+                        if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
                         logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Oração Dia 2 Funil 6]');
                     }
                 }
@@ -1951,8 +2032,8 @@ function scheduleFunil8Reminder(botId, remoteJid, userPhone) {
                 if (sock) {
                     const audioP = path.join(__dirname, 'public', 'funil8', 'audio_dia2_pet.mp3');
                     if (fs.existsSync(audioP)) {
-                        const audioBuf = fs.readFileSync(audioP);
-                        await sock.sendMessage(remoteJid, { audio: audioBuf, mimetype: 'audio/mpeg', ptt: true });
+                        const audioData = resolvePttAudio(audioP);
+                        if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
                         logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Dia 2 Pet Funil 8]');
                     }
                     await sock.sendMessage(remoteJid, { text: `CHAVE PIX TELEFONE: 11965034611` });
@@ -1984,8 +2065,8 @@ async function sendFunil9Phase1(botId, sock, remoteJid, userPhone, pushName) {
     const audioPath = path.join(__dirname, 'public', 'funil9', 'audio_apresentacao.mp3');
     if (fs.existsSync(audioPath)) {
         try {
-            const buf = fs.readFileSync(audioPath);
-            await sock.sendMessage(remoteJid, { audio: buf, mimetype: 'audio/mpeg', ptt: true });
+            const audioData = resolvePttAudio(audioPath);
+                        if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
             logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Apresentação Funil 9]');
         } catch (err) {
             console.warn('[Funil 9 Audio Error]:', err?.message);
@@ -2156,8 +2237,8 @@ async function sendFunil10Phase2(botId, sock, remoteJid, userPhone, pushName, qu
     const audioOferta = path.join(__dirname, 'public', 'funil10', 'audio_oferta.mp3');
     if (fs.existsSync(audioOferta)) {
         try {
-            const buf = fs.readFileSync(audioOferta);
-            await sock.sendMessage(remoteJid, { audio: buf, mimetype: 'audio/mpeg', ptt: true });
+            const audioData = resolvePttAudio(audioOferta);
+                        if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
             logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Oferta Funil 10]');
         } catch (err) {}
     }
@@ -2200,8 +2281,8 @@ async function sendFunil10Phase3(botId, sock, remoteJid, userPhone, pushName, qu
     const audioApp = path.join(__dirname, 'public', 'funil10', 'audio_app_web.mp3');
     if (fs.existsSync(audioApp)) {
         try {
-            const buf = fs.readFileSync(audioApp);
-            await sock.sendMessage(remoteJid, { audio: buf, mimetype: 'audio/mpeg', ptt: true });
+            const audioData = resolvePttAudio(audioApp);
+                        if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
         } catch (err) {}
     }
     try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
@@ -2231,8 +2312,8 @@ async function sendFunil10Phase3(botId, sock, remoteJid, userPhone, pushName, qu
     const audioConf = path.join(__dirname, 'public', 'funil10', 'audio_confianca.mp3');
     if (fs.existsSync(audioConf)) {
         try {
-            const buf = fs.readFileSync(audioConf);
-            await sock.sendMessage(remoteJid, { audio: buf, mimetype: 'audio/mpeg', ptt: true });
+            const audioData = resolvePttAudio(audioConf);
+                        if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
         } catch (err) {}
     }
     try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
@@ -2274,8 +2355,8 @@ async function sendFunil10Phase3(botId, sock, remoteJid, userPhone, pushName, qu
     const audioCert = path.join(__dirname, 'public', 'funil10', 'audio_certificado.mp3');
     if (fs.existsSync(audioCert)) {
         try {
-            const buf = fs.readFileSync(audioCert);
-            await sock.sendMessage(remoteJid, { audio: buf, mimetype: 'audio/mpeg', ptt: true });
+            const audioData = resolvePttAudio(audioCert);
+                        if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
         } catch (err) {}
     }
     try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
@@ -2359,8 +2440,8 @@ function scheduleFunil10Reminder(botId, remoteJid, userPhone) {
                 if (sock) {
                     const audioP = path.join(__dirname, 'public', 'funil10', 'audio_lembrete_dia2.mp3');
                     if (fs.existsSync(audioP)) {
-                        const buf = fs.readFileSync(audioP);
-                        await sock.sendMessage(remoteJid, { audio: buf, mimetype: 'audio/mpeg', ptt: true });
+                        const audioData = resolvePttAudio(audioP);
+                        if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
                     }
                     await sock.sendMessage(remoteJid, { text: 'https://bolsas-lucrativas.vercel.app/' });
                 }
@@ -2398,8 +2479,8 @@ async function sendFunil11Phase1(botId, sock, remoteJid, userPhone, pushName) {
     const audioApres = path.join(__dirname, 'public', 'funil11', 'audio_apresentacao.mp3');
     if (fs.existsSync(audioApres)) {
         try {
-            const buf = fs.readFileSync(audioApres);
-            await sock.sendMessage(remoteJid, { audio: buf, mimetype: 'audio/mpeg', ptt: true });
+            const audioData = resolvePttAudio(audioApres);
+                        if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
             logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Apresentação Funil 11]');
         } catch (err) {}
     }
@@ -2480,8 +2561,8 @@ async function sendFunil11Phase2(botId, sock, remoteJid, userPhone, pushName, qu
     const audioConf = path.join(__dirname, 'public', 'funil11', 'audio_confianca.mp3');
     if (fs.existsSync(audioConf)) {
         try {
-            const buf = fs.readFileSync(audioConf);
-            await sock.sendMessage(remoteJid, { audio: buf, mimetype: 'audio/mpeg', ptt: true });
+            const audioData = resolvePttAudio(audioConf);
+                        if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
         } catch (err) {}
     }
     try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
@@ -2565,8 +2646,8 @@ async function sendFunil12Phase1(botId, sock, remoteJid, userPhone, pushName) {
     const a1 = path.join(__dirname, 'public', 'funil12', 'audio_apresentacao.mp3');
     if (fs.existsSync(a1)) {
         try {
-            const buf = fs.readFileSync(a1);
-            await sock.sendMessage(remoteJid, { audio: buf, mimetype: 'audio/mpeg', ptt: true });
+            const audioData = resolvePttAudio(a1);
+                        if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
         } catch (err) {}
     }
     try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
@@ -2596,8 +2677,8 @@ async function sendFunil12Phase2(botId, sock, remoteJid, userPhone, pushName, qu
     const a2 = path.join(__dirname, 'public', 'funil12', 'audio_explicacao.mp3');
     if (fs.existsSync(a2)) {
         try {
-            const buf = fs.readFileSync(a2);
-            await sock.sendMessage(remoteJid, { audio: buf, mimetype: 'audio/mpeg', ptt: true });
+            const audioData = resolvePttAudio(a2);
+                        if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
         } catch (err) {}
     }
     try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
@@ -2641,8 +2722,8 @@ async function sendFunil12Phase3(botId, sock, remoteJid, userPhone, pushName, qu
     const a3 = path.join(__dirname, 'public', 'funil12', 'audio_envio.mp3');
     if (fs.existsSync(a3)) {
         try {
-            const buf = fs.readFileSync(a3);
-            await sock.sendMessage(remoteJid, { audio: buf, mimetype: 'audio/mpeg', ptt: true });
+            const audioData = resolvePttAudio(a3);
+                        if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
         } catch (err) {}
     }
     try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
@@ -2764,8 +2845,8 @@ async function sendFunil13Phase1(botId, sock, remoteJid, userPhone, pushName) {
     const a1 = path.join(__dirname, 'public', 'funil13', 'audio_apresentacao.mp3');
     if (fs.existsSync(a1)) {
         try {
-            const buf = fs.readFileSync(a1);
-            await sock.sendMessage(remoteJid, { audio: buf, mimetype: 'audio/mpeg', ptt: true });
+            const audioData = resolvePttAudio(a1);
+                        if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
             logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Apresentação Funil 13]');
         } catch (err) {}
     }
@@ -2817,8 +2898,8 @@ async function sendFunil13AfterChildName(botId, sock, remoteJid, userPhone, push
     const a2 = path.join(__dirname, 'public', 'funil13', 'audio_explicacao.mp3');
     if (fs.existsSync(a2)) {
         try {
-            const buf = fs.readFileSync(a2);
-            await sock.sendMessage(remoteJid, { audio: buf, mimetype: 'audio/mpeg', ptt: true });
+            const audioData = resolvePttAudio(a2);
+                        if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
         } catch (err) {}
     }
     try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
@@ -2870,8 +2951,8 @@ async function sendFunil13Phase2(botId, sock, remoteJid, userPhone, pushName, qu
     const aOnline = path.join(__dirname, 'public', 'funil13', 'audio_devocional_online.mp3');
     if (fs.existsSync(aOnline)) {
         try {
-            const buf = fs.readFileSync(aOnline);
-            await sock.sendMessage(remoteJid, { audio: buf, mimetype: 'audio/mpeg', ptt: true });
+            const audioData = resolvePttAudio(aOnline);
+                        if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
         } catch (err) {}
     }
     try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
@@ -2902,8 +2983,8 @@ async function sendFunil13Phase2(botId, sock, remoteJid, userPhone, pushName, qu
     const aFinal = path.join(__dirname, 'public', 'funil13', 'audio_oracao_final.mp3');
     if (fs.existsSync(aFinal)) {
         try {
-            const buf = fs.readFileSync(aFinal);
-            await sock.sendMessage(remoteJid, { audio: buf, mimetype: 'audio/mpeg', ptt: true });
+            const audioData = resolvePttAudio(aFinal);
+                        if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
         } catch (err) {}
     }
     try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
@@ -2997,8 +3078,8 @@ function scheduleFunil13Reminder(botId, remoteJid, userPhone) {
                     await sock.sendMessage(remoteJid, { text: 'A paz do Senhor, minha irmã! ✨' });
                     const audioP = path.join(__dirname, 'public', 'funil13', 'audio_lembrete_dia2.mp3');
                     if (fs.existsSync(audioP)) {
-                        const buf = fs.readFileSync(audioP);
-                        await sock.sendMessage(remoteJid, { audio: buf, mimetype: 'audio/mpeg', ptt: true });
+                        const audioData = resolvePttAudio(audioP);
+                        if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
                     }
                 }
             }
@@ -3101,12 +3182,8 @@ async function sendParabolasPhase1(botId, sock, remoteJid, userPhone, pushName) 
     const mp3Path = path.join(__dirname, 'public', 'parabolas', 'audio_parabolas.mp3');
     if (fs.existsSync(mp3Path)) {
         try {
-            const mp3Buffer = fs.readFileSync(mp3Path);
-            await sock.sendMessage(remoteJid, {
-                audio: mp3Buffer,
-                mimetype: 'audio/mpeg',
-                ptt: true,
-            });
+            const audioData = resolvePttAudio(mp3Path);
+            if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
             logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio MP3 de 22s enviado]');
             console.log(`[Funil Parabolas] 🎙️ Áudio MP3 enviado com sucesso para ${userPhone}`);
         } catch (mp3Err) {
@@ -3404,12 +3481,8 @@ async function sendFunil2Phase1(botId, sock, remoteJid, userPhone, pushName) {
     const mp3Path = path.join(__dirname, 'public', 'funil2', 'audio_apresentacao.mp3');
     if (fs.existsSync(mp3Path)) {
         try {
-            const mp3Buffer = fs.readFileSync(mp3Path);
-            await sock.sendMessage(remoteJid, {
-                audio: mp3Buffer,
-                mimetype: 'audio/mpeg',
-                ptt: true,
-            });
+            const audioData = resolvePttAudio(mp3Path);
+            if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
             logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Apresentação Funil 2 MP3 2m10s]');
             console.log(`[Funil 2] 🎙️ Áudio 1 MP3 enviado para ${userPhone}`);
         } catch (mp3Err) {
@@ -3502,12 +3575,8 @@ async function sendFunil2Phase2(botId, sock, remoteJid, userPhone, pushName, quo
     const audioPixPath = path.join(__dirname, 'public', 'funil2', 'audio_pix.mp3');
     if (fs.existsSync(audioPixPath)) {
         try {
-            const mp3Buffer = fs.readFileSync(audioPixPath);
-            await sock.sendMessage(remoteJid, {
-                audio: mp3Buffer,
-                mimetype: 'audio/mpeg',
-                ptt: true,
-            });
+            const audioData = resolvePttAudio(audioPixPath);
+            if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
             logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio 2 PIX Funil 2 MP3 20s]');
             console.log(`[Funil 2] 🎙️ Áudio 2 MP3 enviado para ${userPhone}`);
         } catch (mp3Err) {
@@ -3573,12 +3642,8 @@ async function sendFunil3Phase1(botId, sock, remoteJid, userPhone, pushName) {
     const mp3Path = path.join(__dirname, 'public', 'funil3', 'audio_apresentacao.mp3');
     if (fs.existsSync(mp3Path)) {
         try {
-            const mp3Buffer = fs.readFileSync(mp3Path);
-            await sock.sendMessage(remoteJid, {
-                audio: mp3Buffer,
-                mimetype: 'audio/mpeg',
-                ptt: true,
-            });
+            const audioData = resolvePttAudio(mp3Path);
+            if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
             logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Apresentação Funil 3 MP3 55s]');
             console.log(`[Funil 3] 🎙️ Áudio 1 MP3 enviado para ${userPhone}`);
         } catch (mp3Err) {
@@ -3666,12 +3731,8 @@ async function sendFunil3Phase2(botId, sock, remoteJid, userPhone, pushName, quo
     const audioPixPath = path.join(__dirname, 'public', 'funil3', 'audio_pix.mp3');
     if (fs.existsSync(audioPixPath)) {
         try {
-            const mp3Buffer = fs.readFileSync(audioPixPath);
-            await sock.sendMessage(remoteJid, {
-                audio: mp3Buffer,
-                mimetype: 'audio/mpeg',
-                ptt: true,
-            });
+            const audioData = resolvePttAudio(audioPixPath);
+            if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
             logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio 2 PIX Funil 3 MP3 27s]');
             console.log(`[Funil 3] 🎙️ Áudio 2 MP3 enviado para ${userPhone}`);
         } catch (mp3Err) {
@@ -3747,37 +3808,19 @@ async function sendFunil4Phase1(botId, sock, remoteJid, userPhone, pushName) {
     try { await sock.sendPresenceUpdate('recording', remoteJid); } catch {}
     await new Promise((r) => setTimeout(r, 2000));
 
-    const mp3Path = path.join(__dirname, 'public', 'funil4', 'audio_apresentacao.mp3');
-    if (fs.existsSync(mp3Path)) {
-        try {
-            const mp3Buffer = fs.readFileSync(mp3Path);
-            await sock.sendMessage(remoteJid, {
-                audio: mp3Buffer,
-                mimetype: 'audio/mpeg',
-                ptt: true,
-            });
-            logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Apresentação Funil 4 MP3 46s]');
-            console.log(`[Funil 4] 🎙️ Áudio 1 MP3 enviado para ${userPhone}`);
-        } catch (mp3Err) {
-            console.warn('[Funil 4 MP3 Send Error]:', mp3Err?.message);
-            sendNtfyEmergencyAlert({
-                title: '⚠️ ALERTA X1: FALHA AO ENVIAR ÁUDIO MP3',
-                message: `⚠️ Ocorreu um erro ao enviar o áudio de apresentação do Funil 4 para ${userPhone}!\nErro: ${mp3Err?.message}`,
-                priority: 'high',
-                tags: 'warning,sound',
-                alertKey: 'mp3_send_error',
-                cooldownSec: 180
-            }).catch(() => {});
-        }
-    } else {
-        console.warn('[Funil 4 MP3 Missing]: Arquivo de áudio não encontrado:', mp3Path);
+    const audioPath = path.join(__dirname, 'public', 'funil4', 'audio_apresentacao');
+    try {
+        const sent = await sendPttVoiceNote(sock, remoteJid, audioPath, botId, userPhone, 'Áudio Apresentação Funil 4 46s');
+        if (!sent) throw new Error('Arquivo de áudio não encontrado no disco (audio_apresentacao.ogg / .mp3)');
+    } catch (audioErr) {
+        console.warn('[Funil 4 Audio Send Error]:', audioErr?.message);
         sendNtfyEmergencyAlert({
-            title: '🚨 ALERTA X1: ÁUDIO MP3 AUSENTE NO DISCO',
-            message: `⚠️ O arquivo 'audio_apresentacao.mp3' não foi encontrado na pasta public/funil4!`,
-            priority: 'urgent',
-            tags: 'warning,file_folder',
-            alertKey: 'mp3_missing',
-            cooldownSec: 300
+            title: '⚠️ ALERTA X1: FALHA AO ENVIAR ÁUDIO',
+            message: `⚠️ Ocorreu um erro ao enviar o áudio de apresentação do Funil 4 para ${userPhone}!\nErro: ${audioErr?.message}`,
+            priority: 'high',
+            tags: 'warning,sound',
+            alertKey: 'audio_send_error',
+            cooldownSec: 180
         }).catch(() => {});
     }
     try { await sock.sendPresenceUpdate('paused', remoteJid); } catch {}
@@ -4001,12 +4044,8 @@ async function sendFunil5Phase1(botId, sock, remoteJid, userPhone, pushName) {
     const mp3Path = path.join(__dirname, 'public', 'funil5', 'audio_apresentacao.mp3');
     if (fs.existsSync(mp3Path)) {
         try {
-            const mp3Buffer = fs.readFileSync(mp3Path);
-            await sock.sendMessage(remoteJid, {
-                audio: mp3Buffer,
-                mimetype: 'audio/mpeg',
-                ptt: true,
-            });
+            const audioData = resolvePttAudio(mp3Path);
+            if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
             logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Apresentação Funil 5 MP3 48s]');
             console.log(`[Funil 5] 🎙️ Áudio 1 MP3 enviado para ${userPhone}`);
         } catch (mp3Err) {
@@ -4052,12 +4091,8 @@ async function sendFunil5Phase1(botId, sock, remoteJid, userPhone, pushName) {
     const audioConfPath = path.join(__dirname, 'public', 'funil5', 'audio_confianca.mp3');
     if (fs.existsSync(audioConfPath)) {
         try {
-            const mp3Buffer = fs.readFileSync(audioConfPath);
-            await sock.sendMessage(remoteJid, {
-                audio: mp3Buffer,
-                mimetype: 'audio/mpeg',
-                ptt: true,
-            });
+            const audioData = resolvePttAudio(audioConfPath);
+            if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
             logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Confiança Funil 5 MP3 19s]');
         } catch (mp3Err) {}
     }
@@ -4091,12 +4126,8 @@ async function sendFunil5Phase2(botId, sock, remoteJid, userPhone, pushName, quo
     const audioEnvPath = path.join(__dirname, 'public', 'funil5', 'audio_enviando.mp3');
     if (fs.existsSync(audioEnvPath)) {
         try {
-            const mp3Buffer = fs.readFileSync(audioEnvPath);
-            await sock.sendMessage(remoteJid, {
-                audio: mp3Buffer,
-                mimetype: 'audio/mpeg',
-                ptt: true,
-            }, quoteOptions);
+            const audioData = resolvePttAudio(audioEnvPath);
+            if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true }, quoteOptions);
             logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Enviando Funil 5 MP3 5s]');
         } catch (mp3Err) {}
     }
@@ -4187,12 +4218,8 @@ async function sendFunil5Phase2(botId, sock, remoteJid, userPhone, pushName, quo
     const audioPixPath = path.join(__dirname, 'public', 'funil5', 'audio_pix.mp3');
     if (fs.existsSync(audioPixPath)) {
         try {
-            const mp3Buffer = fs.readFileSync(audioPixPath);
-            await sock.sendMessage(remoteJid, {
-                audio: mp3Buffer,
-                mimetype: 'audio/mpeg',
-                ptt: true,
-            });
+            const audioData = resolvePttAudio(audioPixPath);
+            if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
             logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio PIX Funil 5 MP3 18s]');
         } catch (mp3Err) {}
     }
@@ -4234,12 +4261,8 @@ async function sendFunil6Phase1(botId, sock, remoteJid, userPhone, pushName) {
     const mp3Path = path.join(__dirname, 'public', 'funil6', 'audio_apresentacao.mp3');
     if (fs.existsSync(mp3Path)) {
         try {
-            const mp3Buffer = fs.readFileSync(mp3Path);
-            await sock.sendMessage(remoteJid, {
-                audio: mp3Buffer,
-                mimetype: 'audio/mpeg',
-                ptt: true,
-            });
+            const audioData = resolvePttAudio(mp3Path);
+            if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
             logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Apresentação Funil 6 MP3 1m20s]');
         } catch (mp3Err) {}
     }
@@ -4309,12 +4332,8 @@ async function sendFunil6Phase2(botId, sock, remoteJid, userPhone, pushName, quo
     const audioExpPath = path.join(__dirname, 'public', 'funil6', 'audio_explicacao.mp3');
     if (fs.existsSync(audioExpPath)) {
         try {
-            const mp3Buffer = fs.readFileSync(audioExpPath);
-            await sock.sendMessage(remoteJid, {
-                audio: mp3Buffer,
-                mimetype: 'audio/mpeg',
-                ptt: true,
-            });
+            const audioData = resolvePttAudio(audioExpPath);
+            if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
             logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Explicação Funil 6 MP3 1m39s]');
         } catch (mp3Err) {}
     }
@@ -4357,12 +4376,8 @@ async function sendFunil6Phase2(botId, sock, remoteJid, userPhone, pushName, quo
     const audioEntPath = path.join(__dirname, 'public', 'funil6', 'audio_entrega.mp3');
     if (fs.existsSync(audioEntPath)) {
         try {
-            const mp3Buffer = fs.readFileSync(audioEntPath);
-            await sock.sendMessage(remoteJid, {
-                audio: mp3Buffer,
-                mimetype: 'audio/mpeg',
-                ptt: true,
-            });
+            const audioData = resolvePttAudio(audioEntPath);
+            if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
             logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Entrega Funil 6 MP3 1m28s]');
         } catch (mp3Err) {}
     }
@@ -4397,12 +4412,8 @@ async function sendFunil6Phase2(botId, sock, remoteJid, userPhone, pushName, quo
     const audioUltPath = path.join(__dirname, 'public', 'funil6', 'audio_ultimo_sorteio.mp3');
     if (fs.existsSync(audioUltPath)) {
         try {
-            const mp3Buffer = fs.readFileSync(audioUltPath);
-            await sock.sendMessage(remoteJid, {
-                audio: mp3Buffer,
-                mimetype: 'audio/mpeg',
-                ptt: true,
-            });
+            const audioData = resolvePttAudio(audioUltPath);
+            if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
             logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Último Áudio Funil 6 MP3 59s]');
         } catch (mp3Err) {}
     }
@@ -4494,12 +4505,8 @@ async function sendFunil7Phase2(botId, sock, remoteJid, userPhone, pushName, quo
     const mp3Path = path.join(__dirname, 'public', 'funil7', 'audio_apresentacao.mp3');
     if (fs.existsSync(mp3Path)) {
         try {
-            const mp3Buffer = fs.readFileSync(mp3Path);
-            await sock.sendMessage(remoteJid, {
-                audio: mp3Buffer,
-                mimetype: 'audio/mpeg',
-                ptt: true,
-            });
+            const audioData = resolvePttAudio(mp3Path);
+            if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
             logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio Apresentação Funil 7 MP3 52s]');
         } catch (mp3Err) {
             console.warn('[Funil 7 Áudio Error]:', mp3Err?.message);
@@ -4629,12 +4636,8 @@ async function sendFunil8Phase1(botId, sock, remoteJid, userPhone, pushName) {
     const mp3Path1 = path.join(__dirname, 'public', 'funil8', 'audio_apresentacao.mp3');
     if (fs.existsSync(mp3Path1)) {
         try {
-            const mp3Buffer = fs.readFileSync(mp3Path1);
-            await sock.sendMessage(remoteJid, {
-                audio: mp3Buffer,
-                mimetype: 'audio/mpeg',
-                ptt: true,
-            });
+            const audioData = resolvePttAudio(mp3Path1);
+            if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
             logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio 1 Apresentação Funil 8 MP3 1m10s]');
         } catch (mp3Err) {
             console.warn('[Funil 8 Áudio 1 Error]:', mp3Err?.message);
@@ -4714,12 +4717,8 @@ async function sendFunil8Phase2(botId, sock, remoteJid, userPhone, pushName, quo
     const mp3Path2 = path.join(__dirname, 'public', 'funil8', 'audio_pix.mp3');
     if (fs.existsSync(mp3Path2)) {
         try {
-            const mp3Buffer = fs.readFileSync(mp3Path2);
-            await sock.sendMessage(remoteJid, {
-                audio: mp3Buffer,
-                mimetype: 'audio/mpeg',
-                ptt: true,
-            });
+            const audioData = resolvePttAudio(mp3Path2);
+            if (audioData) await sock.sendMessage(remoteJid, { audio: audioData.buffer, mimetype: audioData.mimetype, ptt: true });
             logConversation(botId, userPhone, 'BOT', 'AUDIO', '🎙️ [Áudio 2 PIX Funil 8 MP3 1m19s]');
         } catch (mp3Err) {
             console.warn('[Funil 8 Áudio 2 Error]:', mp3Err?.message);
