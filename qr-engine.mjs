@@ -6093,6 +6093,67 @@ app.post('/api/meta/config', (req, res) => {
 // ============================================================
 let metaAccountsCache = { timestamp: 0, data: [] };
 let metaBillingCache = { timestamp: 0, data: [], totals: {} };
+const metaInsightsCache = new Map();
+
+const META_PERIOD_PRESET_MAP = {
+    'TODAY': 'today',
+    'YESTERDAY': 'yesterday',
+    'LAST_7D': 'last_7d',
+    'LAST_30D': 'last_30d',
+    'MAX': 'maximum'
+};
+
+function parseMetaInsightRow(row) {
+    const msgAction = (row.actions || []).find(a =>
+        a.action_type === 'onsite_conversion.messaging_conversation_started_7d' ||
+        a.action_type === 'onsite_conversion.total_messaging_connection' ||
+        a.action_type === 'onsite_conversion.messaging_first_reply'
+    );
+    const leads = msgAction ? parseInt(msgAction.value, 10) : 0;
+
+    const purAction = (row.actions || []).find(a =>
+        a.action_type === 'purchase' ||
+        a.action_type === 'omni_purchase'
+    );
+    const purchases = purAction ? parseInt(purAction.value, 10) : 0;
+
+    const revAction = (row.action_values || []).find(a =>
+        a.action_type === 'purchase' ||
+        a.action_type === 'omni_purchase'
+    );
+    const revenue = revAction ? parseFloat(revAction.value) : 0;
+
+    const spend = parseFloat(row.spend || 0);
+    const impressions = parseInt(row.impressions || 0, 10);
+    const clicks = parseInt(row.clicks || 0, 10);
+    const cpm = parseFloat(row.cpm || 0);
+    const ctr = parseFloat(row.ctr || 0);
+
+    const cplAction = (row.cost_per_action_type || []).find(a =>
+        a.action_type === 'onsite_conversion.messaging_conversation_started_7d' ||
+        a.action_type === 'onsite_conversion.total_messaging_connection'
+    );
+    const cpl = cplAction ? parseFloat(cplAction.value) : (leads > 0 ? spend / leads : 0);
+
+    const roasAction = (row.purchase_roas || []).find(a => a.action_type === 'omni_purchase' || a.action_type === 'purchase');
+    const roas = roasAction ? parseFloat(roasAction.value) : (spend > 0 && revenue > 0 ? revenue / spend : 0);
+
+    return {
+        campaignId: row.campaign_id || '',
+        campaignName: row.campaign_name || '',
+        objective: row.objective || '',
+        spend,
+        cpm,
+        ctr,
+        impressions,
+        clicks,
+        leads,
+        cpl,
+        purchases,
+        revenue,
+        roas
+    };
+}
 
 async function fetchMetaAccountsFromApi() {
     const token = process.env.META_ACCESS_TOKEN || 'EAAUO1JVtzLgBS9gj3E8dtMiX2KkICYQyjZAUuy0SJJmzWPZCZABlSDFUllmoDfB5h1lt7xHJ3ifoY5jOMuLRKG9Bkq7Ulw9V3vOG3PgXEWqZByjMrv1ZCozA2hnjKCWyjlcHAsm4hxzFZCptbgtD3WbzZBxzg8ZBWncHbjBVjOdRON9xfxhX9EoYMQj0Yf7XbG3FDQZDZD';
@@ -6142,6 +6203,84 @@ app.get('/api/meta/adaccounts', async (_req, res) => {
     } catch (err) {
         console.error('[API Proxy Meta Accounts Error]:', err?.message);
         res.status(500).json({ success: false, error: err?.message, accounts: metaAccountsCache.data });
+    }
+});
+
+app.get('/api/meta/insights', async (req, res) => {
+    try {
+        const periodPreset = String(req.query.period || 'TODAY').toUpperCase();
+        const metaPreset = META_PERIOD_PRESET_MAP[periodPreset] || 'today';
+        const forceRefresh = req.query.force === '1' || req.query.force === 'true';
+        const now = Date.now();
+
+        const cached = metaInsightsCache.get(periodPreset);
+        if (!forceRefresh && cached && now - cached.timestamp < 20000) {
+            return res.json({ success: true, period: periodPreset, accountsInsights: cached.data, cached: true });
+        }
+
+        const token = process.env.META_ACCESS_TOKEN || 'EAAUO1JVtzLgBS9gj3E8dtMiX2KkICYQyjZAUuy0SJJmzWPZCZABlSDFUllmoDfB5h1lt7xHJ3ifoY5jOMuLRKG9Bkq7Ulw9V3vOG3PgXEWqZByjMrv1ZCozA2hnjKCWyjlcHAsm4hxzFZCptbgtD3WbzZBxzg8ZBWncHbjBVjOdRON9xfxhX9EoYMQj0Yf7XbG3FDQZDZD';
+        let accounts = metaAccountsCache.data;
+        if (!accounts || accounts.length === 0) {
+            accounts = await fetchMetaAccountsFromApi();
+            if (accounts.length > 0) metaAccountsCache = { timestamp: now, data: accounts };
+        }
+
+        const accountsInsights = {};
+        const fields = 'campaign_id,campaign_name,objective,spend,cpm,ctr,impressions,clicks,actions,action_values,cost_per_action_type,purchase_roas';
+
+        await Promise.allSettled(
+            accounts.map(async (acc) => {
+                const cleanId = acc.account_id || (acc.id ? acc.id.replace('act_', '') : '');
+                const url = `https://graph.facebook.com/v21.0/act_${cleanId}/insights?level=campaign&fields=${fields}&date_preset=${metaPreset}&limit=100&access_token=${token}`;
+                try {
+                    const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+                    const json = await r.json();
+                    const rows = Array.isArray(json.data) ? json.data : [];
+                    const campaigns = rows.map(row => parseMetaInsightRow(row));
+
+                    let spend = 0, impressions = 0, clicks = 0, leads = 0, purchases = 0, revenue = 0;
+                    campaigns.forEach(c => {
+                        spend += c.spend;
+                        impressions += c.impressions;
+                        clicks += c.clicks;
+                        leads += c.leads;
+                        purchases += c.purchases;
+                        revenue += c.revenue;
+                    });
+                    const cpm = impressions > 0 ? spend / (impressions / 1000) : 0;
+                    const ctr = impressions > 0 ? (clicks / impressions) * 100 : 0;
+                    const cpl = leads > 0 ? spend / leads : 0;
+                    const roas = spend > 0 && revenue > 0 ? revenue / spend : 0;
+
+                    accountsInsights[cleanId] = {
+                        metrics: {
+                            spend: +spend.toFixed(2),
+                            cpm: +cpm.toFixed(2),
+                            ctr: +ctr.toFixed(2),
+                            impressions,
+                            clicks,
+                            leads,
+                            cpl: +cpl.toFixed(2),
+                            purchases,
+                            revenue: +revenue.toFixed(2),
+                            roas: +roas.toFixed(2)
+                        },
+                        campaigns
+                    };
+                } catch (e) {
+                    accountsInsights[cleanId] = {
+                        metrics: { spend: 0, cpm: 0, ctr: 0, impressions: 0, clicks: 0, leads: 0, cpl: 0, purchases: 0, revenue: 0, roas: 0 },
+                        campaigns: []
+                    };
+                }
+            })
+        );
+
+        metaInsightsCache.set(periodPreset, { timestamp: now, data: accountsInsights });
+        res.json({ success: true, period: periodPreset, accountsInsights });
+    } catch (err) {
+        console.error('[API Proxy Meta Insights Error]:', err?.message);
+        res.status(500).json({ success: false, error: err?.message });
     }
 });
 
