@@ -1613,7 +1613,7 @@ Agora estou aqui aguardando você cumprir a sua parte que combinou comigo.`,
     // Step 16: ~27h36 (1656 min - Dia 2 06:58 - 99404s)
     timers.push(setTimeout(() => {
         sendFollowUp(16, [
-            `Por que você visualiza a mensagem e não responde ?? depositei minha confiança em você...`,
+            `Por que você visualiza a mensagem e não responde ?? depositei minha confiança em você....`,
             `Para facilitar, vou te enviar a chave Pix separada para você só copiar e colar`,
             `64158407000124`,
             `*(CHAVE PIX É CNPJ)*
@@ -3238,12 +3238,12 @@ async function sendParabolasPhase1(botId, sock, remoteJid, userPhone, pushName) 
         sock,
         remoteJid,
         userPhone,
-        'O acesso ao conteúdo é vitalicio! Você pode imprimir ou ler pelo celular'
+        'O acesso ao conteúdo é vitalício! Você pode imprimir ou ler pelo celular'
     );
     await new Promise((r) => setTimeout(r, 1000));
 
     // 6. Quebra de Objeção / Contribuição Voluntária
-    const valuePropText = `O valor sugerido é R$25,00\nVc só paga depois de receber tudo!\n\nPorém, a contribuição é voluntaria e pode ser até menos, seja 10, 15 ou 20 reais..`;
+    const valuePropText = `O valor sugerido é R$25,00\nVocê só paga depois de receber tudo!\n\nPorém, a contribuição é voluntária e pode ser até menos, seja 10, 15 ou 20 reais.`;
     await sendRealisticText(botId, sock, remoteJid, userPhone, valuePropText);
     await new Promise((r) => setTimeout(r, 800));
 
@@ -3276,7 +3276,7 @@ async function sendParabolasPhase2(botId, sock, remoteJid, userPhone, pushName, 
         sock,
         remoteJid,
         userPhone,
-        'Estarei enviando e confiando em você..\nFique avontade para abrir o material',
+        'Estarei enviando e confiando em você...\nFique à vontade para abrir o material',
         quoteOpts
     );
     await new Promise((r) => setTimeout(r, 1200));
@@ -3329,7 +3329,7 @@ async function sendParabolasPhase2(botId, sock, remoteJid, userPhone, pushName, 
     await new Promise((r) => setTimeout(r, 1200));
 
     // 4. Ancoragem de Valores
-    const anchorText = `Valor sugerido: R$25,00\n\n⭐ Gostei muito: R$30,00\n⭐⭐ Quero compartilhar e abençoar ainda mais: R$50,00\n\nIsso ajuda a continuarmos esse propósito!\n\nCaso não possa contribuir com o valor integral, fique a vontade para enviar o valor que puder!`;
+    const anchorText = `Valor sugerido: R$25,00\n\n⭐ Gostei muito: R$30,00\n⭐⭐ Quero compartilhar e abençoar ainda mais: R$50,00\n\nIsso ajuda a continuarmos esse propósito!\n\nCaso não possa contribuir com o valor integral, fique à vontade para enviar o valor que puder!`;
     await sendRealisticText(botId, sock, remoteJid, userPhone, anchorText);
     await new Promise((r) => setTimeout(r, 1000));
 
@@ -3830,7 +3830,7 @@ async function sendFunil4Phase1(botId, sock, remoteJid, userPhone, pushName) {
     await sendRealisticText(botId, sock, remoteJid, userPhone, offerText);
     await new Promise((r) => setTimeout(r, 1200));
 
-    const trustText = `O acesso ao conteúdo é vitalicio! Você pode imprimir ou ler pelo celular\n\nO valor sugerido é R$20,00\nVc só paga depois de receber tudo!\n\nPorém a contribuição é voluntaria e pode ser até menos, seja 10, 15 reais..\n\nPosso lhe enviar o estudo?`;
+    const trustText = `O acesso ao conteúdo é vitalício! Você pode imprimir ou ler pelo celular\n\nO valor sugerido é R$20,00\nVocê só paga depois de receber tudo!\n\nPorém a contribuição é voluntária e pode ser até menos, seja 10, 15 reais.\n\nPosso lhe enviar o estudo?`;
     await sendRealisticText(botId, sock, remoteJid, userPhone, trustText);
 
     const sessionKey = `${botId}:${userPhone}`;
@@ -3850,7 +3850,7 @@ async function sendFunil4Phase2(botId, sock, remoteJid, userPhone, pushName, quo
     console.log(`[Funil 4 - Jornada Bíblia] 📦 Iniciando Fase 2 (Entrega e PIX) para ${pushName} (${userPhone})`);
 
     const quoteOptions = quotedMsg ? { quoted: quotedMsg } : {};
-    const textTrust = `Estarei enviando e confiando em você, fique avontade para abrir o material`;
+    const textTrust = `Estarei enviando e confiando em você, fique à vontade para abrir o material`;
     await sendRealisticText(botId, sock, remoteJid, userPhone, textTrust, quoteOptions);
     await new Promise((r) => setTimeout(r, 1200));
 
@@ -3900,7 +3900,7 @@ async function sendFunil4Phase2(botId, sock, remoteJid, userPhone, pushName, quo
         await new Promise((r) => setTimeout(r, 1400));
     }
 
-    const valuesText = `Acabei de enviar todos os 5 livros em PDF aqui na conversa para você baixar e ler no seu celular ou imprimir!\n\nValor sugerido: R$20,00\n⭐️ Gostei muito: R$30,00\n⭐️⭐️ Quero abençoar ainda mais: R$50,00\n\nIsso ajuda a continuarmos esse propósito!\nCaso não possa contribuir com o valor integral, fique a vontade para enviar o valor que puder!`;
+    const valuesText = `Acabei de enviar todos os 5 livros em PDF aqui na conversa para você baixar e ler no seu celular ou imprimir!\n\nValor sugerido: R$20,00\n⭐️ Gostei muito: R$30,00\n⭐️⭐️ Quero abençoar ainda mais: R$50,00\n\nIsso ajuda a continuarmos esse propósito!\nCaso não possa contribuir com o valor integral, fique à vontade para enviar o valor que puder!`;
     await sendRealisticText(botId, sock, remoteJid, userPhone, valuesText);
     await new Promise((r) => setTimeout(r, 1200));
 
