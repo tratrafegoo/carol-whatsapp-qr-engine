@@ -243,8 +243,17 @@ async function sendMetaCapiConversion(transactionRecord) {
         console.log(`[Meta CAPI] ✅ Evento Purchase enviado com sucesso para a Meta! Eventos recebidos: ${res.data?.events_received || 1}`);
         return { success: true, data: res.data };
     } catch (err) {
+        const errorMsg = err.response?.data?.error?.message || err.message;
         console.error(`[Meta CAPI] ❌ Erro ao enviar evento de conversão para a Meta:`, err.response?.data || err.message);
-        return { success: false, error: err.response?.data?.error?.message || err.message };
+        sendNtfyEmergencyAlert({
+            title: '⚠️ ALERTA X1: FALHA NO DISPARO META CAPI',
+            message: `⚠️ Não foi possível enviar evento Purchase para a Meta CAPI!\nValor: R$ ${transactionRecord.amount}\nFunil: ${transactionRecord.funnelName}\nLead: +${transactionRecord.userPhone}\nErro da Meta: ${errorMsg}\nVerifique o token de acesso da Meta no painel.`,
+            priority: 'high',
+            tags: 'warning,chart_with_downwards_trend',
+            alertKey: 'capi_error',
+            cooldownSec: 180
+        }).catch(() => {});
+        return { success: false, error: errorMsg };
     }
 }
 
@@ -286,6 +295,33 @@ async function sendNtfyNotification(transactionRecord) {
         console.log(`[ntfy] 🔔 Alerta push enviado para o canal: https://ntfy.sh/${topic}`);
     } catch (err) {
         console.warn(`[ntfy] ⚠️ Erro ao enviar notificação push:`, err.message);
+    }
+}
+
+// ─── SENTINELA DE ALERTAS DE EMERGÊNCIA (NTFY.SH) ───
+const lastEmergencyAlertTimes = {};
+
+async function sendNtfyEmergencyAlert({ title, message, priority = 'urgent', tags = 'warning,rotating_light', alertKey = 'default', cooldownSec = 180 }) {
+    const now = Date.now();
+    if (lastEmergencyAlertTimes[alertKey] && (now - lastEmergencyAlertTimes[alertKey]) < (cooldownSec * 1000)) {
+        console.log(`[ntfy Alert] Cooldown ativo para alerta '${alertKey}' (${Math.round((cooldownSec * 1000 - (now - lastEmergencyAlertTimes[alertKey])) / 1000)}s restantes)`);
+        return;
+    }
+    lastEmergencyAlertTimes[alertKey] = now;
+
+    const topic = process.env.NTFY_TOPIC || 'gui_vendas_sermoes';
+    try {
+        await axios.post(`https://ntfy.sh/${topic}`, message, {
+            headers: {
+                'Title': title,
+                'Priority': priority,
+                'Tags': tags
+            },
+            timeout: 6000
+        });
+        console.log(`[ntfy Alert] 🚨 Alerta crítico enviado para https://ntfy.sh/${topic}: ${title}`);
+    } catch (err) {
+        console.warn(`[ntfy Alert Error]:`, err?.message);
     }
 }
 
@@ -348,6 +384,14 @@ async function getMediaBuffer(msg, sock) {
 async function auditPixReceiptWithGemini(mediaBuffer, mimeType, expectedAmount = 19.90, beneficiary = 'Carol') {
     if (!GEMINI_API_KEY) {
         console.warn('[PIX Auditor] Nenhuma chave GEMINI_API_KEY configurada.');
+        sendNtfyEmergencyAlert({
+            title: '🚨 ALERTA X1: CHAVE DA IA NÃO CONFIGURADA!',
+            message: 'A variável GEMINI_API_KEY está ausente no servidor. O bot não conseguirá ler comprovantes de pagamento!',
+            priority: 'urgent',
+            tags: 'warning,key',
+            alertKey: 'missing_gemini_key',
+            cooldownSec: 300
+        }).catch(() => {});
         return { isValid: false, reason: 'Chave da IA não configurada no servidor.' };
     }
 
@@ -424,7 +468,16 @@ async function auditPixReceiptWithGemini(mediaBuffer, mimeType, expectedAmount =
 
         return { isValid: true, details: parsed };
     } catch (err) {
+        const errorDetail = err?.response?.data?.error?.message || err?.message;
         console.error('[PIX Auditor] Erro na API do Gemini:', err?.response?.data || err?.message);
+        sendNtfyEmergencyAlert({
+            title: '⚠️ ALERTA X1: FALHA NA IA DO GEMINI!',
+            message: `A API do Gemini falhou ao tentar auditar um comprovante!\nErro: ${errorDetail}\nVerifique imediatamente os tokens e status da API do Gemini.`,
+            priority: 'urgent',
+            tags: 'warning,robot',
+            alertKey: 'gemini_api_error',
+            cooldownSec: 120
+        }).catch(() => {});
         return { isValid: false, reason: 'Não foi possível ler com nitidez as informações do comprovante.' };
     }
 }
@@ -829,6 +882,14 @@ async function startQrSession(botId = 'bot_whatsapp_principal', forceNewQr = fal
                         lastError: null,
                     });
                     console.log(`[QR Engine] 📱 QR Code pronto para leitura (${botId})`);
+                    sendNtfyEmergencyAlert({
+                        title: '⚠️ ALERTA X1: WHATSAPP AGUARDANDO QR CODE',
+                        message: `⚠️ O WhatsApp do bot (+55 11 5229-1989) está aguardando leitura de QR Code!\nPAUSE OS ANÚNCIOS NO META ADS até reconectar.`,
+                        priority: 'urgent',
+                        tags: 'warning,qr_code',
+                        alertKey: 'wa_qr_ready',
+                        cooldownSec: 300
+                    }).catch(() => {});
                 } catch (err) {
                     console.error('[QR Engine] Erro ao gerar QR:', err);
                 }
@@ -867,6 +928,14 @@ async function startQrSession(botId = 'bot_whatsapp_principal', forceNewQr = fal
                         profileName: null,
                         lastError: 'Sessão desconectada pelo celular. Clique em Gerar Novo QR Code.',
                     });
+                    sendNtfyEmergencyAlert({
+                        title: '🚨 ALERTA CRÍTICO: WHATSAPP DESLOGADO!',
+                        message: `⚠️ O WhatsApp do bot (+55 11 5229-1989) foi DESLOGADO pelo aparelho!\nPAUSE OS ANÚNCIOS NO META ADS IMEDIATAMENTE até gerar um novo QR Code!`,
+                        priority: 'max',
+                        tags: 'rotating_light,no_entry,warning',
+                        alertKey: 'wa_logged_out',
+                        cooldownSec: 60
+                    }).catch(() => {});
                 } else if (shouldReconnect) {
                     const timer = setTimeout(() => {
                         startQrSession(botId, false).catch(console.error);
@@ -5877,6 +5946,42 @@ app.post('/api/funnels/simulate-pix', async (req, res) => {
         res.status(500).json({ success: false, error: err.message });
     }
 });
+
+// Endpoint de Teste do Alerta de Emergência Ntfy
+app.post('/api/test/emergency-ntfy', async (req, res) => {
+    try {
+        const { title, message } = req.body || {};
+        await sendNtfyEmergencyAlert({
+            title: title || '🧪 TESTE DE ALERTA DE EMERGÊNCIA (RENDER)',
+            message: message || 'Este é um teste do canal de emergência do Chatbot X1. Alertas de queda de WhatsApp, falhas de IA ou erros da Meta CAPI chegarão aqui com prioridade máxima!',
+            priority: 'urgent',
+            tags: 'test_tube,bell,white_check_mark',
+            alertKey: 'manual_test_' + Date.now(),
+            cooldownSec: 0
+        });
+        res.json({ success: true, message: 'Alerta de teste enviado com sucesso!' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ─── CAPTURA GLOBAL DE EXCEÇÕES E REJEIÇÕES ───
+process.on('uncaughtException', (err) => {
+    console.error('[UNCAUGHT EXCEPTION]:', err);
+    sendNtfyEmergencyAlert({
+        title: '🚨 ALERTA CRÍTICO: EXCEÇÃO NO MOTOR NODE.JS',
+        message: `⚠️ Exceção fatal no motor do Chatbot:\n${err?.message || err}\nVerifique os logs no Render imediatamente.`,
+        priority: 'max',
+        tags: 'rotating_light,fire',
+        alertKey: 'uncaught_exception',
+        cooldownSec: 60
+    }).catch(() => {});
+});
+
+process.on('unhandledRejection', (reason) => {
+    console.error('[UNHANDLED REJECTION]:', reason);
+});
+
 
 // Also serve built frontend locally at http://localhost:5050
 const CLIENT_DIST_DIR = path.join(BASE_RUNTIME_DIR, 'client_build', 'dist');
