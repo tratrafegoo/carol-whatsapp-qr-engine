@@ -144,10 +144,16 @@ export const FUNNELS_CATALOG = [
 // ─── EXTRAÇÃO DE CONTEXTO DE ANÚNCIO (CTWA NATIVO OU TAGS UTM) ───
 function extractAdContext(msg, textContent) {
     const adData = {};
+    let m = msg.message || {};
+    while (m.ephemeralMessage || m.viewOnceMessage || m.viewOnceMessageV2 || m.documentWithCaptionMessage) {
+        m = m.ephemeralMessage?.message || m.viewOnceMessage?.message || m.viewOnceMessageV2?.message || m.documentWithCaptionMessage?.message || m;
+    }
     const contextInfo =
+        m.extendedTextMessage?.contextInfo ||
+        m.contextInfo ||
+        m.imageMessage?.contextInfo ||
         msg.message?.extendedTextMessage?.contextInfo ||
         msg.message?.contextInfo ||
-        msg.message?.imageMessage?.contextInfo ||
         {};
 
     if (contextInfo.externalAdReply) {
@@ -870,6 +876,7 @@ async function sendPttVoiceNote(sock, remoteJid, filePath, botId = null, userPho
         description: `${label} (${isOgg ? 'OGG Opus' : 'MP3'})`,
         botId: botId || 'bot_whatsapp_principal',
         userPhone: userPhone || '',
+        timeoutMs: 30000,
         sendAction: async () => {
             const sent = await sock.sendMessage(remoteJid, {
                 audio: audioBuffer,
@@ -1215,9 +1222,14 @@ async function startQrSession(botId = 'bot_whatsapp_principal', forceNewQr = fal
         });
 
         sock.ev.on('messages.upsert', async (event) => {
-            if (event.type !== 'notify') return;
+            // Processa tanto 'notify' quanto 'append' (mensagens acumuladas durante reconexão)
             for (const msg of event.messages) {
                 try {
+                    // Ignora apenas mensagens antigas de histórico histórico (> 24h)
+                    const msgTimestamp = msg.messageTimestamp ? Number(msg.messageTimestamp) * 1000 : Date.now();
+                    if (Date.now() - msgTimestamp > 24 * 60 * 60 * 1000) {
+                        continue;
+                    }
                     await handleIncomingMessage(botId, sock, msg);
                 } catch (err) {
                     console.error('[QR Engine] Erro ao processar mensagem:', err);
@@ -5009,20 +5021,26 @@ async function handleIncomingMessage(botId, sock, msg) {
     const userPhone = remoteJid.split('@')[0].split(':')[0];
     const pushName = msg.pushName || 'Cliente';
 
+    // Desempacotamento recursivo de mensagens temporárias e mídias de visualização única
+    let m = msg.message;
+    while (m.ephemeralMessage || m.viewOnceMessage || m.viewOnceMessageV2 || m.documentWithCaptionMessage) {
+        m = m.ephemeralMessage?.message || m.viewOnceMessage?.message || m.viewOnceMessageV2?.message || m.documentWithCaptionMessage?.message || m;
+    }
+
     const textContent =
-        msg.message.conversation ||
-        msg.message.extendedTextMessage?.text ||
-        msg.message.imageMessage?.caption ||
-        msg.message.documentMessage?.caption ||
-        msg.message.buttonsResponseMessage?.selectedDisplayText ||
-        msg.message.listResponseMessage?.title ||
+        m.conversation ||
+        m.extendedTextMessage?.text ||
+        m.imageMessage?.caption ||
+        m.documentMessage?.caption ||
+        m.buttonsResponseMessage?.selectedDisplayText ||
+        m.listResponseMessage?.title ||
         '';
 
-    const hasImage = !!msg.message.imageMessage;
-    const hasDocument = !!msg.message.documentMessage || !!msg.message.documentWithCaptionMessage;
+    const hasImage = !!m.imageMessage;
+    const hasDocument = !!m.documentMessage;
     const hasMediaReceipt = hasImage || hasDocument;
-    const hasAudio = !!msg.message.audioMessage;
-    const hasSticker = !!msg.message.stickerMessage;
+    const hasAudio = !!m.audioMessage;
+    const hasSticker = !!m.stickerMessage;
 
     console.log(`[Funil X1] 📩 Mensagem de ${pushName} (${userPhone}): "${textContent || (hasMediaReceipt ? '[COMPROVANTE]' : hasAudio ? '[AUDIO]' : hasSticker ? '[FIGURINHA]' : '')}"`);
 
@@ -6366,8 +6384,12 @@ app.post('/api/funnels/recover-lead', async (req, res) => {
         saveStore(store);
 
         if (funnel === 'funil4') {
+            console.log(`[Lead Recovery] ⏳ Aguardando espaçamento de conexão para ${phone}...`);
+            await new Promise((r) => setTimeout(r, 1500));
             await sendFunil4Phase1(botId, sock, remoteJid, phone, pushName);
         } else if (funnel === 'funil1') {
+            console.log(`[Lead Recovery] ⏳ Aguardando espaçamento de conexão para ${phone}...`);
+            await new Promise((r) => setTimeout(r, 1500));
             await sendParabolasPhase1(botId, sock, remoteJid, phone, pushName);
         }
 
@@ -7004,11 +7026,8 @@ app.listen(PORT, '0.0.0.0', () => {
 // ─── Rotina Keep-Alive Anti-Sleep Universal (Render Free Tier) ───
 // Dispara um ping HTTP a cada 4 minutos para a rota /api/health garantindo que o servidor permaneça acordado 24/7
 const RENDER_PING_URL = process.env.RENDER_EXTERNAL_URL ? `${process.env.RENDER_EXTERNAL_URL}/api/health` : 'https://carol-whatsapp-qr-engine.onrender.com/api/health';
-setInterval(() => {
+setInterval(async () => {
     try {
-        const protocol = RENDER_PING_URL.startsWith('https') ? https : http;
-        protocol.get(RENDER_PING_URL, (res) => {
-            // Heartbeat mantido ativo
-        }).on('error', () => {});
+        await fetch(RENDER_PING_URL).catch(() => {});
     } catch {}
-}, 4 * 60 * 1000);
+}, 3 * 60 * 1000);
