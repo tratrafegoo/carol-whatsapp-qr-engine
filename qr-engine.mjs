@@ -705,14 +705,14 @@ try {
         const defFlows = JSON.parse(fs.readFileSync(defFlowsPath, 'utf-8'));
         const currentFlows = store.flows['bot_whatsapp_principal'] || [];
         const isOutdated = currentFlows.length < 13 || 
-            currentFlows.some(f => f._id === 'flow_funil_4' && (f.draftVersion?.flowData?.nodes?.length || 0) < 19) ||
-            store.flows_schema_version !== 'v4_unbroken_bonus_20261110_v2';
+            currentFlows.some(f => f._id === 'flow_funil_4' && (f.draftVersion?.flowData?.nodes?.length || 0) < 20) ||
+            store.flows_schema_version !== 'v5_reminders_unbroken_20261110_v3';
         if (currentFlows.length === 0 || isOutdated) {
             const customFlows = currentFlows.filter(f => !defFlows.some(df => df._id === f._id));
             store.flows['bot_whatsapp_principal'] = [...defFlows, ...customFlows];
-            store.flows_schema_version = 'v4_unbroken_bonus_20261110_v2';
+            store.flows_schema_version = 'v5_reminders_unbroken_20261110_v3';
             saveStore(store);
-            console.log(`[Store Init] 🚀 13 Funis Visuais Ricos V4 Carregados (Total: ${store.flows['bot_whatsapp_principal'].length} funis)!`);
+            console.log(`[Store Init] 🚀 13 Funis Visuais Ricos V5 (com Lembretes Follow-up e Edges Contínuos) Carregados (Total: ${store.flows['bot_whatsapp_principal'].length} funis)!`);
         }
     }
 } catch (err) {
@@ -3356,6 +3356,48 @@ function scheduleParabolasReminder(botId, remoteJid, userPhone) {
     parabolasReminderTimers.set(key, timers);
 }
 
+function cancelAllUserTimers(botId, userPhone) {
+    cancelParabolasReminder(botId, userPhone);
+    cancelFunil2Reminder(botId, userPhone);
+    cancelFunil3Reminder(botId, userPhone);
+    cancelFunil4Reminder(botId, userPhone);
+    cancelFunil5Reminder(botId, userPhone);
+    cancelFunil6Reminder(botId, userPhone);
+    cancelFunil7Reminder(botId, userPhone);
+    cancelFunil8Reminder(botId, userPhone);
+    cancelFunil9Reminder(botId, userPhone);
+    cancelFunil10Reminder(botId, userPhone);
+    cancelFunil11Reminder(botId, userPhone);
+    cancelFunil12Reminder(botId, userPhone);
+    cancelFunil13Reminder(botId, userPhone);
+}
+
+function scheduleVisualReminder(botId, sock, remoteJid, userPhone, delayMinutes, text) {
+    cancelFunil4Reminder(botId, userPhone);
+    const key = `${botId}:${userPhone}`;
+    const delayMs = Math.max(Number(delayMinutes) || 15, 1) * 60 * 1000;
+    const timer = setTimeout(async () => {
+        try {
+            const currentStore = loadStore();
+            const sess = currentStore.userSessions[key];
+            if (sess && (sess.waitingFor === 'PIX_RECEIPT' || (sess.waitingFor || '').startsWith('PIX_RECEIPT_'))) {
+                const activeSock = activeSockets.get(botId) || sock;
+                if (activeSock) {
+                    await activeSock.sendMessage(remoteJid, { text });
+                    logConversation(botId, userPhone, 'BOT', 'REMINDER', text);
+                    console.log(`[Visual Flow] ⏰ Follow-up automático de lembrete enviado para ${userPhone}: "${text}"`);
+                }
+            }
+        } catch (err) {
+            console.error('[Visual Reminder Error]:', err?.message);
+        }
+    }, delayMs);
+
+    const existingTimers = funil4ReminderTimers.get(key) || [];
+    existingTimers.push(timer);
+    funil4ReminderTimers.set(key, existingTimers);
+}
+
 // ─── FASE 1: Apresentação da Oferta (Print 1 & 2) ───
 async function sendParabolasPhase1(botId, sock, remoteJid, userPhone, pushName) {
     console.log(`[Funil Parabolas] 🚀 Iniciando Fase 1 para ${pushName} (${userPhone})`);
@@ -5082,12 +5124,42 @@ async function handleIncomingMessage(botId, sock, msg) {
 
     const normalizedText = textContent.trim().toLowerCase();
 
+    // ─── Função de Cancelamento Universal de Timers (Hoisted e Segura) ───
+    const cancelAllTimers = () => cancelAllUserTimers(botId, userPhone);
+
     // ─── Sistema Universal de Reações Humanizadas para TODOS os Funis (Atuais e Futuros) ───
     const isNegative = ['não', 'nao', 'agora não', 'agora nao', 'depois', 'nop', 'cancelar', 'não quero', 'nao quero'].some(w => normalizedText === w || normalizedText.startsWith(w + ' '));
     const autoEmoji = hasMediaReceipt ? '❤️' : (hasAudio ? '👍' : (hasSticker ? '❤️' : getHumanReactionEmoji(textContent, isNegative)));
     
     // Dispara a reação humanizada imediatamente na mensagem do lead
     reactToMessage(sock, remoteJid, msg.key, autoEmoji).catch(() => {});
+
+    // Roteador Multi-Funil por Gatilhos de Teste (teste1 a teste13):
+    const isTest1 = ['teste1', 'teste 1', '#teste1', '!teste1', '/teste1', 'teste', 'test', '#teste', '!teste', '/teste'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
+    const isTest2 = ['teste2', 'teste 2', '#teste2', '!teste2', '/teste2'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
+    const isTest3 = ['teste3', 'teste 3', '#teste3', '!teste3', '/teste3'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
+    const isTest4 = ['teste4', 'teste 4', '#teste4', '!teste4', '/teste4'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
+    const isTest5 = ['teste5', 'teste 5', '#teste5', '!teste5', '/teste5'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
+    const isTest6 = ['teste6', 'teste 6', '#teste6', '!teste6', '/teste6'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
+    const isTest7 = ['teste7', 'teste 7', '#teste7', '!teste7', '/teste7'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
+    const isTest8 = ['teste8', 'teste 8', '#teste8', '!teste8', '/teste8'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
+    const isTest9 = ['teste9', 'teste 9', '#teste9', '!teste9', '/teste9'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
+    const isTest10 = ['teste10', 'teste 10', '#teste10', '!teste10', '/teste10'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
+    const isTest11 = ['teste11', 'teste 11', '#teste11', '!teste11', '/teste11'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
+    const isTest12 = ['teste12', 'teste 12', '#teste12', '!teste12', '/teste12'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
+    const isTest13 = ['teste13', 'teste 13', '#teste13', '!teste13', '/teste13'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
+
+    const isAnyTestTrigger = isTest1 || isTest2 || isTest3 || isTest4 || isTest5 || isTest6 || isTest7 || isTest8 || isTest9 || isTest10 || isTest11 || isTest12 || isTest13 || normalizedText.startsWith('teste');
+
+    // Se o lead enviou qualquer gatilho de teste ou comando de início, LIMPA QUALQUER SESSÃO ANTERIOR IMEDIATAMENTE!
+    // Garante que o testador nunca fique preso na etapa de comprovante ou com sessão travada
+    if (isAnyTestTrigger) {
+        console.log(`[Universal Trigger Reset] 🔄 Gatilho de teste "${normalizedText}" recebido de ${pushName} (${userPhone}). Resetando sessão presa e timers!`);
+        cancelAllTimers();
+        session = null;
+        delete store.userSessions[sessionKey];
+        saveStore(store);
+    }
 
     // ─── 0. Verificação de Sessão Ativa em Fluxo Visual Deployed (INPUT / PIX_VERIFIER) ───
     if (session && session.flowId) {
@@ -5132,6 +5204,7 @@ async function handleIncomingMessage(botId, sock, msg) {
 
                 if (auditResult && auditResult.isValid) {
                     console.log(`[Visual Flow] ✅ Comprovante APROVADO para ${userPhone}!`);
+                    cancelAllTimers();
                     const successEdge = edges.find(e => (e.sourceNodeId || e.source) === session.currentNodeId && e.sourceHandle === 'success') ||
                                         edges.find(e => (e.sourceNodeId || e.source) === session.currentNodeId);
                     if (successEdge) {
@@ -5180,37 +5253,6 @@ async function handleIncomingMessage(botId, sock, msg) {
             return;
         }
     }
-
-    // Roteador Multi-Funil por Gatilhos de Teste (teste1 a teste10):
-    const isTest1 = ['teste1', 'teste 1', '#teste1', '!teste1', '/teste1', 'teste', 'test', '#teste', '!teste', '/teste'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
-    const isTest2 = ['teste2', 'teste 2', '#teste2', '!teste2', '/teste2'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
-    const isTest3 = ['teste3', 'teste 3', '#teste3', '!teste3', '/teste3'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
-    const isTest4 = ['teste4', 'teste 4', '#teste4', '!teste4', '/teste4'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
-    const isTest5 = ['teste5', 'teste 5', '#teste5', '!teste5', '/teste5'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
-    const isTest6 = ['teste6', 'teste 6', '#teste6', '!teste6', '/teste6'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
-    const isTest7 = ['teste7', 'teste 7', '#teste7', '!teste7', '/teste7'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
-    const isTest8 = ['teste8', 'teste 8', '#teste8', '!teste8', '/teste8'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
-    const isTest9 = ['teste9', 'teste 9', '#teste9', '!teste9', '/teste9'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
-    const isTest10 = ['teste10', 'teste 10', '#teste10', '!teste10', '/teste10'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
-    const isTest11 = ['teste11', 'teste 11', '#teste11', '!teste11', '/teste11'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
-    const isTest12 = ['teste12', 'teste 12', '#teste12', '!teste12', '/teste12'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
-    const isTest13 = ['teste13', 'teste 13', '#teste13', '!teste13', '/teste13'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
-
-    const cancelAllTimers = () => {
-        cancelParabolasReminder(botId, userPhone);
-        cancelFunil2Reminder(botId, userPhone);
-        cancelFunil3Reminder(botId, userPhone);
-        cancelFunil4Reminder(botId, userPhone);
-        cancelFunil5Reminder(botId, userPhone);
-        cancelFunil6Reminder(botId, userPhone);
-        cancelFunil7Reminder(botId, userPhone);
-        cancelFunil8Reminder(botId, userPhone);
-        cancelFunil9Reminder(botId, userPhone);
-        cancelFunil10Reminder(botId, userPhone);
-        cancelFunil11Reminder(botId, userPhone);
-        cancelFunil12Reminder(botId, userPhone);
-        cancelFunil13Reminder(botId, userPhone);
-    };
 
     // DISPARO FUNIL 1: As 40 Parábolas de Jesus
     if (isTest1) {
@@ -6004,31 +6046,44 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
             await new Promise((r) => setTimeout(r, durationSec * 1000));
 
             const audioUrl = config.audioUrl || 'audio.mp3';
-            const media = await resolveMediaBuffer(audioUrl, 'audio.mp3');
-            if (media && media.buffer) {
-                const isMp3 = media.filename.toLowerCase().endsWith('.mp3');
-                await safeDispatchBlock({
-                    sock,
-                    remoteJid,
-                    blockType: 'AUDIO',
-                    description: `Áudio: ${media.filename}`,
-                    botId,
-                    userPhone: session.userPhone,
-                    sendAction: async () => {
-                        const sent = await sock.sendMessage(remoteJid, {
-                            audio: media.buffer,
-                            mimetype: isMp3 ? 'audio/mpeg' : 'audio/ogg; codecs=opus',
-                            ptt: true,
-                        });
-                        logConversation(botId, session.userPhone, 'BOT', 'AUDIO', `🎙️ [Áudio enviado: ${media.filename}]`);
-                        return sent;
-                    }
-                });
-            } else {
-                const text =
-                    config.fallbackText ||
-                    `🎙️ *Olá, ${session.userName}!* Que alegria ter você aqui! Já separei o seu material completo para te entregar agora mesmo.`;
-                await sendRealisticText(botId, sock, remoteJid, session.userPhone, text);
+            const cleanAudio = audioUrl.replace(/^\/+/, '');
+            const localAudioPath = path.join(__dirname, 'public', cleanAudio);
+
+            let sentAudio = false;
+            try {
+                sentAudio = await sendPttVoiceNote(sock, remoteJid, localAudioPath, botId, session.userPhone, `Áudio PTT (${node.label || 'Voz'})`);
+            } catch (pttErr) {
+                console.warn('[executeFromNode AUDIO sendPttVoiceNote Error]:', pttErr?.message);
+            }
+
+            if (!sentAudio) {
+                const media = await resolveMediaBuffer(audioUrl, 'audio.mp3');
+                if (media && media.buffer) {
+                    const isMp3 = media.filename.toLowerCase().endsWith('.mp3');
+                    await safeDispatchBlock({
+                        sock,
+                        remoteJid,
+                        blockType: 'AUDIO',
+                        description: `Áudio: ${media.filename}`,
+                        botId,
+                        userPhone: session.userPhone,
+                        timeoutMs: 30000,
+                        sendAction: async () => {
+                            const sent = await sock.sendMessage(remoteJid, {
+                                audio: media.buffer,
+                                mimetype: isMp3 ? 'audio/mpeg' : 'audio/ogg; codecs=opus',
+                                ptt: true,
+                            });
+                            logConversation(botId, session.userPhone, 'BOT', 'AUDIO', `🎙️ [Áudio enviado: ${media.filename}]`);
+                            return sent;
+                        }
+                    });
+                } else {
+                    const text =
+                        config.fallbackText ||
+                        `🎙️ *Olá, ${session.userName}!* Que alegria ter você aqui! Já separei o seu material completo para te entregar agora mesmo.`;
+                    await sendRealisticText(botId, sock, remoteJid, session.userPhone, text);
+                }
             }
             try {
                 await sock.sendPresenceUpdate('paused', remoteJid);
@@ -6257,6 +6312,14 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
         }
 
         default: {
+            const isReminder = config.isReminder || (node.label && node.label.toLowerCase().includes('lembrete'));
+            if (isReminder) {
+                const delayMin = Number(config.delayMinutes) || 15;
+                const reminderText = config.text || config.messageText || 'Faltou alguma coisa?';
+                console.log(`[Visual Flow] ⏰ Agendando lembrete de follow-up (${delayMin} min) para ${session.userPhone}: "${reminderText}"`);
+                scheduleVisualReminder(botId, sock, remoteJid, session.userPhone, delayMin, reminderText);
+                break; // Segue imediatamente para o próximo nó (PIX_VERIFIER) sem travar a esteira!
+            }
             if (config.text || config.messageText) {
                 await sendRealisticText(botId, sock, remoteJid, session.userPhone, config.text || config.messageText);
             }
