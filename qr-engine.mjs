@@ -704,11 +704,15 @@ try {
     if (fs.existsSync(defFlowsPath)) {
         const defFlows = JSON.parse(fs.readFileSync(defFlowsPath, 'utf-8'));
         const currentFlows = store.flows['bot_whatsapp_principal'] || [];
-        const isOutdated = currentFlows.length < 13 || currentFlows.some(f => f._id === 'flow_funil_4' && (f.draftVersion?.flowData?.nodes?.length || 0) < 17);
+        const isOutdated = currentFlows.length < 13 || 
+            currentFlows.some(f => f._id === 'flow_funil_4' && (f.draftVersion?.flowData?.nodes?.length || 0) < 19) ||
+            store.flows_schema_version !== 'v4_unbroken_bonus_20261110_v2';
         if (currentFlows.length === 0 || isOutdated) {
-            store.flows['bot_whatsapp_principal'] = defFlows;
+            const customFlows = currentFlows.filter(f => !defFlows.some(df => df._id === f._id));
+            store.flows['bot_whatsapp_principal'] = [...defFlows, ...customFlows];
+            store.flows_schema_version = 'v4_unbroken_bonus_20261110_v2';
             saveStore(store);
-            console.log('[Store Init] 🚀 13 Funis Visuais Ricos Atualizados (PDFs Individuais) carregados em store.flows!');
+            console.log(`[Store Init] 🚀 13 Funis Visuais Ricos V4 Carregados (Total: ${store.flows['bot_whatsapp_principal'].length} funis)!`);
         }
     }
 } catch (err) {
@@ -5821,7 +5825,22 @@ async function handleIncomingMessage(botId, sock, msg) {
             );
             await new Promise((r) => setTimeout(r, 1200));
 
-            if (session.funnel === 'funil7') {
+            if (session.funnel === 'funil4') {
+                const bonusPdfPath = path.join(__dirname, 'public', 'funil4', 'Bônus Especial - Estudos do Apocalipse.pdf');
+                if (fs.existsSync(bonusPdfPath)) {
+                    const bonusBuffer = fs.readFileSync(bonusPdfPath);
+                    await sendSafeDocument(
+                        sock,
+                        remoteJid,
+                        bonusBuffer,
+                        'Bônus Especial - Estudos do Apocalipse.pdf',
+                        '🎁 Aqui está o seu Bônus Especial: 7 Estudos do Apocalipse em PDF! Que este estudo ilumine sua fé e traga grandes revelações da Palavra de Deus! 🙏📖',
+                        botId,
+                        userPhone,
+                        '[Bônus]: 7 Estudos do Apocalipse'
+                    );
+                }
+            } else if (session.funnel === 'funil7') {
                 const bonusText = `🎁 *Acesso Completo ao Kit Construtor de Palavras e Alfabetização Confirmado!*\n\nTodos os 8 materiais já estão disponíveis na sua conversa para você consultar e imprimir sempre que quiser. Que este material faça uma grande diferença no aprendizado das crianças! 🌟📚`;
                 await sendRealisticText(botId, sock, remoteJid, userPhone, bonusText);
             } else if (session.funnel === 'funil8') {
@@ -6428,8 +6447,104 @@ app.post('/api/bots/:botId/whatsapp/qr/sync', (req, res) => {
     if (req.body?.flows && Array.isArray(req.body.flows)) {
         store.flows[botId] = req.body.flows;
         saveStore(store);
+        console.log(`[QR Engine Sync] 🔄 ${req.body.flows.length} fluxos sincronizados para bot ${botId}`);
     }
-    res.json({ success: true });
+    res.json({ success: true, count: store.flows[botId]?.length || 0 });
+});
+
+// Suporte direto para /bots/:botId/whatsapp/qr/sync (sem prefixo /api)
+app.post('/bots/:botId/whatsapp/qr/sync', (req, res) => {
+    const botId = String(req.params.botId || 'bot_whatsapp_principal');
+    if (req.body?.flows && Array.isArray(req.body.flows)) {
+        store.flows[botId] = req.body.flows;
+        saveStore(store);
+        console.log(`[QR Engine Sync Direct] 🔄 ${req.body.flows.length} fluxos sincronizados para bot ${botId}`);
+    }
+    res.json({ success: true, count: store.flows[botId]?.length || 0 });
+});
+
+app.get(['/api/bots/:botId/flows', '/bots/:botId/flows'], (req, res) => {
+    const botId = String(req.params.botId || 'bot_whatsapp_principal');
+    const flows = store.flows[botId] || [];
+    res.json({ success: true, data: flows });
+});
+
+app.post(['/api/bots/:botId/flows/:flowId/duplicate', '/bots/:botId/flows/:flowId/duplicate'], (req, res) => {
+    const botId = String(req.params.botId || 'bot_whatsapp_principal');
+    const flowId = String(req.params.flowId);
+    const flows = store.flows[botId] || [];
+    const sourceFlow = flows.find(f => f._id === flowId);
+    if (!sourceFlow) {
+        return res.status(404).json({ success: false, error: 'Funil não encontrado' });
+    }
+
+    const newFlowId = 'flow_' + Date.now();
+    const clonedFlowData = JSON.parse(JSON.stringify(sourceFlow.draftVersion?.flowData || { nodes: [], edges: [] }));
+    const startNode = (clonedFlowData.nodes || []).find(n => (n.nodeType || '').toUpperCase() === 'START');
+    let newTrigger = 'novo_gatilho';
+    if (startNode) {
+        const oldTrigger = (startNode.config?.trigger || 'start').trim();
+        if (/_copia(_\d+)?$/i.test(oldTrigger)) {
+            const match = oldTrigger.match(/_copia_?(\d+)?$/i);
+            const nextNum = match && match[1] ? parseInt(match[1], 10) + 1 : 2;
+            newTrigger = oldTrigger.replace(/_copia(_\d+)?$/i, `_copia_${nextNum}`);
+        } else {
+            newTrigger = `${oldTrigger}_copia`;
+        }
+        startNode.config = { ...(startNode.config || {}), trigger: newTrigger };
+        startNode.label = `Início (Gatilho: ${newTrigger})`;
+    }
+
+    let newName = sourceFlow.name || 'Novo Funil';
+    if (newName.includes('(Gatilho:')) {
+        newName = newName.replace(/\(Gatilho:\s*[^)]+\)/i, `(Gatilho: ${newTrigger})`);
+    }
+    if (!newName.endsWith('(Cópia)')) {
+        newName = `${newName} (Cópia)`;
+    }
+
+    const duplicatedFlow = {
+        ...JSON.parse(JSON.stringify(sourceFlow)),
+        _id: newFlowId,
+        botId,
+        name: newName,
+        isMainFlow: false,
+        isDeployed: true,
+        productionVersion: 1,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        draftVersion: {
+            version: 1,
+            flowData: clonedFlowData
+        }
+    };
+
+    const sourceIndex = flows.findIndex(f => f._id === flowId);
+    if (sourceIndex >= 0) {
+        flows.splice(sourceIndex + 1, 0, duplicatedFlow);
+    } else {
+        flows.push(duplicatedFlow);
+    }
+    store.flows[botId] = flows;
+    saveStore(store);
+    console.log(`[QR Engine Duplicate] 📋 Funil "${sourceFlow.name}" duplicado como "${newName}" (Gatilho: ${newTrigger})`);
+    res.status(201).json({ success: true, data: duplicatedFlow });
+});
+
+app.post(['/api/bots/:botId/flows/:flowId/deploy', '/bots/:botId/flows/:flowId/deploy'], (req, res) => {
+    const botId = String(req.params.botId || 'bot_whatsapp_principal');
+    const flowId = String(req.params.flowId);
+    const flows = store.flows[botId] || [];
+    const flow = flows.find(f => f._id === flowId);
+    if (flow) {
+        flow.isDeployed = true;
+        flow.productionVersion = (flow.productionVersion || 1) + 1;
+        flow.updatedAt = new Date().toISOString();
+        saveStore(store);
+        console.log(`[QR Engine Deploy] 🚀 Funil "${flow.name}" deployado em produção!`);
+        return res.json({ success: true, data: flow });
+    }
+    res.status(404).json({ success: false, error: 'Funil não encontrado' });
 });
 
 
@@ -6494,21 +6609,110 @@ app.post('/api/bots/:botId/whatsapp/qr/test-message', async (req, res) => {
     }
 });
 
-// ─── ROTAS DE INTEGRAÇÃO COM O FACEHUB (META ADS MULTI-CONTAS) ───
+// ─── ROTAS DE INTEGRAÇÃO COM O METAHUB (META ADS MULTI-CONTAS) ───
 app.get('/api/funnels', (_req, res) => {
-    // Mesclar catálogo estático com estatísticas em tempo real
-    const stats = store.funnelStats || {};
-    const funnelsWithStats = FUNNELS_CATALOG.map(f => {
-        const txs = (store.funnelTransactions || []).filter(t => t.funnelId === f.id);
-        const sales = txs.length;
-        const revenue = txs.reduce((acc, cur) => acc + (cur.amount || 0), 0);
-        return {
-            ...f,
-            sales,
-            revenue: Number(revenue.toFixed(2))
-        };
+    try {
+        const flows = store.flows['bot_whatsapp_principal'] || [];
+        let baseFlows = flows;
+        if (!baseFlows || baseFlows.length === 0) {
+            const defFlowsPath = path.join(__dirname, 'default_flows.json');
+            if (fs.existsSync(defFlowsPath)) {
+                baseFlows = JSON.parse(fs.readFileSync(defFlowsPath, 'utf-8'));
+            }
+        }
+
+        const funnelsList = [];
+        const seenIds = new Set();
+
+        (baseFlows || []).forEach((flow, index) => {
+            const fid = flow._id;
+            seenIds.add(fid);
+
+            const nodes = flow.draftVersion?.flowData?.nodes || [];
+            const startNode = nodes.find(n => (n.nodeType || '').toUpperCase() === 'START');
+            const pixNode = nodes.find(n => (n.nodeType || '').toUpperCase() === 'PIX' || (n.nodeType || '').toUpperCase() === 'PIX_VERIFIER');
+
+            const trigger = (startNode?.config?.trigger || `teste${index + 1}`).trim();
+            const expectedAmount = Number(pixNode?.config?.amount || pixNode?.config?.expectedAmount || 19.90);
+            const beneficiary = pixNode?.config?.pixKeyName || pixNode?.config?.beneficiary || 'Pastor Guilherme';
+
+            const canonicalMatch = FUNNELS_CATALOG.find(c => c.id === fid || c.trigger === trigger);
+            const rawName = flow.name || canonicalMatch?.name || `Funil ${index + 1}`;
+            const whatsappPhone = canonicalMatch?.whatsappPhone || store.connectedPhone || '551152291989';
+            const defaultMsg = canonicalMatch?.defaultMessage || `Olá! Gostaria de receber ${rawName} [ref_{{campaign.id}}_{{ad.id}}]`;
+
+            const txs = (store.funnelTransactions || []).filter(t => t.funnelId === fid || t.funnelId === canonicalMatch?.id);
+            const sales = txs.length;
+            const revenue = txs.reduce((acc, cur) => acc + (cur.amount || 0), 0);
+
+            funnelsList.push({
+                id: fid,
+                canonicalId: canonicalMatch?.id || fid,
+                name: rawName,
+                trigger,
+                expectedAmount,
+                beneficiary,
+                whatsappPhone,
+                defaultMessage: defaultMsg,
+                isDeployed: flow.isDeployed !== false,
+                isCustomOrCopy: !canonicalMatch,
+                sales,
+                revenue: Number(revenue.toFixed(2))
+            });
+        });
+
+        // Adicionar do catálogo canônico se algum não constava
+        FUNNELS_CATALOG.forEach((cat) => {
+            if (!seenIds.has(cat.id) && !funnelsList.some(f => f.trigger === cat.trigger)) {
+                const txs = (store.funnelTransactions || []).filter(t => t.funnelId === cat.id);
+                funnelsList.push({
+                    ...cat,
+                    sales: txs.length,
+                    revenue: Number(txs.reduce((acc, cur) => acc + (cur.amount || 0), 0).toFixed(2))
+                });
+            }
+        });
+
+        res.json({
+            success: true,
+            count: funnelsList.length,
+            singleFunnelMode: Boolean(store.singleFunnelMode),
+            activeFunnelId: store.activeFunnelId || 'funil4',
+            activeFunnelName: store.activeFunnelName || 'Funil 4: Jornada da Bíblia (Pastor Guilherme)',
+            funnels: funnelsList
+        });
+    } catch (err) {
+        console.error('[GET /api/funnels] Erro:', err);
+        res.status(500).json({ success: false, error: err?.message });
+    }
+});
+
+app.post('/api/funnels/mode', (req, res) => {
+    try {
+        const { singleFunnelMode, activeFunnelId, activeFunnelName } = req.body || {};
+        store.singleFunnelMode = Boolean(singleFunnelMode);
+        if (activeFunnelId) store.activeFunnelId = activeFunnelId;
+        if (activeFunnelName) store.activeFunnelName = activeFunnelName;
+        saveStore(store);
+        console.log(`[MetaHub] Modo Funil Único atualizado: ${store.singleFunnelMode ? 'ATIVO' : 'DESATIVADO'} -> ${store.activeFunnelName}`);
+        res.json({
+            success: true,
+            singleFunnelMode: store.singleFunnelMode,
+            activeFunnelId: store.activeFunnelId,
+            activeFunnelName: store.activeFunnelName
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err?.message });
+    }
+});
+
+app.get('/api/funnels/mode', (_req, res) => {
+    res.json({
+        success: true,
+        singleFunnelMode: Boolean(store.singleFunnelMode),
+        activeFunnelId: store.activeFunnelId || 'funil4',
+        activeFunnelName: store.activeFunnelName || 'Funil 4: Jornada da Bíblia (Pastor Guilherme)'
     });
-    res.json({ success: true, count: funnelsWithStats.length, funnels: funnelsWithStats });
 });
 
 app.get('/api/funnels/transactions', (req, res) => {
