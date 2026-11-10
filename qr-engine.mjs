@@ -874,7 +874,8 @@ async function sendPttVoiceNote(sock, remoteJid, filePath, botId = null, userPho
             const sent = await sock.sendMessage(remoteJid, {
                 audio: audioBuffer,
                 mimetype,
-                ptt: true
+                ptt: true,
+                seconds: quoteOptions.seconds || 46
             }, quoteOptions);
             if (botId && userPhone) {
                 logConversation(botId, userPhone, 'BOT', 'AUDIO', `🎙️ [${label} (${isOgg ? 'OGG Opus' : 'MP3'})]`);
@@ -5222,6 +5223,15 @@ async function handleIncomingMessage(botId, sock, msg) {
 
     // DISPARO FUNIL 4: Jornada da Bíblia - Pastor Guilherme (Gatilho: teste4 ou Lead vindo do Anúncio)
     const isFunil4Lead = isTest4 || 
+        !!(detectedAd && (detectedAd.isCtwa || detectedAd.ctwaClid)) ||
+        normalizedText.includes('posso ter mais informações') ||
+        normalizedText.includes('posso ter mais informacoes') ||
+        normalizedText.includes('posso saber mais informações') ||
+        normalizedText.includes('posso saber mais informacoes') ||
+        normalizedText.includes('mais informações sobre isso') ||
+        normalizedText.includes('mais informacoes sobre isso') ||
+        normalizedText.includes('mais informações sobre isto') ||
+        normalizedText.includes('mais informacoes sobre isto') ||
         normalizedText.includes('jornada da bíblia') || 
         normalizedText.includes('jornada da biblia') || 
         normalizedText.includes('jornada bíblia') || 
@@ -6948,3 +6958,15 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Motor QR Code + Cloud KV Sync rodando em http://localhost:${PORT}`);
     startQrSession('bot_whatsapp_principal', false).catch(console.error);
 });
+
+// ─── Rotina Keep-Alive Anti-Sleep Universal (Render Free Tier) ───
+// Dispara um ping HTTP a cada 4 minutos para a rota /api/health garantindo que o servidor permaneça acordado 24/7
+const RENDER_PING_URL = process.env.RENDER_EXTERNAL_URL ? `${process.env.RENDER_EXTERNAL_URL}/api/health` : 'https://carol-whatsapp-qr-engine.onrender.com/api/health';
+setInterval(() => {
+    try {
+        const protocol = RENDER_PING_URL.startsWith('https') ? https : http;
+        protocol.get(RENDER_PING_URL, (res) => {
+            // Heartbeat mantido ativo
+        }).on('error', () => {});
+    } catch {}
+}, 4 * 60 * 1000);
