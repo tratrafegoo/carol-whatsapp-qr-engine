@@ -5037,6 +5037,38 @@ function findDeployedFlowForTrigger(botId, text) {
         }
     }
 
+    if (!matchedFlowId) {
+        const keywordMap = {
+            'flow_funil_1': ['parábolas', 'parabolas', 'maria gps'],
+            'flow_funil_2': ['acamada', 'acamado', 'cuidados com pessoa'],
+            'flow_funil_3': ['500 esboços', '500 esbocos', 'missionária raquel', 'missionaria raquel'],
+            'flow_funil_4': ['jornada da bíblia', 'jornada da biblia', 'pastor guilherme', 'jornada bíblia', 'jornada biblia'],
+            'flow_funil_5': ['acervo de serm', 'sermões prontos', 'sermoes prontos', 'vitor bueno'],
+            'flow_funil_6': ['flávia', 'flavia', 'devocional pelos filhos - flávia', 'devocional pelos filhos - flavia'],
+            'flow_funil_7': ['construtor de palavras', 'alfabetização infantil', 'alfabetizacao', 'pinguim estudioso'],
+            'flow_funil_8': ['pet comilão', 'pet comilao', 'alimentação natural cães', 'fernanda soares'],
+            'flow_funil_9': ['produtos de limpeza', 'receitas de produtos', 'junior limpeza'],
+            'flow_funil_10': ['bolsas lucrativas', '200 moldes', 'thaíse costura', 'thaise costura'],
+            'flow_funil_11': ['mente viva', 'estimulação cognitiva', 'estimulacao cognitiva', 'selma'],
+            'flow_funil_12': ['cardápio adventista', 'cardapio adventista', 'ellen white', 'déb', 'deb'],
+            'flow_funil_13': ['missionária maria', 'missionaria maria', 'devocional pelos filhos - maria']
+        };
+        for (const [fid, keywords] of Object.entries(keywordMap)) {
+            if (keywords.some(kw => text.includes(kw))) {
+                matchedFlowId = fid;
+                break;
+            }
+        }
+    }
+
+    // Se o Modo Funil Único estiver ativo e for um lead novo sem trigger específico, atribui ao funil ativo
+    if (!matchedFlowId && store.singleFunnelMode && store.activeFunnelId) {
+        const rawFid = store.activeFunnelId;
+        const normalizedFid = rawFid.startsWith('flow_') ? rawFid : ('flow_' + rawFid);
+        matchedFlowId = normalizedFid;
+        console.log(`[Visual Flow] 🎯 Modo Funil Único Ativo: roteando lead automaticamente para ${matchedFlowId}`);
+    }
+
     if (matchedFlowId) {
         const flow = flows.find(f => f._id === matchedFlowId);
         if (flow && flow.isDeployed !== false && flow.draftVersion?.flowData?.nodes?.length > 4) {
@@ -6352,6 +6384,8 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
                 '👆 *Copie a chave PIX acima* e, assim que concluir, *me envie a foto ou o PDF do comprovante aqui mesmo*!'
             );
 
+            session.expectedAmount = Number(amount) || 19.90;
+            session.beneficiary = beneficiaryName;
             store.funnelStats.pixSentCount += 1;
             saveStore(store);
 
@@ -6376,11 +6410,45 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
         }
 
         case 'META_CAPI': {
-            const value = Number(config.value || config.eventValue || 19.90);
+            const value = Number(config.value || config.eventValue || session.expectedAmount || 19.90);
             const confirmText =
                 config.confirmationText ||
                 `🎉 *Pagamento de R$ ${value.toFixed(2).replace('.', ',')} confirmado com sucesso!*\n\nMuito obrigada pela confiança, ${session.userName}! Seu acesso completo já está 100% liberado!`;
             await sendRealisticText(botId, sock, remoteJid, session.userPhone, confirmText);
+
+            // Registro oficial da transação para o MetaHub e disparo no Meta Conversions API (CAPI)
+            const transactionRecord = {
+                id: `tx_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+                time: Date.now(),
+                dateFormatted: new Date().toLocaleDateString('pt-BR'),
+                timeFormatted: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                userPhone: session.userPhone,
+                pushName: session.userName,
+                amount: value,
+                funnelId: session.flowId || 'funil_visual',
+                funnelName: session.flowName || node.label || 'Funil Visual',
+                campaignId: session.adData?.campaignId || undefined,
+                adId: session.adData?.adId || undefined,
+                ctwaClid: session.adData?.ctwaClid || undefined,
+                adTag: session.adData?.adTag || undefined,
+                isCtwa: Boolean(session.adData?.isCtwa || session.adData?.ctwaClid),
+                status: 'APROVADO_PIX',
+                capiStatus: 'PENDING'
+            };
+
+            try {
+                const capiRes = await sendMetaCapiConversion(transactionRecord);
+                transactionRecord.capiStatus = capiRes.success ? 'ENVIADO_CAPI_OK' : (capiRes.skipped ? 'CAPI_CONFIG_PENDENTE' : 'ERRO_CAPI: ' + capiRes.error);
+                console.log(`[Visual Flow META_CAPI] 🎯 Disparo CAPI: ${transactionRecord.capiStatus}`);
+            } catch (capiErr) {
+                transactionRecord.capiStatus = 'ERRO_CAPI: ' + capiErr.message;
+            }
+
+            store.funnelTransactions = store.funnelTransactions || [];
+            store.funnelTransactions.unshift(transactionRecord);
+            store.funnelStats.convertedCount = (store.funnelStats.convertedCount || 0) + 1;
+            store.funnelStats.totalRevenue = (store.funnelStats.totalRevenue || 0) + value;
+            saveStore(store);
             break;
         }
 
