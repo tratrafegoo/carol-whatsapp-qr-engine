@@ -691,6 +691,22 @@ function saveStore(data) {
 }
 
 const store = loadStore();
+
+// Carregar automaticamente os 13 funis visuais ricos se store.flows estiver vazio ou desatualizado
+try {
+    const defFlowsPath = path.join(__dirname, 'default_flows.json');
+    if (fs.existsSync(defFlowsPath)) {
+        const defFlows = JSON.parse(fs.readFileSync(defFlowsPath, 'utf-8'));
+        const currentFlows = store.flows['bot_whatsapp_principal'] || [];
+        if (currentFlows.length === 0 || currentFlows.some(f => f._id === 'flow_principal' || (f.draftVersion?.flowData?.nodes?.length || 0) <= 4)) {
+            store.flows['bot_whatsapp_principal'] = defFlows;
+            saveStore(store);
+            console.log('[Store Init] 🚀 13 Funis Visuais Ricos carregados em store.flows!');
+        }
+    }
+} catch (err) {
+    console.warn('[Store Init] Aviso ao carregar default_flows.json:', err?.message);
+}
 const activeSockets = new Map();
 const sessionStates = new Map();
 const reconnectTimers = new Map();
@@ -4766,6 +4782,57 @@ async function sendFunil8Phase2(botId, sock, remoteJid, userPhone, pushName, quo
     scheduleFunil8Reminder(botId, remoteJid, userPhone);
 }
 
+function findDeployedFlowForTrigger(botId, text) {
+    const flows = store.flows[botId] || [];
+    const triggerMap = {
+        'teste1': 'flow_funil_1',
+        'teste2': 'flow_funil_2',
+        'teste3': 'flow_funil_3',
+        'teste4': 'flow_funil_4',
+        'teste5': 'flow_funil_5',
+        'teste6': 'flow_funil_6',
+        'teste7': 'flow_funil_7',
+        'teste8': 'flow_funil_8',
+        'teste9': 'flow_funil_9',
+        'teste10': 'flow_funil_10',
+        'teste11': 'flow_funil_11',
+        'teste12': 'flow_funil_12',
+        'teste13': 'flow_funil_13',
+    };
+
+    let matchedFlowId = null;
+    for (const [trig, fid] of Object.entries(triggerMap)) {
+        const variants = [trig, trig.replace('teste', 'teste '), '#' + trig, '!' + trig, '/' + trig];
+        if (variants.some(k => text === k || text.startsWith(k + ' '))) {
+            matchedFlowId = fid;
+            break;
+        }
+    }
+
+    if (matchedFlowId) {
+        const flow = flows.find(f => f._id === matchedFlowId);
+        if (flow && flow.isDeployed !== false && flow.draftVersion?.flowData?.nodes?.length > 4) {
+            const nodes = flow.draftVersion.flowData.nodes;
+            const edges = flow.draftVersion.flowData.edges || [];
+            const startNode = nodes.find(n => (n.nodeType || '').toUpperCase() === 'START') || nodes[0];
+            return { flow, startNode, nodes, edges };
+        }
+    }
+
+    for (const flow of flows) {
+        if (flow.isDeployed === false) continue;
+        const nodes = flow.draftVersion?.flowData?.nodes || [];
+        const startNode = nodes.find(n => (n.nodeType || '').toUpperCase() === 'START');
+        const trigger = (startNode?.config?.trigger || '').trim().toLowerCase();
+        if (trigger && (text === trigger || text.startsWith(trigger + ' '))) {
+            if (nodes.length > 2) {
+                return { flow, startNode, nodes, edges: flow.draftVersion?.flowData?.edges || [] };
+            }
+        }
+    }
+    return null;
+}
+
 async function handleIncomingMessage(botId, sock, msg) {
     if (!msg.message || msg.key.fromMe) return;
 
@@ -4838,6 +4905,98 @@ async function handleIncomingMessage(botId, sock, msg) {
     
     // Dispara a reação humanizada imediatamente na mensagem do lead
     reactToMessage(sock, remoteJid, msg.key, autoEmoji).catch(() => {});
+
+    // ─── 0. Verificação de Sessão Ativa em Fluxo Visual Deployed (INPUT / PIX_VERIFIER) ───
+    if (session && session.flowId) {
+        const flows = store.flows[botId] || [];
+        const flow = flows.find(f => f._id === session.flowId || f.name === session.flowName);
+        if (flow && flow.draftVersion?.flowData) {
+            const nodes = flow.draftVersion.flowData.nodes || [];
+            const edges = flow.draftVersion.flowData.edges || [];
+
+            // A) Lead respondeu a um nó de INPUT (ex: "Posso enviar?", "SIM", etc.)
+            if (session.waitingFor === 'USER_REPLY') {
+                const isNeg = ['não', 'nao', 'agora não', 'agora nao', 'depois', 'nop', 'cancelar', 'não quero', 'nao quero'].includes(normalizedText);
+                if (isNeg) {
+                    await sendRealisticText(botId, sock, remoteJid, userPhone, 'Sem problemas! Quando desejar receber os materiais, estarei por aqui. Fique com Deus! 🙏');
+                    session.waitingFor = null;
+                    saveStore(store);
+                    return;
+                }
+                const emoji = getHumanReactionEmoji(textContent);
+                await reactToMessage(sock, remoteJid, msg.key, emoji);
+
+                const nextEdge = edges.find(e => (e.sourceNodeId || e.source) === session.currentNodeId);
+                if (nextEdge) {
+                    session.waitingFor = null;
+                    session.variables = session.variables || {};
+                    session.variables[session.variableName || 'user_reply'] = textContent;
+                    saveStore(store);
+                    await executeFromNode(botId, sock, remoteJid, session, nextEdge.targetNodeId || nextEdge.target, nodes, edges);
+                    return;
+                }
+            }
+
+            // B) Lead enviou comprovante para auditoria (nó PIX_VERIFIER)
+            if (session.waitingFor === 'PIX_RECEIPT' && hasMediaReceipt) {
+                console.log(`[Visual Flow] 🧾 Auditando comprovante com IA Gemini para ${userPhone}...`);
+                const mediaBuffer = await getMediaBuffer(msg, sock);
+                let auditResult = { isValid: false, reason: 'Arquivo ilegível' };
+                if (mediaBuffer) {
+                    const mime = msg.message.imageMessage ? 'image/jpeg' : 'application/pdf';
+                    auditResult = await auditPixReceiptWithGemini(mediaBuffer, mime, session.expectedAmount || 19.90, session.beneficiary || '');
+                }
+
+                if (auditResult && auditResult.isValid) {
+                    console.log(`[Visual Flow] ✅ Comprovante APROVADO para ${userPhone}!`);
+                    const successEdge = edges.find(e => (e.sourceNodeId || e.source) === session.currentNodeId && e.sourceHandle === 'success') ||
+                                        edges.find(e => (e.sourceNodeId || e.source) === session.currentNodeId);
+                    if (successEdge) {
+                        session.waitingFor = null;
+                        session.paid = true;
+                        saveStore(store);
+                        await executeFromNode(botId, sock, remoteJid, session, successEdge.targetNodeId || successEdge.target, nodes, edges);
+                        return;
+                    }
+                } else {
+                    console.warn(`[Visual Flow] ❌ Comprovante RECUSADO para ${userPhone}: ${auditResult?.reason}`);
+                    const failEdge = edges.find(e => (e.sourceNodeId || e.source) === session.currentNodeId && e.sourceHandle === 'fail');
+                    if (failEdge) {
+                        await executeFromNode(botId, sock, remoteJid, session, failEdge.targetNodeId || failEdge.target, nodes, edges);
+                        return;
+                    } else {
+                        await sendRealisticText(botId, sock, remoteJid, userPhone, 'Não consegui identificar o valor ou destinatário com clareza na imagem enviada. Poderia me enviar o comprovante oficial completo em PDF ou imagem nítida, por favor? 🙏');
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    // ─── 1. Roteador de Gatilhos de Fluxos Visuais Deployed ───
+    const visualFlowMatch = findDeployedFlowForTrigger(botId, normalizedText);
+    if (visualFlowMatch) {
+        console.log(`[Visual Flow Engine] 🚀 Executando fluxo visual deployado "${visualFlowMatch.flow.name}" para ${userPhone}`);
+        cancelAllTimers();
+        session = {
+            botId,
+            userJid: remoteJid,
+            userPhone,
+            userName: pushName,
+            flowId: visualFlowMatch.flow._id,
+            flowName: visualFlowMatch.flow.name,
+            currentNodeId: visualFlowMatch.startNode.nodeId,
+            updatedAt: new Date().toISOString()
+        };
+        store.userSessions[sessionKey] = session;
+        saveStore(store);
+
+        const firstEdge = visualFlowMatch.edges.find(e => (e.sourceNodeId || e.source) === visualFlowMatch.startNode.nodeId);
+        if (firstEdge) {
+            await executeFromNode(botId, sock, remoteJid, session, firstEdge.targetNodeId || firstEdge.target, visualFlowMatch.nodes, visualFlowMatch.edges);
+            return;
+        }
+    }
 
     // Roteador Multi-Funil por Gatilhos de Teste (teste1 a teste10):
     const isTest1 = ['teste1', 'teste 1', '#teste1', '!teste1', '/teste1', 'teste', 'test', '#teste', '!teste', '/teste'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
@@ -5567,9 +5726,15 @@ async function handleIncomingMessage(botId, sock, msg) {
 
 async function resolveMediaBuffer(targetUrl, defaultFilename) {
     if (targetUrl) {
-        const directLocalPath = path.join(__dirname, 'public', targetUrl);
+        const clean = targetUrl.replace(/^\/+/, '');
+        const directLocalPath = path.join(__dirname, 'public', clean);
         if (fs.existsSync(directLocalPath)) {
-            return { buffer: fs.readFileSync(directLocalPath), filename: defaultFilename || path.basename(targetUrl) };
+            return { buffer: fs.readFileSync(directLocalPath), filename: defaultFilename || path.basename(clean) };
+        }
+        const base = path.basename(clean);
+        const directBase = path.join(__dirname, 'public', base);
+        if (fs.existsSync(directBase)) {
+            return { buffer: fs.readFileSync(directBase), filename: defaultFilename || base };
         }
     }
     const filename = defaultFilename || (targetUrl ? path.basename(targetUrl.split('?')[0]) : null);
@@ -5602,6 +5767,28 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
     const nodeType = (node.nodeType || '').toUpperCase();
 
     switch (nodeType) {
+        case 'START': {
+            // Ponto de entrada, continua imediatamente para o próximo nó
+            break;
+        }
+
+        case 'INPUT': {
+            if (config.prompt || config.text) {
+                await sendRealisticText(botId, sock, remoteJid, session.userPhone, config.prompt || config.text);
+            }
+            session.waitingFor = 'USER_REPLY';
+            session.currentNodeId = node.nodeId;
+            session.variableName = config.variableName || 'user_reply';
+            saveStore(store);
+            return; // Pausa e aguarda resposta do lead no WhatsApp!
+        }
+
+        case 'DELAY': {
+            const delaySec = Math.min(Math.max(Number(config.delaySeconds) || 2, 1), 60);
+            await new Promise((r) => setTimeout(r, delaySec * 1000));
+            break;
+        }
+
         case 'AUDIO': {
             const durationSec = Math.min(Math.max(Number(config.recordingDurationSeconds) || 4, 1), 15);
             try {
@@ -5654,24 +5841,32 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
 
         case 'MEDIA': {
             const mediaUrl = config.mediaUrl || 'Material_Exclusivo_Carol.pdf';
-            const caption = config.caption || '📦 Aqui está seu acesso exclusivo! Dá uma olhada no conteúdo com carinho.';
+            const caption = config.caption || '';
             try {
                 await sock.sendPresenceUpdate('composing', remoteJid);
             } catch {}
-            await new Promise((r) => setTimeout(r, 1500));
+            await new Promise((r) => setTimeout(r, 1200));
 
             let sentMedia = false;
             try {
-                const media = await resolveMediaBuffer(mediaUrl, 'Material_Exclusivo_Carol.pdf');
+                const media = await resolveMediaBuffer(mediaUrl, config.filename || 'Material.pdf');
                 if (media && media.buffer) {
-                    await sock.sendMessage(remoteJid, {
-                        document: media.buffer,
-                        mimetype: 'application/pdf',
-                        fileName: config.filename || media.filename || 'Material_Exclusivo_Carol.pdf',
-                        caption,
-                    });
+                    const isImage = /\.(jpe?g|png|webp)$/i.test(media.filename);
+                    const isVideo = /\.(mp4|mov|avi)$/i.test(media.filename);
+                    if (isImage) {
+                        await sock.sendMessage(remoteJid, { image: media.buffer, caption: caption || undefined });
+                    } else if (isVideo) {
+                        await sock.sendMessage(remoteJid, { video: media.buffer, caption: caption || undefined, mimetype: 'video/mp4' });
+                    } else {
+                        await sock.sendMessage(remoteJid, {
+                            document: media.buffer,
+                            mimetype: 'application/pdf',
+                            fileName: config.filename || media.filename,
+                            caption: caption || undefined,
+                        });
+                    }
                     sentMedia = true;
-                    logConversation(botId, session.userPhone, 'BOT', 'DOCUMENT', `📦 [Documento PDF Enviado]: ${media.filename}`);
+                    logConversation(botId, session.userPhone, 'BOT', isImage ? 'IMAGE' : isVideo ? 'VIDEO' : 'DOCUMENT', `📦 [Arquivo Enviado]: ${media.filename}`);
                 }
             } catch (err) {
                 console.error('[Media Send Error]:', err?.message);

@@ -1,0 +1,4245 @@
+[
+  {
+    "_id": "flow_funil_1",
+    "botId": "bot_whatsapp_principal",
+    "name": "Funil 1: As 40 Parábolas de Jesus (Gatilho: teste1) - Maria Gps Digital",
+    "description": "Pasta: parabolas/ | Áudio MP3 (22s), Capa Oficial, 5 PDFs Reais, Botão Copiar PIX CNPJ GPS Ebooks, Auditor IA Gemini e Meta CAPI",
+    "isMainFlow": true,
+    "isDeployed": true,
+    "productionVersion": 1,
+    "createdAt": "2026-10-30T18:59:28.000Z",
+    "updatedAt": "2026-11-10T03:30:00.000Z",
+    "draftVersion": {
+      "version": 1,
+      "flowData": {
+        "nodes": [
+          {
+            "nodeId": "node_flow_funil_1_1",
+            "nodeType": "START",
+            "position": {
+              "x": 320,
+              "y": 40
+            },
+            "label": "Início (Gatilho: teste1)",
+            "config": {
+              "trigger": "teste1"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_1_2",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 180
+            },
+            "label": "Saudação Inicial",
+            "config": {
+              "text": "A Paz do Senhor!"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_1_3",
+            "nodeType": "AUDIO",
+            "position": {
+              "x": 320,
+              "y": 320
+            },
+            "label": "🎙️ Áudio Apresentação (22s)",
+            "config": {
+              "audioUrl": "parabolas/audio_parabolas.mp3",
+              "recordingDurationSeconds": 4,
+              "fallbackText": "A Paz do Senhor! Já separei seu material completo das 40 Parábolas."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_1_4",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 460
+            },
+            "label": "Oferta Coleção Parábolas",
+            "config": {
+              "text": "📘 As 40 Parábolas de Jesus (Explicadas e Ilustradas)\n\nDe 59,00 por: *R$25,00*\nContexto histórico, explicação clara, embasamento bíblico e ilustrações exclusivas.\n\n🎁 *Bônus após o pagamento* 🎁\n🎁 Curiosidades da Bíblia, Escatologia Estudo e muito mais!"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_1_5",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 600
+            },
+            "label": "🖼️ Capa Coleção Completa",
+            "config": {
+              "mediaUrl": "parabolas/capa_parabolas.jpeg",
+              "filename": "capa_parabolas.jpeg",
+              "caption": "Capa oficial da Coleção Completa 40 Parábolas de Jesus"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_1_6",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 740
+            },
+            "label": "Garantia & Contribuição Voluntária",
+            "config": {
+              "text": "O acesso ao conteúdo é vitalício! Você pode imprimir ou ler pelo celular\n\nO valor sugerido é R$25,00\nVocê só paga depois de receber tudo!\n\nPorém a contribuição é voluntária e pode ser até menos, seja 10, 15 ou 20 reais.\n\nPosso enviar agora?"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_1_7",
+            "nodeType": "INPUT",
+            "position": {
+              "x": 320,
+              "y": 880
+            },
+            "label": "Aguardando Resposta (Posso enviar?)",
+            "config": {
+              "placeholder": "Aguardando Sim/Pode do lead...",
+              "variableName": "lead_confirm"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_1_8",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 1020
+            },
+            "label": "Mensagem de Confiança",
+            "config": {
+              "text": "Estarei enviando e confiando em você...\nFique à vontade para abrir o material"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_1_9",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 1160
+            },
+            "label": "📦 Entrega 5 PDFs da Coleção",
+            "config": {
+              "mediaUrl": "parabolas/01_Parabolas_do_Reino_Dos_Ceus.pdf",
+              "filename": "As Parábolas de Jesus - Coleção Completa (5 PDFs).pdf",
+              "caption": "📦 Coleção 40 Parábolas de Jesus (5 PDFs reais entregues)"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_1_10",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 1300
+            },
+            "label": "Link Google Drive & Valores",
+            "config": {
+              "text": "Caso não consiga abrir PDF ou quer abrir no computador\nLink Google Drive: https://drive.google.com/drive/folders/1VQ2kDbxKha7_CxeKaGlg0rptQp-ZEY1UO?usp=sharing\n\nValor sugerido: R$25,00\n\n⭐ Gostei muito: R$30,00\n⭐⭐ Quero compartilhar e abençoar ainda mais: R$50,00\n\nIsso ajuda a continuarmos esse propósito!\n\nCaso não possa contribuir com o valor integral, fique à vontade para enviar o valor que puder!"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_1_11",
+            "nodeType": "PIX",
+            "position": {
+              "x": 320,
+              "y": 1440
+            },
+            "label": "💸 Chave PIX CNPJ GPS Ebooks",
+            "config": {
+              "pixKey": "67.039.217/0001-86",
+              "beneficiaryName": "GPS EBOOKS DIGITAIS LTDA",
+              "amount": "25.00",
+              "message": "Chave Pix CNPJ\nNome da Chave :GPS EBOOKS DIGITAIS LTDA\n👇 Só copiar e colar CNPJ 👇"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_1_12",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 1580
+            },
+            "label": "Instruções & Promessa de Bônus",
+            "config": {
+              "text": "Conto com sua honestidade!\n\nQuando fizer o pagamento, me envia o comprovante aqui que eu libero seu bônus:\n\n🎁 Curiosidades da Biblia\n🎁 Material extra: Escatologia — Estudo sobre os Tempos Finais"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_1_13",
+            "nodeType": "PIX_VERIFIER",
+            "position": {
+              "x": 320,
+              "y": 1720
+            },
+            "label": "🧠 Auditoria Comprovante IA Gemini",
+            "config": {
+              "expectedAmount": "25.00",
+              "beneficiary": "GPS EBOOKS DIGITAIS LTDA"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_1_14",
+            "nodeType": "META_CAPI",
+            "position": {
+              "x": 320,
+              "y": 1860
+            },
+            "label": "🎯 Conversão Meta Ads (CAPI)",
+            "config": {
+              "value": 25.0,
+              "confirmationText": "🎉 Pagamento de R$ 25,00 confirmado com sucesso! Deus abençoe grandemente seus estudos e sua família!"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "edgeId": "e_node_flow_funil_1_1_node_flow_funil_1_2",
+            "sourceNodeId": "node_flow_funil_1_1",
+            "targetNodeId": "node_flow_funil_1_2",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_1_2_node_flow_funil_1_3",
+            "sourceNodeId": "node_flow_funil_1_2",
+            "targetNodeId": "node_flow_funil_1_3",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_1_3_node_flow_funil_1_4",
+            "sourceNodeId": "node_flow_funil_1_3",
+            "targetNodeId": "node_flow_funil_1_4",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_1_4_node_flow_funil_1_5",
+            "sourceNodeId": "node_flow_funil_1_4",
+            "targetNodeId": "node_flow_funil_1_5",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_1_5_node_flow_funil_1_6",
+            "sourceNodeId": "node_flow_funil_1_5",
+            "targetNodeId": "node_flow_funil_1_6",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_1_6_node_flow_funil_1_7",
+            "sourceNodeId": "node_flow_funil_1_6",
+            "targetNodeId": "node_flow_funil_1_7",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_1_7_node_flow_funil_1_8",
+            "sourceNodeId": "node_flow_funil_1_7",
+            "targetNodeId": "node_flow_funil_1_8",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_1_8_node_flow_funil_1_9",
+            "sourceNodeId": "node_flow_funil_1_8",
+            "targetNodeId": "node_flow_funil_1_9",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_1_9_node_flow_funil_1_10",
+            "sourceNodeId": "node_flow_funil_1_9",
+            "targetNodeId": "node_flow_funil_1_10",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_1_10_node_flow_funil_1_11",
+            "sourceNodeId": "node_flow_funil_1_10",
+            "targetNodeId": "node_flow_funil_1_11",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_1_11_node_flow_funil_1_12",
+            "sourceNodeId": "node_flow_funil_1_11",
+            "targetNodeId": "node_flow_funil_1_12",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_1_12_node_flow_funil_1_13",
+            "sourceNodeId": "node_flow_funil_1_12",
+            "targetNodeId": "node_flow_funil_1_13",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_1_13_node_flow_funil_1_14_success",
+            "sourceNodeId": "node_flow_funil_1_13",
+            "targetNodeId": "node_flow_funil_1_14",
+            "sourceHandle": "success",
+            "animated": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "_id": "flow_funil_2",
+    "botId": "bot_whatsapp_principal",
+    "name": "Funil 2: Guia Cuidados com Pessoa Acamada (Gatilho: teste2) - 82 9685-7184",
+    "description": "Pasta: funil2/ | Áudio MP3 (2m10s + 20s), Capa, 4 PDFs Reais, Bônus Exclusivos, PIX Celular SANTOS LIVROS e Auditoria IA",
+    "isMainFlow": false,
+    "isDeployed": true,
+    "productionVersion": 1,
+    "createdAt": "2026-10-30T18:59:28.000Z",
+    "updatedAt": "2026-11-10T03:30:00.000Z",
+    "draftVersion": {
+      "version": 1,
+      "flowData": {
+        "nodes": [
+          {
+            "nodeId": "node_flow_funil_2_1",
+            "nodeType": "START",
+            "position": {
+              "x": 320,
+              "y": 40
+            },
+            "label": "Início (Gatilho: teste2)",
+            "config": {
+              "trigger": "teste2"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_2_2",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 180
+            },
+            "label": "Acolhimento Inicial",
+            "config": {
+              "text": "Oláaa, tudo bem? ❤️ Fico muito feliz que tenha se interessado!!\n\nVou te ajudar a cuidar de quem você ama com mais segurança, mais leveza e muito menos esforço, sem machucar a pessoa nem a sua coluna! 🤲✨\n\nTenho certeza que esse guia vai deixar a sua rotina de cuidado muito mais tranquila!! 💙🙏"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_2_3",
+            "nodeType": "AUDIO",
+            "position": {
+              "x": 320,
+              "y": 320
+            },
+            "label": "🎙️ Áudio Apresentação (2m10s)",
+            "config": {
+              "audioUrl": "funil2/audio_apresentacao.mp3",
+              "recordingDurationSeconds": 4,
+              "fallbackText": "Olá! Vou te explicar rapidinho como esse guia vai te ajudar na rotina diária de cuidados."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_2_4",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 460
+            },
+            "label": "🖼️ Capa Guia Acamados",
+            "config": {
+              "mediaUrl": "funil2/capa_guia_acamado.jpeg",
+              "filename": "capa_guia_acamado.jpeg",
+              "caption": "Guia Completo de Cuidados com Pessoa Acamada"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_2_5",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 600
+            },
+            "label": "Oferta Completa & Honestidade",
+            "config": {
+              "text": "Hoje separei um material especial pra você:\n\n✅ Guia Completo de Cuidados com Pessoa Acamada\n✅ Higiene, posições seguras, mudança de posição e prevenção de escaras\n✅ Passo a passo ilustrado, pra cuidar com segurança mesmo sem experiência\n🎁 Bônus: 185 atividades entre exercícios, alongamentos, massagens e estímulos cognitivos, Primeiros Socorros em Casa e Calendário de Cuidados\n📲 Tudo no seu WhatsApp\n\n🔴 Tudo por R$10,00 no Pix 💎\n🔴 Válido só hoje\n\nPosso confiar na sua honestidade pra te enviar o guia primeiro?\n\nPosso te enviar?"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_2_6",
+            "nodeType": "INPUT",
+            "position": {
+              "x": 320,
+              "y": 740
+            },
+            "label": "Aguardando Resposta (Posso te enviar?)",
+            "config": {
+              "placeholder": "Aguardando Sim/Pode do lead...",
+              "variableName": "lead_confirm"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_2_7",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 880
+            },
+            "label": "Agradecimento & Confiança",
+            "config": {
+              "text": "❤️ Vou contar com sua honestidade, tá bom?"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_2_8",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 1020
+            },
+            "label": "📦 Entrega 4 PDFs Acamados",
+            "config": {
+              "mediaUrl": "funil2/Guia Completo de Cuidados com Pessoa Acamada.pdf",
+              "filename": "Guia Completo de Cuidados com Pessoa Acamada.pdf",
+              "caption": "Guia Completo + 3 Guias de Exercícios, Alongamentos e Massagens"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_2_9",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 1160
+            },
+            "label": "Lista de Bônus Exclusivos",
+            "config": {
+              "text": "Assim que me enviar o comprovante, te envio o restante dos materiais:\n\nBônus:\n🎁 Exercícios de Mobilidade\n🎁 Alongamentos\n🎁 Técnicas de Massagem\n🎁 100 Atividades Sensoriais e Cognitivas\n🎁 Primeiros Socorros em Casa\n🎁 Calendário de Cuidados\n🎁 Grupo VIP com a Fisioterapeuta e Enfermeira\n\nAcesso Exclusivo:\n✅ 50 Receitas Fáceis de Engolir 🍲\n✅ Kit SOS do Cuidador: alívio rápido pra sua coluna e seu cansaço 💙\n✅ 50 Exercícios de Fala e Linguagem 🗣️"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_2_10",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 1300
+            },
+            "label": "Tabela de Preços (4 Opções)",
+            "config": {
+              "text": "Forma de pagamento: Valor Único\nEu irei disponibilizar aqui 4 valores e você escolhe qual acha mais justo:\n\n• R$10,00\n• R$19,90 (Acesso a todos os bônus)\n• R$39,90 (Acesso Total + Receitas Fáceis + Kit SOS do Cuidador + Exercícios de Fala e Linguagem)\n• R$49,90 (Acesso Total Completo)\n\nDeixe seu coração ser guiado por Deus e contribua com o valor que vier no seu coração! 🙏"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_2_11",
+            "nodeType": "AUDIO",
+            "position": {
+              "x": 320,
+              "y": 1440
+            },
+            "label": "🎙️ Áudio 2 PIX (20s)",
+            "config": {
+              "audioUrl": "funil2/audio_pix.mp3",
+              "recordingDurationSeconds": 3,
+              "fallbackText": "🎙️ Segue a chave Pix no áudio para cópia rápida."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_2_12",
+            "nodeType": "PIX",
+            "position": {
+              "x": 320,
+              "y": 1580
+            },
+            "label": "💸 Chave PIX Celular SANTOS LIVROS",
+            "config": {
+              "pixKey": "82996382293",
+              "beneficiaryName": "SANTOS LIVROS",
+              "amount": "10.00",
+              "message": "Chave Pix CELULAR\nNome da Chave :SANTOS LIVROS\n👇 Só copiar e colar NÚMERO CELULAR"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_2_13",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 1720
+            },
+            "label": "Instruções de Comprovante",
+            "config": {
+              "text": "Assim que você finalizar o pagamento, me envia o comprovante por aqui, que já envio todo material restante prometido!\n\nBasta apenas me enviar o comprovante que já te envio tudo."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_2_14",
+            "nodeType": "PIX_VERIFIER",
+            "position": {
+              "x": 320,
+              "y": 1860
+            },
+            "label": "🧠 Auditoria Comprovante IA Gemini",
+            "config": {
+              "expectedAmount": "10.00",
+              "beneficiary": "SANTOS LIVROS"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_2_15",
+            "nodeType": "META_CAPI",
+            "position": {
+              "x": 320,
+              "y": 2000
+            },
+            "label": "🎯 Conversão Meta Ads (CAPI)",
+            "config": {
+              "value": 10.0,
+              "confirmationText": "🎉 Pagamento de R$ 10,00 confirmado com sucesso pela IA! Muito obrigada pela confiança, seu acesso aos materiais e bônus está liberado!"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "edgeId": "e_node_flow_funil_2_1_node_flow_funil_2_2",
+            "sourceNodeId": "node_flow_funil_2_1",
+            "targetNodeId": "node_flow_funil_2_2",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_2_2_node_flow_funil_2_3",
+            "sourceNodeId": "node_flow_funil_2_2",
+            "targetNodeId": "node_flow_funil_2_3",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_2_3_node_flow_funil_2_4",
+            "sourceNodeId": "node_flow_funil_2_3",
+            "targetNodeId": "node_flow_funil_2_4",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_2_4_node_flow_funil_2_5",
+            "sourceNodeId": "node_flow_funil_2_4",
+            "targetNodeId": "node_flow_funil_2_5",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_2_5_node_flow_funil_2_6",
+            "sourceNodeId": "node_flow_funil_2_5",
+            "targetNodeId": "node_flow_funil_2_6",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_2_6_node_flow_funil_2_7",
+            "sourceNodeId": "node_flow_funil_2_6",
+            "targetNodeId": "node_flow_funil_2_7",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_2_7_node_flow_funil_2_8",
+            "sourceNodeId": "node_flow_funil_2_7",
+            "targetNodeId": "node_flow_funil_2_8",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_2_8_node_flow_funil_2_9",
+            "sourceNodeId": "node_flow_funil_2_8",
+            "targetNodeId": "node_flow_funil_2_9",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_2_9_node_flow_funil_2_10",
+            "sourceNodeId": "node_flow_funil_2_9",
+            "targetNodeId": "node_flow_funil_2_10",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_2_10_node_flow_funil_2_11",
+            "sourceNodeId": "node_flow_funil_2_10",
+            "targetNodeId": "node_flow_funil_2_11",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_2_11_node_flow_funil_2_12",
+            "sourceNodeId": "node_flow_funil_2_11",
+            "targetNodeId": "node_flow_funil_2_12",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_2_12_node_flow_funil_2_13",
+            "sourceNodeId": "node_flow_funil_2_12",
+            "targetNodeId": "node_flow_funil_2_13",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_2_13_node_flow_funil_2_14",
+            "sourceNodeId": "node_flow_funil_2_13",
+            "targetNodeId": "node_flow_funil_2_14",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_2_14_node_flow_funil_2_15_success",
+            "sourceNodeId": "node_flow_funil_2_14",
+            "targetNodeId": "node_flow_funil_2_15",
+            "sourceHandle": "success",
+            "animated": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "_id": "flow_funil_3",
+    "botId": "bot_whatsapp_principal",
+    "name": "Funil 3: 500 Esboços para Mulheres - Missionária Raquel (Gatilho: teste3) - 11 96359-2672",
+    "description": "Pasta: funil3/ | Áudio MP3 (55s + 27s), Capa, 5 PDFs Reais, Link Drive, Tabela e Bônus, PIX Marco Antonio e IA",
+    "isMainFlow": false,
+    "isDeployed": true,
+    "productionVersion": 1,
+    "createdAt": "2026-10-30T18:59:28.000Z",
+    "updatedAt": "2026-11-10T03:30:00.000Z",
+    "draftVersion": {
+      "version": 1,
+      "flowData": {
+        "nodes": [
+          {
+            "nodeId": "node_flow_funil_3_1",
+            "nodeType": "START",
+            "position": {
+              "x": 320,
+              "y": 40
+            },
+            "label": "Início (Gatilho: teste3)",
+            "config": {
+              "trigger": "teste3"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_3_2",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 180
+            },
+            "label": "Apresentação Missionária Raquel",
+            "config": {
+              "text": "Oii! Prazer, sou a Missionária Raquel, responsável pelos 500 Esboços de Pregações para Mulheres! 🙏💛\n\nEstou terminando de enviar o material para outra cliente e já volto para te atender, tá bom? 😊"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_3_3",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 320
+            },
+            "label": "Pergunta de Conexão",
+            "config": {
+              "text": "Me conta, irmã: você é pastora, missionária, líder ou quer aprender mais sobre a Palavra de Deus? 😊🙏"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_3_4",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 460
+            },
+            "label": "Salvar Contato & Conteúdo Gratuito",
+            "config": {
+              "text": "Perfeito! Esse material vai te ajudar a preparar suas ministrações com mais clareza e segurança. 🥰📖\n\nAgora vou te mostrar tudo o que você recebe!\n\nAproveita e salva meu contato como Missionária Raquel! 💛\n\nToda semana compartilho conteúdos gratuitos para seus estudos e ministrações, além de novidades e sorteios nos Status. Assim você não perde nada! 😊🙏"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_3_5",
+            "nodeType": "AUDIO",
+            "position": {
+              "x": 320,
+              "y": 600
+            },
+            "label": "🎙️ Áudio Apresentação Raquel (55s)",
+            "config": {
+              "audioUrl": "funil3/audio_apresentacao.mp3",
+              "recordingDurationSeconds": 4,
+              "fallbackText": "Vou gravar um áudio pra te explicar bem rapidinho, e não te atrapalhar."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_3_6",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 740
+            },
+            "label": "🖼️ Capa 500 Esboços",
+            "config": {
+              "mediaUrl": "funil3/capa_esbocos.jpeg",
+              "filename": "capa_esbocos.jpeg",
+              "caption": "500 Esboços de Pregações para Mulheres"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_3_7",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 880
+            },
+            "label": "Oferta R$ 10 & Envio Antecipado",
+            "config": {
+              "text": "Não precisa mais começar cada preparação do zero. Com os 500 Esboços de Pregações para Mulheres, você ganha tempo e uma direção clara para desenvolver suas mensagens. 🙏📖\n\n📚 500 esboços em dois volumes\n✍️ Versículo, contexto, desenvolvimento, conclusão e frase final\n⛪️ Temas para cultos, congressos, vigílias, células, Santa Ceia e encontros femininos\n🎁 Planner de Cultos, Checklist da Pregadora e 30 Dinâmicas para Encontros e Cultos\n\nTodo o pacote, de R$39,90, por apenas R$10,00. 💛\n\nTodos os materiais são digitais, em PDF, e eu envio tudo diretamente aqui na nossa conversa pelo WhatsApp, para você consultar sempre que precisar. 🥰📖\n\nAntes de pagar, eu vou te enviar tudo para que possa conferir! ❤️\n\nPosso contar com sua Honestidade, e te mandar os materiais agora? 🙏"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_3_8",
+            "nodeType": "INPUT",
+            "position": {
+              "x": 320,
+              "y": 1020
+            },
+            "label": "Aguardando Honestidade (Posso mandar agora?)",
+            "config": {
+              "placeholder": "Aguardando Sim/Pode do lead...",
+              "variableName": "lead_confirm"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_3_9",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 1160
+            },
+            "label": "Solidariedade Cestas Básicas",
+            "config": {
+              "text": "Combinado!! Vou te enviar agora, e já te mando os dados pra pagar. 💕\n\nEu não ganho nada com esses materiais, todo o dinheiro arrecadado será doado, em forma de cestas básicas, para aqueles que estão passando por um momento difícil.\n\nQue Deus te abençoe grandemente 😊"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_3_10",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 1300
+            },
+            "label": "📦 Entrega 5 PDFs de Esboços",
+            "config": {
+              "mediaUrl": "funil3/PARTE 1 - 500 ESBOÇOS DE PREGAÇÕES PARA MULHERES.pdf",
+              "filename": "PARTE 1 - 500 ESBOÇOS DE PREGAÇÕES PARA MULHERES.pdf",
+              "caption": "Coleção 500 Esboços + Checklist + Planner + Dinâmicas"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_3_11",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 1440
+            },
+            "label": "Link Drive & Transição Pagamento",
+            "config": {
+              "text": "Se não conseguir abrir no WhatsApp, vou deixar o link dos materiais abaixo 👇\n\nhttps://drive.google.com/drive/folders/1FPYg1bkaf5YYRvQI_YjjNk3CSdwKVEvT?usp=sharing\n\nProntinho, já te enviei tudo, conforme o combinado, espero que goste, tá bom? 🥰\n\nAgora é com você 💛\nVou te mandar um último áudio, e já passo os dados do pagamento 🙏"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_3_12",
+            "nodeType": "AUDIO",
+            "position": {
+              "x": 320,
+              "y": 1580
+            },
+            "label": "🎙️ Áudio 2 PIX Raquel (27s)",
+            "config": {
+              "audioUrl": "funil3/audio_pix.mp3",
+              "recordingDurationSeconds": 3,
+              "fallbackText": "🎙️ Segue o áudio com as instruções de pagamento."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_3_13",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 1720
+            },
+            "label": "🖼️ Tabela de Contribuição",
+            "config": {
+              "mediaUrl": "funil3/tabela_pix.jpeg",
+              "filename": "tabela_pix.jpeg",
+              "caption": "Tabela de Contribuição e Bônus"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_3_14",
+            "nodeType": "PIX",
+            "position": {
+              "x": 320,
+              "y": 1860
+            },
+            "label": "💸 Chave PIX Celular Marco Antonio",
+            "config": {
+              "pixKey": "11967837631",
+              "beneficiaryName": "Marco Antonio",
+              "amount": "10.00",
+              "message": "O pix estará em nome do meu filho:\n• Marco Antonio\n\nEle que me ajuda a organizar as finanças 🥰\n\nChave Pix Celular: 11 967837631"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_3_15",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 2000
+            },
+            "label": "🎁 Imagem dos 4 Bônus Exclusivos",
+            "config": {
+              "mediaUrl": "funil3/bonus_esbocos.jpeg",
+              "filename": "bonus_esbocos.jpeg",
+              "caption": "Bônus Exclusivos da Missionária Raquel"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_3_16",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 2140
+            },
+            "label": "Instruções de Comprovante",
+            "config": {
+              "text": "4 BÔNUS EXCLUSIVOS APÓS SUA CONTRIBUIÇÃO 🎁🙏\n\n💬 Comunidade de Pregadoras no WhatsApp, com conteúdos para suas ministrações;\n📕 Guia da Pregadora, para preparar e organizar suas mensagens com confiança;\n🖼️ 50 Ilustrações, para tornar suas pregações mais marcantes;\n📖 500 Versículos Organizados por Tema, para facilitar seus estudos.\n\nQuando pagar, por gentileza, manda o comprovante aqui na nossa conversa!!\nPode ser um Print também, apenas para me ajudar com o controle do financeiro ❤️"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_3_17",
+            "nodeType": "PIX_VERIFIER",
+            "position": {
+              "x": 320,
+              "y": 2280
+            },
+            "label": "🧠 Auditoria Comprovante IA Gemini",
+            "config": {
+              "expectedAmount": "10.00",
+              "beneficiary": "Marco Antonio"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_3_18",
+            "nodeType": "META_CAPI",
+            "position": {
+              "x": 320,
+              "y": 2420
+            },
+            "label": "🎯 Conversão Meta Ads (CAPI)",
+            "config": {
+              "value": 10.0,
+              "confirmationText": "🎉 Pagamento de R$ 10,00 confirmado com sucesso! Deus abençoe grandemente seu ministério, irmã!"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "edgeId": "e_node_flow_funil_3_1_node_flow_funil_3_2",
+            "sourceNodeId": "node_flow_funil_3_1",
+            "targetNodeId": "node_flow_funil_3_2",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_3_2_node_flow_funil_3_3",
+            "sourceNodeId": "node_flow_funil_3_2",
+            "targetNodeId": "node_flow_funil_3_3",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_3_3_node_flow_funil_3_4",
+            "sourceNodeId": "node_flow_funil_3_3",
+            "targetNodeId": "node_flow_funil_3_4",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_3_4_node_flow_funil_3_5",
+            "sourceNodeId": "node_flow_funil_3_4",
+            "targetNodeId": "node_flow_funil_3_5",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_3_5_node_flow_funil_3_6",
+            "sourceNodeId": "node_flow_funil_3_5",
+            "targetNodeId": "node_flow_funil_3_6",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_3_6_node_flow_funil_3_7",
+            "sourceNodeId": "node_flow_funil_3_6",
+            "targetNodeId": "node_flow_funil_3_7",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_3_7_node_flow_funil_3_8",
+            "sourceNodeId": "node_flow_funil_3_7",
+            "targetNodeId": "node_flow_funil_3_8",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_3_8_node_flow_funil_3_9",
+            "sourceNodeId": "node_flow_funil_3_8",
+            "targetNodeId": "node_flow_funil_3_9",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_3_9_node_flow_funil_3_10",
+            "sourceNodeId": "node_flow_funil_3_9",
+            "targetNodeId": "node_flow_funil_3_10",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_3_10_node_flow_funil_3_11",
+            "sourceNodeId": "node_flow_funil_3_10",
+            "targetNodeId": "node_flow_funil_3_11",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_3_11_node_flow_funil_3_12",
+            "sourceNodeId": "node_flow_funil_3_11",
+            "targetNodeId": "node_flow_funil_3_12",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_3_12_node_flow_funil_3_13",
+            "sourceNodeId": "node_flow_funil_3_12",
+            "targetNodeId": "node_flow_funil_3_13",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_3_13_node_flow_funil_3_14",
+            "sourceNodeId": "node_flow_funil_3_13",
+            "targetNodeId": "node_flow_funil_3_14",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_3_14_node_flow_funil_3_15",
+            "sourceNodeId": "node_flow_funil_3_14",
+            "targetNodeId": "node_flow_funil_3_15",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_3_15_node_flow_funil_3_16",
+            "sourceNodeId": "node_flow_funil_3_15",
+            "targetNodeId": "node_flow_funil_3_16",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_3_16_node_flow_funil_3_17",
+            "sourceNodeId": "node_flow_funil_3_16",
+            "targetNodeId": "node_flow_funil_3_17",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_3_17_node_flow_funil_3_18_success",
+            "sourceNodeId": "node_flow_funil_3_17",
+            "targetNodeId": "node_flow_funil_3_18",
+            "sourceHandle": "success",
+            "animated": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "_id": "flow_funil_4",
+    "botId": "bot_whatsapp_principal",
+    "name": "Funil 4: Jornada da Bíblia - João Antônio (Gatilho: teste4) - 82 99689-8259",
+    "description": "Pasta: funil 4/ | Criativos: funil 4/ads/ | Áudio MP3 (46s), 5 PDFs reais, Link Drive, PIX JOÃO GABRIEL e Reações ❤️",
+    "isMainFlow": false,
+    "isDeployed": true,
+    "productionVersion": 1,
+    "createdAt": "2026-10-30T18:59:28.000Z",
+    "updatedAt": "2026-11-10T03:30:00.000Z",
+    "draftVersion": {
+      "version": 1,
+      "flowData": {
+        "nodes": [
+          {
+            "nodeId": "node_flow_funil_4_1",
+            "nodeType": "START",
+            "position": {
+              "x": 320,
+              "y": 40
+            },
+            "label": "Início (Gatilho: teste4)",
+            "config": {
+              "trigger": "teste4"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_2",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 180
+            },
+            "label": "Saudação Pastor Guilherme",
+            "config": {
+              "text": "A Paz do Senhor!"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_3",
+            "nodeType": "AUDIO",
+            "position": {
+              "x": 320,
+              "y": 320
+            },
+            "label": "🎙️ Áudio Apresentação Pastor Guilherme (46s)",
+            "config": {
+              "audioUrl": "funil4/audio_apresentacao.mp3",
+              "recordingDurationSeconds": 4,
+              "fallbackText": "A Paz do Senhor! Já separei seu estudo completo da Jornada da Bíblia."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_4",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 460
+            },
+            "label": "Oferta Jornada da Bíblia",
+            "config": {
+              "text": "📘 Jornada da Bíblia - de Gênesis a Apocalipse\n(Uma explicação simples e didática de todos os 66 livros da Bíblia)\n\nDe 59,00 por: R$20,00\n\nPentateuco, Livros Históricos, Livros Poéticos, Profetas Maiores e Menores, Evangelhos, Livro Histórico, Cartas e Livro Profético\n\nBônus após o pagamento 👇\n• Bônus Especial: 7 Estudos do Apocalipse"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_5",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 600
+            },
+            "label": "Acesso Vitalício & Contribuição Voluntária",
+            "config": {
+              "text": "O acesso ao conteúdo é vitalício! Você pode imprimir ou ler pelo celular\n\nO valor sugerido é R$20,00\nVocê só paga depois de receber tudo!\n\nPorém a contribuição é voluntária e pode ser até menos, seja 10, 15 reais.\n\nPosso lhe enviar o estudo?"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_6",
+            "nodeType": "INPUT",
+            "position": {
+              "x": 320,
+              "y": 740
+            },
+            "label": "Aguardando Resposta (Posso enviar?)",
+            "config": {
+              "placeholder": "Aguardando Sim/Pode do lead...",
+              "variableName": "lead_confirm"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_7",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 880
+            },
+            "label": "Mensagem de Confiança",
+            "config": {
+              "text": "Estarei enviando e confiando em você, fique à vontade para abrir o material"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_8",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 1020
+            },
+            "label": "📦 Entrega 5 Livros da Jornada",
+            "config": {
+              "mediaUrl": "funil4/1 - Jornada da Bíblia Parte 01.pdf",
+              "filename": "1 - Jornada da Bíblia Parte 01.pdf",
+              "caption": "Jornada da Bíblia (Partes 1 a 4 + Os 4 Evangelhos)"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_9",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 1160
+            },
+            "label": "Tabela de Valores Sugeridos",
+            "config": {
+              "text": "Acabei de enviar todos os 5 livros em PDF aqui na conversa para você baixar e ler no seu celular ou imprimir!\n\nValor sugerido: R$20,00\n⭐️ Gostei muito: R$30,00\n⭐️⭐️ Quero abençoar ainda mais: R$50,00\n\nIsso ajuda a continuarmos esse propósito!\nCaso não possa contribuir com o valor integral, fique à vontade para enviar o valor que puder!"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_10",
+            "nodeType": "PIX",
+            "position": {
+              "x": 320,
+              "y": 1300
+            },
+            "label": "💸 Chave PIX E-mail Pastor Guilherme",
+            "config": {
+              "pixKey": "pastorguilhermeigreja@gmail.com",
+              "beneficiaryName": "Pastor Guilherme",
+              "amount": "20.00",
+              "message": "Chave Pix E-MAIL\nNome: Pastor Guilherme\n👇 Só clicar no botão ou copiar a chave abaixo 👇"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_11",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 1440
+            },
+            "label": "Bônus 7 Estudos do Apocalipse",
+            "config": {
+              "text": "Após o pagamento, me envie o comprovante aqui, que eu vou te enviar como BÔNUS:\n7 ESTUDOS DO APOCALIPSE EM PDF 🎁"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_12",
+            "nodeType": "PIX_VERIFIER",
+            "position": {
+              "x": 320,
+              "y": 1580
+            },
+            "label": "🧠 Auditoria Comprovante IA Gemini",
+            "config": {
+              "expectedAmount": "20.00",
+              "beneficiary": "Pastor Guilherme"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_13",
+            "nodeType": "META_CAPI",
+            "position": {
+              "x": 320,
+              "y": 1720
+            },
+            "label": "🎯 Conversão Meta Ads (CAPI)",
+            "config": {
+              "value": 20.0,
+              "confirmationText": "🎉 Pagamento de R$ 20,00 confirmado com sucesso! Deus abençoe sua jornada e seus estudos na Palavra!"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "edgeId": "e_node_flow_funil_4_1_node_flow_funil_4_2",
+            "sourceNodeId": "node_flow_funil_4_1",
+            "targetNodeId": "node_flow_funil_4_2",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_2_node_flow_funil_4_3",
+            "sourceNodeId": "node_flow_funil_4_2",
+            "targetNodeId": "node_flow_funil_4_3",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_3_node_flow_funil_4_4",
+            "sourceNodeId": "node_flow_funil_4_3",
+            "targetNodeId": "node_flow_funil_4_4",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_4_node_flow_funil_4_5",
+            "sourceNodeId": "node_flow_funil_4_4",
+            "targetNodeId": "node_flow_funil_4_5",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_5_node_flow_funil_4_6",
+            "sourceNodeId": "node_flow_funil_4_5",
+            "targetNodeId": "node_flow_funil_4_6",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_6_node_flow_funil_4_7",
+            "sourceNodeId": "node_flow_funil_4_6",
+            "targetNodeId": "node_flow_funil_4_7",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_7_node_flow_funil_4_8",
+            "sourceNodeId": "node_flow_funil_4_7",
+            "targetNodeId": "node_flow_funil_4_8",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_8_node_flow_funil_4_9",
+            "sourceNodeId": "node_flow_funil_4_8",
+            "targetNodeId": "node_flow_funil_4_9",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_9_node_flow_funil_4_10",
+            "sourceNodeId": "node_flow_funil_4_9",
+            "targetNodeId": "node_flow_funil_4_10",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_10_node_flow_funil_4_11",
+            "sourceNodeId": "node_flow_funil_4_10",
+            "targetNodeId": "node_flow_funil_4_11",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_11_node_flow_funil_4_12",
+            "sourceNodeId": "node_flow_funil_4_11",
+            "targetNodeId": "node_flow_funil_4_12",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_12_node_flow_funil_4_13_success",
+            "sourceNodeId": "node_flow_funil_4_12",
+            "targetNodeId": "node_flow_funil_4_13",
+            "sourceHandle": "success",
+            "animated": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "_id": "flow_funil_5",
+    "botId": "bot_whatsapp_principal",
+    "name": "Funil 5: Acervo 5.000+ Sermões - Vitor (Gatilho: teste5) - 17 98117-5202",
+    "description": "Pasta: funil 5/ | Criativos: funil 5/ads/ | 5 Áudios MP3 (Vitor), 22 PDFs, Video Tutorial, Plataforma Online, PIX Vitor Bueno e IA",
+    "isMainFlow": false,
+    "isDeployed": true,
+    "productionVersion": 1,
+    "createdAt": "2026-10-30T18:59:28.000Z",
+    "updatedAt": "2026-11-10T03:30:00.000Z",
+    "draftVersion": {
+      "version": 1,
+      "flowData": {
+        "nodes": [
+          {
+            "nodeId": "node_flow_funil_5_1",
+            "nodeType": "START",
+            "position": {
+              "x": 320,
+              "y": 40
+            },
+            "label": "Início (Gatilho: teste5)",
+            "config": {
+              "trigger": "teste5"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_5_2",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 180
+            },
+            "label": "Saudação Inicial",
+            "config": {
+              "text": "Bom dia, tudo bem? A Paz do Senhor Jesus!"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_5_3",
+            "nodeType": "AUDIO",
+            "position": {
+              "x": 320,
+              "y": 320
+            },
+            "label": "🎙️ Áudio Apresentação Acervo (48s)",
+            "config": {
+              "audioUrl": "funil5/audio_apresentacao.mp3",
+              "recordingDurationSeconds": 4,
+              "fallbackText": "A Paz do Senhor Jesus! Separei os sermões para você."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_5_4",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 460
+            },
+            "label": "Salvar Contato",
+            "config": {
+              "text": "Salva meu contato para eu poder te enviar mais materiais e conteúdos como esses, amém?"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_5_5",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 600
+            },
+            "label": "🖼️ Capa Oficial do Acervo",
+            "config": {
+              "mediaUrl": "funil5/capa_acervo.jpeg",
+              "filename": "capa_acervo.jpeg",
+              "caption": "+ de 5 Mil Sermões Prontos"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_5_6",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 740
+            },
+            "label": "Oferta Completa & 4 Presentes",
+            "config": {
+              "text": "+ DE 5 MIL SERMÕES PRONTOS\nOrganizados e fáceis de usar 📖\n\n👉 É só ler, adaptar e ministrar.\n\n📲 Acesso imediato (PDFs)\n🖨️ Pode imprimir.\n\nO que você vai receber: 👇\n\n✅ Acesso ao acervo completo com + de 5MIL Sermões.\n✅ Sermões organizados por temas e categorias.\n✅ Acesso ao Grupo EXCLUSIVO no WhatsApp.\n✅ Materiais prontos pra usar, baixar e ministrar.\n\n👉 Você receberá atualizações semanais e você tem acesso VITALÍCIO!\n\nVocê vai receber 4 PRESENTES EXCLUSIVOS: 👇\n\n🎁 Os 150 Salmos explicados passo a passo.\n🎁 Os 66 livros da Bíblia Explicados (De Gênises a Apocalipse)\n🎁 AS CARTAS DE PAULO\n🎁 APLICATIVO DO APOCALIPSE\n\nAcervo completo 100% completo ⭐"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_5_7",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 880
+            },
+            "label": "Preço R$ 19,90 & Pagamento Posterior",
+            "config": {
+              "text": "Normalmente esses materiais custariam no mínimo R$79,90\n\nMais Somente HOJE você recebe tudo isso por apenas R$19,90 no PIX\n\n(valor simbólico para ajudar nosso projeto)\n\nVOCÊ RECEBE TUDO PRIMEIRO\n\nE depois que eu enviar os materiais você faz a contribuição simbólica para apoiar essa obra ok? 🙏"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_5_8",
+            "nodeType": "AUDIO",
+            "position": {
+              "x": 320,
+              "y": 1020
+            },
+            "label": "🎙️ Áudio Confiança (19s)",
+            "config": {
+              "audioUrl": "funil5/audio_confianca.mp3",
+              "recordingDurationSeconds": 3,
+              "fallbackText": "🎙️ Áudio de compromisso e confiança."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_5_9",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 1160
+            },
+            "label": "Pergunta de Compromisso (SIM/NÃO)",
+            "config": {
+              "text": "Posso te enviar agora mesmo e você faz o pix após receber os materiais ?\n\n⚠️ Atenção: responda SIM apenas se você se comprometer a realizar o pagamento em seguida.\n\nResponda apenas SIM ou NÃO por favor."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_5_10",
+            "nodeType": "INPUT",
+            "position": {
+              "x": 320,
+              "y": 1300
+            },
+            "label": "Aguardando Resposta (SIM ou NÃO)",
+            "config": {
+              "placeholder": "Aguardando SIM do lead...",
+              "variableName": "lead_confirm"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_5_11",
+            "nodeType": "AUDIO",
+            "position": {
+              "x": 320,
+              "y": 1440
+            },
+            "label": "🎙️ Áudio Enviando Materiais (5s)",
+            "config": {
+              "audioUrl": "funil5/audio_enviando.mp3",
+              "recordingDurationSeconds": 2,
+              "fallbackText": "Estou enviando agora!"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_5_12",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 1580
+            },
+            "label": "📦 Entrega dos 22 PDFs de Sermões",
+            "config": {
+              "mediaUrl": "funil5/50 ESBOÇOS EM LUCAS.pdf",
+              "filename": "50 ESBOÇOS EM LUCAS.pdf",
+              "caption": "22 Volumes de Sermões Prontos em PDF"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_5_13",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 1720
+            },
+            "label": "Biblioteca Online Exclusiva",
+            "config": {
+              "text": "Como são muitos materiais eu separei eles em uma Biblioteca Exclusiva todos organizados por temas. 👇\n\n🚨 ACESSE O RESTANTE DOS ESBOÇOS NO LINK ABAIXO 👇\n\nhttps://bibliotecapregacoes.netlify.app/\n\nSEU ACESSO FOI LIBERADO ✅\n\nVeja no tutorial abaixo como acessar sua biblioteca online 👇👇"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_5_14",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 1860
+            },
+            "label": "🎥 Vídeo Tutorial da Biblioteca",
+            "config": {
+              "mediaUrl": "funil5/tutorial_biblioteca.mp4",
+              "filename": "tutorial_biblioteca.mp4",
+              "caption": "Tutorial de Acesso à Biblioteca Online"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_5_15",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 2000
+            },
+            "label": "Liberação dos 4 Presentes & Grupo VIP",
+            "config": {
+              "text": "PRESENTE 1 🎁\nAcesse os 66 livros da bíblia de gênises a apocallipse 👇\nhttps://drive.google.com/drive/folders/10oLG9FY90lp5gQGIbfFrdzME8tytdMGm?usp=drive_link\n\nPRESENTE 2 - APLICATIVO SERMÃO DO APOCALIPSE 🎁👇\nhttps://sermoesbiblicos.online (Usuário: Apocalipse / Senha: 1234)\n\nPRESENTE 3 - AS CARTAS DE PAULO 🎁👇\nhttps://drive.google.com/drive/folders/1uNovAhcit1QUosY7Srk2-jSNvG5S0dS0?usp=drive_link\n\n📲 Grupo Oficial no WhatsApp:\nhttps://chat.whatsapp.com/DDrnWQKV5vTB2UAYyQj3M2"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_5_16",
+            "nodeType": "PIX",
+            "position": {
+              "x": 320,
+              "y": 2140
+            },
+            "label": "💸 Chave PIX CNPJ Vitor Bueno",
+            "config": {
+              "pixKey": "64158407000124",
+              "beneficiaryName": "Vitor Bueno de Carvalho",
+              "amount": "19.90",
+              "message": "🔑 - Chave PIX CNPJ: 64158407000124\n💵 - Valor: R$ 19,90\n👤 - Nome: Vitor Bueno de Carvalho\n🏦 - Banco: CloudWalk I.P"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_5_17",
+            "nodeType": "AUDIO",
+            "position": {
+              "x": 320,
+              "y": 2280
+            },
+            "label": "🎙️ Áudio PIX Vitor (18s)",
+            "config": {
+              "audioUrl": "funil5/audio_pix.mp3",
+              "recordingDurationSeconds": 3,
+              "fallbackText": "Fico no aguardo do pagamento, só me enviar o comprovante!"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_5_18",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 2420
+            },
+            "label": "Instruções Comprovante",
+            "config": {
+              "text": "Fico no aguardo do pagamento, só me enviar o comprovante!\n\nAgora conto com a sua honestidade amém. 🙏"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_5_19",
+            "nodeType": "PIX_VERIFIER",
+            "position": {
+              "x": 320,
+              "y": 2560
+            },
+            "label": "🧠 Auditoria Comprovante IA Gemini",
+            "config": {
+              "expectedAmount": "19.90",
+              "beneficiary": "Vitor Bueno de Carvalho"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_5_20",
+            "nodeType": "META_CAPI",
+            "position": {
+              "x": 320,
+              "y": 2700
+            },
+            "label": "🎯 Conversão Meta Ads (CAPI)",
+            "config": {
+              "value": 19.9,
+              "confirmationText": "🎉 Pagamento de R$ 19,90 confirmado com sucesso! Que Deus abençoe abundantemente seu ministério!"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "edgeId": "e_node_flow_funil_5_1_node_flow_funil_5_2",
+            "sourceNodeId": "node_flow_funil_5_1",
+            "targetNodeId": "node_flow_funil_5_2",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_5_2_node_flow_funil_5_3",
+            "sourceNodeId": "node_flow_funil_5_2",
+            "targetNodeId": "node_flow_funil_5_3",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_5_3_node_flow_funil_5_4",
+            "sourceNodeId": "node_flow_funil_5_3",
+            "targetNodeId": "node_flow_funil_5_4",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_5_4_node_flow_funil_5_5",
+            "sourceNodeId": "node_flow_funil_5_4",
+            "targetNodeId": "node_flow_funil_5_5",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_5_5_node_flow_funil_5_6",
+            "sourceNodeId": "node_flow_funil_5_5",
+            "targetNodeId": "node_flow_funil_5_6",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_5_6_node_flow_funil_5_7",
+            "sourceNodeId": "node_flow_funil_5_6",
+            "targetNodeId": "node_flow_funil_5_7",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_5_7_node_flow_funil_5_8",
+            "sourceNodeId": "node_flow_funil_5_7",
+            "targetNodeId": "node_flow_funil_5_8",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_5_8_node_flow_funil_5_9",
+            "sourceNodeId": "node_flow_funil_5_8",
+            "targetNodeId": "node_flow_funil_5_9",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_5_9_node_flow_funil_5_10",
+            "sourceNodeId": "node_flow_funil_5_9",
+            "targetNodeId": "node_flow_funil_5_10",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_5_10_node_flow_funil_5_11",
+            "sourceNodeId": "node_flow_funil_5_10",
+            "targetNodeId": "node_flow_funil_5_11",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_5_11_node_flow_funil_5_12",
+            "sourceNodeId": "node_flow_funil_5_11",
+            "targetNodeId": "node_flow_funil_5_12",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_5_12_node_flow_funil_5_13",
+            "sourceNodeId": "node_flow_funil_5_12",
+            "targetNodeId": "node_flow_funil_5_13",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_5_13_node_flow_funil_5_14",
+            "sourceNodeId": "node_flow_funil_5_13",
+            "targetNodeId": "node_flow_funil_5_14",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_5_14_node_flow_funil_5_15",
+            "sourceNodeId": "node_flow_funil_5_14",
+            "targetNodeId": "node_flow_funil_5_15",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_5_15_node_flow_funil_5_16",
+            "sourceNodeId": "node_flow_funil_5_15",
+            "targetNodeId": "node_flow_funil_5_16",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_5_16_node_flow_funil_5_17",
+            "sourceNodeId": "node_flow_funil_5_16",
+            "targetNodeId": "node_flow_funil_5_17",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_5_17_node_flow_funil_5_18",
+            "sourceNodeId": "node_flow_funil_5_17",
+            "targetNodeId": "node_flow_funil_5_18",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_5_18_node_flow_funil_5_19",
+            "sourceNodeId": "node_flow_funil_5_18",
+            "targetNodeId": "node_flow_funil_5_19",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_5_19_node_flow_funil_5_20_success",
+            "sourceNodeId": "node_flow_funil_5_19",
+            "targetNodeId": "node_flow_funil_5_20",
+            "sourceHandle": "success",
+            "animated": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "_id": "flow_funil_6",
+    "botId": "bot_whatsapp_principal",
+    "name": "Funil 6: Devocional Pelos Filhos - Missionária Flávia (Gatilho: teste6) - 12 98308-5720",
+    "description": "Pasta: funil 6/ | Criativos: funil 6/ads/ | 4 Áudios MP3 (Miss. Flávia), 2 PDFs, Plataforma Lovable, Caixa Devocional, PIX Celular e IA",
+    "isMainFlow": false,
+    "isDeployed": true,
+    "productionVersion": 1,
+    "createdAt": "2026-10-30T18:59:28.000Z",
+    "updatedAt": "2026-11-10T03:30:00.000Z",
+    "draftVersion": {
+      "version": 1,
+      "flowData": {
+        "nodes": [
+          {
+            "nodeId": "node_flow_funil_6_1",
+            "nodeType": "START",
+            "position": {
+              "x": 320,
+              "y": 40
+            },
+            "label": "Início (Gatilho: teste6)",
+            "config": {
+              "trigger": "teste6"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_6_2",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 180
+            },
+            "label": "Saudação Missionária Flávia",
+            "config": {
+              "text": "A paz do Senhor, minha irmã! Que Deus abençoe ✨\n\nSó 1 minuto, que vou te mandar um áudio explicando sobre o Devocional."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_6_3",
+            "nodeType": "AUDIO",
+            "position": {
+              "x": 320,
+              "y": 320
+            },
+            "label": "🎙️ Áudio 1 Apresentação (1m20s)",
+            "config": {
+              "audioUrl": "funil6/audio_apresentacao.mp3",
+              "recordingDurationSeconds": 4,
+              "fallbackText": "A paz do Senhor! Vou te explicar sobre o Devocional."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_6_4",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 460
+            },
+            "label": "Pergunta do Nome do Filho",
+            "config": {
+              "text": "Deixa eu te perguntar mais uma coisa: como se chama o seu filho ou filha que se afastou?"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_6_5",
+            "nodeType": "INPUT",
+            "position": {
+              "x": 320,
+              "y": 600
+            },
+            "label": "Aguardando Nome do Filho",
+            "config": {
+              "placeholder": "Lead enviando o nome do filho/filha...",
+              "variableName": "child_name"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_6_6",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 740
+            },
+            "label": "Oração & Conexão Emocional",
+            "config": {
+              "text": "Sei que o coração aperta, mas Deus não esquece, vamos orar juntos pra que dê tudo certo 🙏\n\nMas sabe o que realmente toca o meu coração, irmã?"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_6_7",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 880
+            },
+            "label": "🖼️ Print Testemunho de Mães",
+            "config": {
+              "mediaUrl": "funil6/print_testemunho_filho.jpeg",
+              "filename": "print_testemunho_filho.jpeg",
+              "caption": "Testemunho real de restauração"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_6_8",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 1020
+            },
+            "label": "Pergunta de Fé no Milagre",
+            "config": {
+              "text": "Os testemunhos das mulheres que fazem o devocional\n\nE eu sei que Deus pode fazer um milagre na sua família também! Você acredita? 🙏"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_6_9",
+            "nodeType": "INPUT",
+            "position": {
+              "x": 320,
+              "y": 1160
+            },
+            "label": "Aguardando Confirmação da Mãe",
+            "config": {
+              "placeholder": "Aguardando Sim/Acredito...",
+              "variableName": "mother_belief"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_6_10",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 1300
+            },
+            "label": "Cuidado de Deus & Explicação",
+            "config": {
+              "text": "Amém irmã! Deus está cuidando de cada detalhe com muito amor ❤️\n\nIrmã, eu vou te mandar mais 1 áudio explicando como funciona o Devocional ⬇️"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_6_11",
+            "nodeType": "AUDIO",
+            "position": {
+              "x": 320,
+              "y": 1440
+            },
+            "label": "🎙️ Áudio 2 Explicação (1m39s)",
+            "config": {
+              "audioUrl": "funil6/audio_explicacao.mp3",
+              "recordingDurationSeconds": 4,
+              "fallbackText": "Glória a Deus! Em breve quero ouvir seu testemunho, irmã! Vou te enviar agora ⬇️"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_6_12",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 1580
+            },
+            "label": "📦 Entrega Devocional 7 e 21 dias",
+            "config": {
+              "mediaUrl": "funil6/Devocional 7 dias.pdf",
+              "filename": "Devocional 7 dias.pdf",
+              "caption": "Devocional Pelos Filhos (7 e 21 dias)"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_6_13",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 1720
+            },
+            "label": "Link Plataforma Online",
+            "config": {
+              "text": "Caso a senhora não consiga abrir pelo PDF, vou te mandar o link pra abrir direto 👇\nhttps://devocional7diasonline.lovable.app"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_6_14",
+            "nodeType": "AUDIO",
+            "position": {
+              "x": 320,
+              "y": 1860
+            },
+            "label": "🎙️ Áudio 3 Entrega (1m28s)",
+            "config": {
+              "audioUrl": "funil6/audio_entrega.mp3",
+              "recordingDurationSeconds": 4,
+              "fallbackText": "🎙️ Áudio sobre a caixa devocional."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_6_15",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 2000
+            },
+            "label": "🖼️ Foto Kit Caixa Devocional",
+            "config": {
+              "mediaUrl": "funil6/kit_caixa_devocional.jpeg",
+              "filename": "kit_caixa_devocional.jpeg",
+              "caption": "Kit Caixa Devocional Pelos Filhos"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_6_16",
+            "nodeType": "PIX",
+            "position": {
+              "x": 320,
+              "y": 2140
+            },
+            "label": "💸 Chave PIX Celular Flávia",
+            "config": {
+              "pixKey": "12983085720",
+              "beneficiaryName": "DIGITAL DSX LTDA",
+              "amount": "5.00",
+              "message": "📌 Chave Pix (Celular): 12983085720\n📌 Nome que aparece: DIGITAL DSX LTDA\n📌 Banco: DOCK IP S.A.\n📌 Valor: O que Deus tocar no seu coração"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_6_17",
+            "nodeType": "AUDIO",
+            "position": {
+              "x": 320,
+              "y": 2280
+            },
+            "label": "🎙️ Áudio 4 Sorteio (59s)",
+            "config": {
+              "audioUrl": "funil6/audio_ultimo_sorteio.mp3",
+              "recordingDurationSeconds": 3,
+              "fallbackText": "E irmã, tenta ver se consegue ainda hoje, porque já coloco seu nome no sorteio."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_6_18",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 2420
+            },
+            "label": "Instruções Comprovante & Grupo de Oração",
+            "config": {
+              "text": "Me manda o comprovante, irmã, que eu já coloco a senhora no nosso grupo de oração do WhatsApp 🙏"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_6_19",
+            "nodeType": "PIX_VERIFIER",
+            "position": {
+              "x": 320,
+              "y": 2560
+            },
+            "label": "🧠 Auditoria Comprovante IA Gemini",
+            "config": {
+              "expectedAmount": "5.00",
+              "beneficiary": "DIGITAL DSX LTDA"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_6_20",
+            "nodeType": "META_CAPI",
+            "position": {
+              "x": 320,
+              "y": 2700
+            },
+            "label": "🎯 Conversão Meta Ads (CAPI)",
+            "config": {
+              "value": 5.0,
+              "confirmationText": "🎉 Pagamento confirmado com sucesso! Seu nome foi colocado em oração e no grupo oficial das mães!"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "edgeId": "e_node_flow_funil_6_1_node_flow_funil_6_2",
+            "sourceNodeId": "node_flow_funil_6_1",
+            "targetNodeId": "node_flow_funil_6_2",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_6_2_node_flow_funil_6_3",
+            "sourceNodeId": "node_flow_funil_6_2",
+            "targetNodeId": "node_flow_funil_6_3",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_6_3_node_flow_funil_6_4",
+            "sourceNodeId": "node_flow_funil_6_3",
+            "targetNodeId": "node_flow_funil_6_4",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_6_4_node_flow_funil_6_5",
+            "sourceNodeId": "node_flow_funil_6_4",
+            "targetNodeId": "node_flow_funil_6_5",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_6_5_node_flow_funil_6_6",
+            "sourceNodeId": "node_flow_funil_6_5",
+            "targetNodeId": "node_flow_funil_6_6",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_6_6_node_flow_funil_6_7",
+            "sourceNodeId": "node_flow_funil_6_6",
+            "targetNodeId": "node_flow_funil_6_7",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_6_7_node_flow_funil_6_8",
+            "sourceNodeId": "node_flow_funil_6_7",
+            "targetNodeId": "node_flow_funil_6_8",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_6_8_node_flow_funil_6_9",
+            "sourceNodeId": "node_flow_funil_6_8",
+            "targetNodeId": "node_flow_funil_6_9",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_6_9_node_flow_funil_6_10",
+            "sourceNodeId": "node_flow_funil_6_9",
+            "targetNodeId": "node_flow_funil_6_10",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_6_10_node_flow_funil_6_11",
+            "sourceNodeId": "node_flow_funil_6_10",
+            "targetNodeId": "node_flow_funil_6_11",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_6_11_node_flow_funil_6_12",
+            "sourceNodeId": "node_flow_funil_6_11",
+            "targetNodeId": "node_flow_funil_6_12",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_6_12_node_flow_funil_6_13",
+            "sourceNodeId": "node_flow_funil_6_12",
+            "targetNodeId": "node_flow_funil_6_13",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_6_13_node_flow_funil_6_14",
+            "sourceNodeId": "node_flow_funil_6_13",
+            "targetNodeId": "node_flow_funil_6_14",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_6_14_node_flow_funil_6_15",
+            "sourceNodeId": "node_flow_funil_6_14",
+            "targetNodeId": "node_flow_funil_6_15",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_6_15_node_flow_funil_6_16",
+            "sourceNodeId": "node_flow_funil_6_15",
+            "targetNodeId": "node_flow_funil_6_16",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_6_16_node_flow_funil_6_17",
+            "sourceNodeId": "node_flow_funil_6_16",
+            "targetNodeId": "node_flow_funil_6_17",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_6_17_node_flow_funil_6_18",
+            "sourceNodeId": "node_flow_funil_6_17",
+            "targetNodeId": "node_flow_funil_6_18",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_6_18_node_flow_funil_6_19",
+            "sourceNodeId": "node_flow_funil_6_18",
+            "targetNodeId": "node_flow_funil_6_19",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_6_19_node_flow_funil_6_20_success",
+            "sourceNodeId": "node_flow_funil_6_19",
+            "targetNodeId": "node_flow_funil_6_20",
+            "sourceHandle": "success",
+            "animated": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "_id": "flow_funil_7",
+    "botId": "bot_whatsapp_principal",
+    "name": "Funil 7: Construtor de Palavras e Alfabetização - Pinguim Estudioso (Gatilho: teste7) - 37 99938-7172",
+    "description": "Pasta: funil 7/ | Criativos: funil 7/ads/ | Amostra grátis, Áudio MP3 (52s), 8 PDFs, Oferta R$ 11,90, PIX Editora Branth e IA",
+    "isMainFlow": false,
+    "isDeployed": true,
+    "productionVersion": 1,
+    "createdAt": "2026-10-30T18:59:28.000Z",
+    "updatedAt": "2026-11-10T03:30:00.000Z",
+    "draftVersion": {
+      "version": 1,
+      "flowData": {
+        "nodes": [
+          {
+            "nodeId": "node_flow_funil_7_1",
+            "nodeType": "START",
+            "position": {
+              "x": 320,
+              "y": 40
+            },
+            "label": "Início (Gatilho: teste7)",
+            "config": {
+              "trigger": "teste7"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_7_2",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 180
+            },
+            "label": "Saudação Inicial",
+            "config": {
+              "text": "Olá! Bom dia, tudo bem?"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_7_3",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 320
+            },
+            "label": "🖼️ Capa Material Gratuito",
+            "config": {
+              "mediaUrl": "funil7/capa_gratuito.jpeg",
+              "filename": "capa_gratuito.jpeg",
+              "caption": "Amostra Gratuita Construtor de Palavras"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_7_4",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 460
+            },
+            "label": "Oferta da Amostra Grátis",
+            "config": {
+              "text": "Posso te enviar nosso material gratuito?"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_7_5",
+            "nodeType": "INPUT",
+            "position": {
+              "x": 320,
+              "y": 600
+            },
+            "label": "Aguardando Confirmação do Lead",
+            "config": {
+              "placeholder": "Aguardando Sim/Pode enviar...",
+              "variableName": "lead_confirm_free"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_7_6",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 740
+            },
+            "label": "Envio da Amostra",
+            "config": {
+              "text": "Segue o material gratuito Construtor de Palavras 👇"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_7_7",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 880
+            },
+            "label": "📦 Amostra Grátis em PDF",
+            "config": {
+              "mediaUrl": "funil7/CONSTRUTOR DE PALAVRAS PLR.pdf",
+              "filename": "CONSTRUTOR DE PALAVRAS PLR.pdf",
+              "caption": "Amostra Gratuita Construtor de Palavras"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_7_8",
+            "nodeType": "AUDIO",
+            "position": {
+              "x": 320,
+              "y": 1020
+            },
+            "label": "🎙️ Áudio Apresentação Kit Completo (52s)",
+            "config": {
+              "audioUrl": "funil7/audio_apresentacao.mp3",
+              "recordingDurationSeconds": 4,
+              "fallbackText": "Áudio de apresentação do Kit Completo de Alfabetização Infantil."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_7_9",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 1160
+            },
+            "label": "🖼️ Tabela Promoção",
+            "config": {
+              "mediaUrl": "funil7/tabela_promocao.jpeg",
+              "filename": "tabela_promocao.jpeg",
+              "caption": "Tabela da Promoção Exclusiva"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_7_10",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 1300
+            },
+            "label": "Oferta Válida Apenas Hoje R$ 11,90",
+            "config": {
+              "text": "VÁLIDO APENAS HOJE ⭐️\nVocê paga apenas R$ 11,90 pelo KIT COMPLETO! ✅\n\nVocê gostaria de receber?"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_7_11",
+            "nodeType": "INPUT",
+            "position": {
+              "x": 320,
+              "y": 1440
+            },
+            "label": "Aguardando Resposta (Gostaria de receber?)",
+            "config": {
+              "placeholder": "Aguardando Sim/Quero do lead...",
+              "variableName": "lead_confirm_full"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_7_12",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 1580
+            },
+            "label": "Envio do Kit Completo (7 PDFs)",
+            "config": {
+              "text": "Segue o KIT COMPLETO ABAIXO 👇"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_7_13",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 1720
+            },
+            "label": "📦 Kit 7 PDFs de Atividades",
+            "config": {
+              "mediaUrl": "funil7/CAIXA DA LEITURA.pdf",
+              "filename": "CAIXA DA LEITURA.pdf",
+              "caption": "Kit Completo 7 Apostilas de Alfabetização"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_7_14",
+            "nodeType": "PIX",
+            "position": {
+              "x": 320,
+              "y": 1860
+            },
+            "label": "💸 Chave PIX Telefone Editora Branth",
+            "config": {
+              "pixKey": "37999387172",
+              "beneficiaryName": "Editora Branth",
+              "amount": "11.90",
+              "message": "🔑 Chave PIX:\n📲 TELEFONE: 37999387172\n👤 Editora Branth\n\nO valor é R$ 11,90 se você quiser copiar e colar a chave 👇"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_7_15",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 2000
+            },
+            "label": "Aguardando Comprovante",
+            "config": {
+              "text": "Fico aguardando o comprovante 🙏"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_7_16",
+            "nodeType": "PIX_VERIFIER",
+            "position": {
+              "x": 320,
+              "y": 2140
+            },
+            "label": "🧠 Auditoria Comprovante IA Gemini",
+            "config": {
+              "expectedAmount": "11.90",
+              "beneficiary": "Editora Branth"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_7_17",
+            "nodeType": "META_CAPI",
+            "position": {
+              "x": 320,
+              "y": 2280
+            },
+            "label": "🎯 Conversão Meta Ads (CAPI)",
+            "config": {
+              "value": 11.9,
+              "confirmationText": "🎉 Pagamento de R$ 11,90 confirmado com sucesso! Bons estudos com os pequenos!"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "edgeId": "e_node_flow_funil_7_1_node_flow_funil_7_2",
+            "sourceNodeId": "node_flow_funil_7_1",
+            "targetNodeId": "node_flow_funil_7_2",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_7_2_node_flow_funil_7_3",
+            "sourceNodeId": "node_flow_funil_7_2",
+            "targetNodeId": "node_flow_funil_7_3",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_7_3_node_flow_funil_7_4",
+            "sourceNodeId": "node_flow_funil_7_3",
+            "targetNodeId": "node_flow_funil_7_4",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_7_4_node_flow_funil_7_5",
+            "sourceNodeId": "node_flow_funil_7_4",
+            "targetNodeId": "node_flow_funil_7_5",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_7_5_node_flow_funil_7_6",
+            "sourceNodeId": "node_flow_funil_7_5",
+            "targetNodeId": "node_flow_funil_7_6",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_7_6_node_flow_funil_7_7",
+            "sourceNodeId": "node_flow_funil_7_6",
+            "targetNodeId": "node_flow_funil_7_7",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_7_7_node_flow_funil_7_8",
+            "sourceNodeId": "node_flow_funil_7_7",
+            "targetNodeId": "node_flow_funil_7_8",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_7_8_node_flow_funil_7_9",
+            "sourceNodeId": "node_flow_funil_7_8",
+            "targetNodeId": "node_flow_funil_7_9",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_7_9_node_flow_funil_7_10",
+            "sourceNodeId": "node_flow_funil_7_9",
+            "targetNodeId": "node_flow_funil_7_10",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_7_10_node_flow_funil_7_11",
+            "sourceNodeId": "node_flow_funil_7_10",
+            "targetNodeId": "node_flow_funil_7_11",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_7_11_node_flow_funil_7_12",
+            "sourceNodeId": "node_flow_funil_7_11",
+            "targetNodeId": "node_flow_funil_7_12",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_7_12_node_flow_funil_7_13",
+            "sourceNodeId": "node_flow_funil_7_12",
+            "targetNodeId": "node_flow_funil_7_13",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_7_13_node_flow_funil_7_14",
+            "sourceNodeId": "node_flow_funil_7_13",
+            "targetNodeId": "node_flow_funil_7_14",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_7_14_node_flow_funil_7_15",
+            "sourceNodeId": "node_flow_funil_7_14",
+            "targetNodeId": "node_flow_funil_7_15",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_7_15_node_flow_funil_7_16",
+            "sourceNodeId": "node_flow_funil_7_15",
+            "targetNodeId": "node_flow_funil_7_16",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_7_16_node_flow_funil_7_17_success",
+            "sourceNodeId": "node_flow_funil_7_16",
+            "targetNodeId": "node_flow_funil_7_17",
+            "sourceHandle": "success",
+            "animated": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "_id": "flow_funil_8",
+    "botId": "bot_whatsapp_principal",
+    "name": "Funil 8: Guia Pet Comilão e Alimentação Natural - Fernanda Soares (Gatilho: teste8) - 11 92202-6498",
+    "description": "Pasta: funil 8/ | Áudio MP3 (1m10s + 1m19s), Capa, 4 PDFs Reais, Calculadora de Porção, PIX KV DIGITAL e IA",
+    "isMainFlow": false,
+    "isDeployed": true,
+    "productionVersion": 1,
+    "createdAt": "2026-10-30T18:59:28.000Z",
+    "updatedAt": "2026-11-10T03:30:00.000Z",
+    "draftVersion": {
+      "version": 1,
+      "flowData": {
+        "nodes": [
+          {
+            "nodeId": "node_flow_funil_8_1",
+            "nodeType": "START",
+            "position": {
+              "x": 320,
+              "y": 40
+            },
+            "label": "Início (Gatilho: teste8)",
+            "config": {
+              "trigger": "teste8"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_8_2",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 180
+            },
+            "label": "Acolhimento & Saúde do Pet",
+            "config": {
+              "text": "Oi! Que alegria ter você aqui 🤍\n\nSe você chegou até aqui, é porque se preocupa de verdade com a saúde do seu doguinho 🐶"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_8_3",
+            "nodeType": "AUDIO",
+            "position": {
+              "x": 320,
+              "y": 320
+            },
+            "label": "🎙️ Áudio 1 Apresentação (1m10s)",
+            "config": {
+              "audioUrl": "funil8/audio_apresentacao.mp3",
+              "recordingDurationSeconds": 4,
+              "fallbackText": "Áudio de apresentação do Guia Pet Comilão e Alimentação Natural."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_8_4",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 460
+            },
+            "label": "Oferta Guia Pet Comilão + 100 Receitas",
+            "config": {
+              "text": "Criei o Guia do Pet Comilão, com o passo a passo pra você introduzir a Alimentação Natural e mais 100 Receitas de Alimentação Natural para cães 🐶🐱\n\nDá uma olhada no que você vai receber 👇\n\n✅ Guia Completo de Alimentação Natural (passo a passo)\n✅ 100 Receitas de Alimentação Natural para Cães\n✅ Lista Semáforo: o que Pode, o que Cuidado e o que Nunca dar\n✅ Material em PDF pronto pra usar direto do celular\n✅ Acesso vitalício\n✅ Suporte direto comigo no WhatsApp\n\nBÔNUS ⭐️⭐️⭐️\n✅ Calculadora de Porção, a quantidade exata pro peso e porte do seu pet\n\n👉 Tudo isso por uma contribuição simbólica de apenas R$15,00 SOMENTE HOJE!\n\n🐶🤍 Posso te enviar o material completo agora?"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_8_5",
+            "nodeType": "INPUT",
+            "position": {
+              "x": 320,
+              "y": 600
+            },
+            "label": "Aguardando Resposta (Posso enviar?)",
+            "config": {
+              "placeholder": "Aguardando Sim/Pode do lead...",
+              "variableName": "lead_confirm"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_8_6",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 740
+            },
+            "label": "Confiança & Envio dos Materiais",
+            "config": {
+              "text": "Eu faço questão de enviar antes porque acredito muito na honestidade de quem ama de verdade seus pets 🤍\n\nVou te enviar o material agora 👇"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_8_7",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 880
+            },
+            "label": "📦 Entrega 4 PDFs Pet Comilão",
+            "config": {
+              "mediaUrl": "funil8/Guia Pet Comilão - COMO INICIAR.pdf",
+              "filename": "Guia Pet Comilão - 4 PDFs Completos.pdf",
+              "caption": "Guia Como Iniciar + 50 Cozidas + 50 Cruas + Lista Semáforo"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_8_8",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 1020
+            },
+            "label": "Tabela de Contribuição Pet",
+            "config": {
+              "text": "🎁 AGORA QUE VOCÊ JÁ TEM TODO O MATERIAL...\n\nConfio 100% na sua honestidade. ❤️\n\nPor favor, contribua com o valor que seu coração mandar para que ela possa continuar salvando mais pets como o seu:\n\nR$ 15,00 (recomendado)\n🌟 R$19,90 (mais escolhido) 🌟\n💰 R$24,90 - Contribuição abençoada"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_8_9",
+            "nodeType": "AUDIO",
+            "position": {
+              "x": 320,
+              "y": 1160
+            },
+            "label": "🎙️ Áudio 2 PIX (1m19s)",
+            "config": {
+              "audioUrl": "funil8/audio_pix.mp3",
+              "recordingDurationSeconds": 4,
+              "fallbackText": "Áudio com orientações de pagamento da alimentação natural pet."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_8_10",
+            "nodeType": "PIX",
+            "position": {
+              "x": 320,
+              "y": 1300
+            },
+            "label": "💸 Chave PIX Telefone KV DIGITAL",
+            "config": {
+              "pixKey": "11965034611",
+              "beneficiaryName": "KV DIGITAL (Projeto Feliz)",
+              "amount": "15.00",
+              "message": "PIX TELEFONE: 11965034611\nNome: Projeto Feliz (KV DIGITAL)\n\nEscolha o valor que toca o seu coração! 💚\n\nAlgumas tutoras mandam até R$50 porque viram a vida dos pets transformar..."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_8_11",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 1440
+            },
+            "label": "Bônus Calculadora de Porção",
+            "config": {
+              "text": "Após o pagamento, me envie o comprovante aqui, que eu vou te enviar como BÔNUS:\n\n📲 CALCULADORA DE PORÇÃO pra você saber exatamente quanto dar para o seu pet 🐶"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_8_12",
+            "nodeType": "PIX_VERIFIER",
+            "position": {
+              "x": 320,
+              "y": 1580
+            },
+            "label": "🧠 Auditoria Comprovante IA Gemini",
+            "config": {
+              "expectedAmount": "15.00",
+              "beneficiary": "KV DIGITAL"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_8_13",
+            "nodeType": "META_CAPI",
+            "position": {
+              "x": 320,
+              "y": 1720
+            },
+            "label": "🎯 Conversão Meta Ads (CAPI)",
+            "config": {
+              "value": 15.0,
+              "confirmationText": "🎉 Pagamento de R$ 15,00 confirmado com sucesso! Muito carinho para o seu peludinho!"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "edgeId": "e_node_flow_funil_8_1_node_flow_funil_8_2",
+            "sourceNodeId": "node_flow_funil_8_1",
+            "targetNodeId": "node_flow_funil_8_2",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_8_2_node_flow_funil_8_3",
+            "sourceNodeId": "node_flow_funil_8_2",
+            "targetNodeId": "node_flow_funil_8_3",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_8_3_node_flow_funil_8_4",
+            "sourceNodeId": "node_flow_funil_8_3",
+            "targetNodeId": "node_flow_funil_8_4",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_8_4_node_flow_funil_8_5",
+            "sourceNodeId": "node_flow_funil_8_4",
+            "targetNodeId": "node_flow_funil_8_5",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_8_5_node_flow_funil_8_6",
+            "sourceNodeId": "node_flow_funil_8_5",
+            "targetNodeId": "node_flow_funil_8_6",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_8_6_node_flow_funil_8_7",
+            "sourceNodeId": "node_flow_funil_8_6",
+            "targetNodeId": "node_flow_funil_8_7",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_8_7_node_flow_funil_8_8",
+            "sourceNodeId": "node_flow_funil_8_7",
+            "targetNodeId": "node_flow_funil_8_8",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_8_8_node_flow_funil_8_9",
+            "sourceNodeId": "node_flow_funil_8_8",
+            "targetNodeId": "node_flow_funil_8_9",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_8_9_node_flow_funil_8_10",
+            "sourceNodeId": "node_flow_funil_8_9",
+            "targetNodeId": "node_flow_funil_8_10",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_8_10_node_flow_funil_8_11",
+            "sourceNodeId": "node_flow_funil_8_10",
+            "targetNodeId": "node_flow_funil_8_11",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_8_11_node_flow_funil_8_12",
+            "sourceNodeId": "node_flow_funil_8_11",
+            "targetNodeId": "node_flow_funil_8_12",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_8_12_node_flow_funil_8_13_success",
+            "sourceNodeId": "node_flow_funil_8_12",
+            "targetNodeId": "node_flow_funil_8_13",
+            "sourceHandle": "success",
+            "animated": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "_id": "flow_funil_9",
+    "botId": "bot_whatsapp_principal",
+    "name": "Funil 9: Receitas de Produtos de Limpeza - Junior (Gatilho: teste9) - 11 5229-1989",
+    "description": "Pasta: funil 9/ | Áudio MP3, Foto Receitas, PDF Receitas Completo, PIX Celular Junior Campos e IA",
+    "isMainFlow": false,
+    "isDeployed": true,
+    "productionVersion": 1,
+    "createdAt": "2026-10-30T18:59:28.000Z",
+    "updatedAt": "2026-11-10T03:30:00.000Z",
+    "draftVersion": {
+      "version": 1,
+      "flowData": {
+        "nodes": [
+          {
+            "nodeId": "node_flow_funil_9_1",
+            "nodeType": "START",
+            "position": {
+              "x": 320,
+              "y": 40
+            },
+            "label": "Início (Gatilho: teste9)",
+            "config": {
+              "trigger": "teste9"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_9_2",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 180
+            },
+            "label": "Saudação Inicial",
+            "config": {
+              "text": "olá tudo bem"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_9_3",
+            "nodeType": "AUDIO",
+            "position": {
+              "x": 320,
+              "y": 320
+            },
+            "label": "🎙️ Áudio Apresentação Junior",
+            "config": {
+              "audioUrl": "funil9/audio_apresentacao.mp3",
+              "recordingDurationSeconds": 3,
+              "fallbackText": "Olá! Separei as receitas de produtos de limpeza pra você economizar e faturar."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_9_4",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 460
+            },
+            "label": "🖼️ Foto Receitas de Limpeza",
+            "config": {
+              "mediaUrl": "funil9/foto_receitas.jpeg",
+              "filename": "foto_receitas.jpeg",
+              "caption": "Apostila de Fórmulas e Produtos de Limpeza"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_9_5",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 600
+            },
+            "label": "Oferta R$ 25 & Contribuição",
+            "config": {
+              "text": "peço apenas *25,00* pelas receitas de produtos de limpeza\nmas aceito o valor que puder 🙏🏻❤️"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_9_6",
+            "nodeType": "PIX",
+            "position": {
+              "x": 320,
+              "y": 740
+            },
+            "label": "💸 Chave PIX Celular Junior",
+            "config": {
+              "pixKey": "42999944139",
+              "beneficiaryName": "Junior Campos dos Santos",
+              "amount": "25.00",
+              "message": "chave pix Celular\n*42999944139*\nconfira meu nome\n(Junior Campos dos Santos)"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_9_7",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 880
+            },
+            "label": "Envio Antecipado por Honestidade",
+            "config": {
+              "text": "confio na tua honestidade e já vou enviar as receitas para você 🙏"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_9_8",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 1020
+            },
+            "label": "📦 Entrega PDF Produtos de Limpeza",
+            "config": {
+              "mediaUrl": "funil9/PRODUTOS_DE_LIMPEZA_2.pdf",
+              "filename": "PRODUTOS_DE_LIMPEZA_2.pdf",
+              "caption": "Receitas e Fórmulas de Produtos de Limpeza"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_9_9",
+            "nodeType": "PIX_VERIFIER",
+            "position": {
+              "x": 320,
+              "y": 1160
+            },
+            "label": "🧠 Auditoria Comprovante IA Gemini",
+            "config": {
+              "expectedAmount": "25.00",
+              "beneficiary": "Junior Campos dos Santos"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_9_10",
+            "nodeType": "META_CAPI",
+            "position": {
+              "x": 320,
+              "y": 1300
+            },
+            "label": "🎯 Conversão Meta Ads (CAPI)",
+            "config": {
+              "value": 25.0,
+              "confirmationText": "🎉 Pagamento de R$ 25,00 confirmado com sucesso! Sucesso na fabricação das suas receitas!"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "edgeId": "e_node_flow_funil_9_1_node_flow_funil_9_2",
+            "sourceNodeId": "node_flow_funil_9_1",
+            "targetNodeId": "node_flow_funil_9_2",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_9_2_node_flow_funil_9_3",
+            "sourceNodeId": "node_flow_funil_9_2",
+            "targetNodeId": "node_flow_funil_9_3",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_9_3_node_flow_funil_9_4",
+            "sourceNodeId": "node_flow_funil_9_3",
+            "targetNodeId": "node_flow_funil_9_4",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_9_4_node_flow_funil_9_5",
+            "sourceNodeId": "node_flow_funil_9_4",
+            "targetNodeId": "node_flow_funil_9_5",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_9_5_node_flow_funil_9_6",
+            "sourceNodeId": "node_flow_funil_9_5",
+            "targetNodeId": "node_flow_funil_9_6",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_9_6_node_flow_funil_9_7",
+            "sourceNodeId": "node_flow_funil_9_6",
+            "targetNodeId": "node_flow_funil_9_7",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_9_7_node_flow_funil_9_8",
+            "sourceNodeId": "node_flow_funil_9_7",
+            "targetNodeId": "node_flow_funil_9_8",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_9_8_node_flow_funil_9_9",
+            "sourceNodeId": "node_flow_funil_9_8",
+            "targetNodeId": "node_flow_funil_9_9",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_9_9_node_flow_funil_9_10_success",
+            "sourceNodeId": "node_flow_funil_9_9",
+            "targetNodeId": "node_flow_funil_9_10",
+            "sourceHandle": "success",
+            "animated": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "_id": "flow_funil_10",
+    "botId": "bot_whatsapp_principal",
+    "name": "Funil 10: Bolsas Lucrativas (+200 Moldes) - Thaíse Costura (Gatilho: teste10) - 11 5229-1989",
+    "description": "Pasta: funil 10/ | Foto Thaíse, 3 Áudios MP3, App Web, Vídeo Tutorial, Pacote +200 Moldes PDF, PIX Thaíse e IA",
+    "isMainFlow": false,
+    "isDeployed": true,
+    "productionVersion": 1,
+    "createdAt": "2026-10-30T18:59:28.000Z",
+    "updatedAt": "2026-11-10T03:30:00.000Z",
+    "draftVersion": {
+      "version": 1,
+      "flowData": {
+        "nodes": [
+          {
+            "nodeId": "node_flow_funil_10_1",
+            "nodeType": "START",
+            "position": {
+              "x": 320,
+              "y": 40
+            },
+            "label": "Início (Gatilho: teste10)",
+            "config": {
+              "trigger": "teste10"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_10_2",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 180
+            },
+            "label": "🖼️ Foto Thaíse & Acolhimento",
+            "config": {
+              "mediaUrl": "funil10/foto_thaise.jpeg",
+              "filename": "foto_thaise.jpeg",
+              "caption": "🌷 Oii, tudo bem? Muito prazer, me chamo Thaíse!\nSe você curte costura criativa, guarda meu contato aqui pra gente conversar melhor, viu meu bem 🙏❤️🌸"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_10_3",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 320
+            },
+            "label": "Pergunta de Renda Extra",
+            "config": {
+              "text": "Você quer aprender uma coisa que te dá uma renda extra garantida, né?"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_10_4",
+            "nodeType": "INPUT",
+            "position": {
+              "x": 320,
+              "y": 460
+            },
+            "label": "Aguardando Resposta (Renda Extra)",
+            "config": {
+              "placeholder": "Aguardando Sim/Quero do lead...",
+              "variableName": "lead_confirm_renda"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_10_5",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 600
+            },
+            "label": "Salvar Contato & Confirmação",
+            "config": {
+              "text": "Perfeito!! Salvou meu contato? Me avisa que já te envio! 🧵✨"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_10_6",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 740
+            },
+            "label": "🖼️ Foto Oferta Completa",
+            "config": {
+              "mediaUrl": "funil10/foto_oferta.jpeg",
+              "filename": "foto_oferta.jpeg",
+              "caption": "Aplicativo Web + Curso + 200 Moldes"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_10_7",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 880
+            },
+            "label": "Detalhes do Pacote R$ 14,90",
+            "config": {
+              "text": "📲✨ APLICATIVO WEB EXCLUSIVO + CURSO COMPLETO!\n\n💻 Aplicativo Web com materiais organizados e ferramentas digitais\n✂️ +200 moldes de BOLSAS, NECESSAIRES, MOCHILAS E CARTEIRAS\n🎬 Videoaulas passo a passo + medidas e dicas práticas\n🧵 Técnicas de acabamento para valorizar suas peças\n💰 Ferramenta de precificação + cálculo de custos e lucros\n📋 Lista de fornecedores de materiais e aviamentos\n📸 Tutorial de fotografia para deixar suas peças mais atrativas\n🛍️ Tutorial de vendas para aprender a vender no Instagram, Mercado Livre, Shopee, lojas e feirinhas\n🎁 Modelos extras + Grupo no WhatsApp com materiais gratuitos e novidades\n\n🔥 HOJE: APENAS R$ 14,90!🔥"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_10_8",
+            "nodeType": "AUDIO",
+            "position": {
+              "x": 320,
+              "y": 1020
+            },
+            "label": "🎙️ Áudio Oferta Thaíse",
+            "config": {
+              "audioUrl": "funil10/audio_oferta.mp3",
+              "recordingDurationSeconds": 4,
+              "fallbackText": "Áudio com a explicação completa dos moldes e do aplicativo."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_10_9",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 1160
+            },
+            "label": "🖼️ Foto Preço & Condições",
+            "config": {
+              "mediaUrl": "funil10/foto_preco.jpeg",
+              "filename": "foto_preco.jpeg",
+              "caption": "R$ 14,90 - Válido Apenas Hoje"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_10_10",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 1300
+            },
+            "label": "Posso confiar e te enviar agora?",
+            "config": {
+              "text": "Posso confiar em você e te enviar agora? 💖"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_10_11",
+            "nodeType": "INPUT",
+            "position": {
+              "x": 320,
+              "y": 1440
+            },
+            "label": "Aguardando Confiança do Lead",
+            "config": {
+              "placeholder": "Aguardando Sim/Pode do lead...",
+              "variableName": "lead_confirm_envio"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_10_12",
+            "nodeType": "AUDIO",
+            "position": {
+              "x": 320,
+              "y": 1580
+            },
+            "label": "🎙️ Áudio App Web Exclusivo",
+            "config": {
+              "audioUrl": "funil10/audio_app_web.mp3",
+              "recordingDurationSeconds": 3,
+              "fallbackText": "Dá uma olhadinha nesse vídeo aqui em cima que te mostro como acessar o app."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_10_13",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 1720
+            },
+            "label": "Link App Web & Drive",
+            "config": {
+              "text": "https://bolsas-lucrativas.vercel.app/\n\n🟢 Material Completo + Bônus:\n👉 https://drive.google.com/drive/folders/1pMwwl2EbCe2i2Zf3QXXuHGRSzlFIdyxR\n✅ Material liberado."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_10_14",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 1860
+            },
+            "label": "🎥 Vídeo Tutorial de Acesso",
+            "config": {
+              "mediaUrl": "funil10/video_tutorial_1.mp4",
+              "filename": "video_tutorial_1.mp4",
+              "caption": "Vídeo Tutorial como acessar a plataforma"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_10_15",
+            "nodeType": "AUDIO",
+            "position": {
+              "x": 320,
+              "y": 2000
+            },
+            "label": "🎙️ Áudio Confiança & Sustento",
+            "config": {
+              "audioUrl": "funil10/audio_confianca.mp3",
+              "recordingDurationSeconds": 4,
+              "fallbackText": "Áudio de confiança e apoio à família."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_10_16",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 2140
+            },
+            "label": "Valores de Apoio",
+            "config": {
+              "text": "Agora conto com você! 🙏\nConfiei em você e te enviei tudo primeiro, agora, contamos com sua palavra de pessoa honesta!\nEsses valores vão para trazer comida e roupas para meu filho dentro de casa. 🩷\n\nEscolha sua forma de contribuição:\n🟡 R$ 14,90 –> Recebe 200 MOLDES VITALÍCIO\n🟢 R$ 19,00 –> Recebe 200 MOLDES +10 MOLDES extras. VITALÍCIO\n💖 R$ 25,00 –> Recebe 200 MOLDES +14 MOLDES extras.VITALÍCIO\n🩷 R$ 37,00 –> Recebe 200 MOLDES +16 MOLDES extras VITALÍCIO\n💜 R$ 49,00 –> Recebe 200 MOLDES +30 MOLDES extras VITALÍCIO\n\n👉 Esse apoio mantém o projeto ativo e abençoando mais costureiras ✝️"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_10_17",
+            "nodeType": "PIX",
+            "position": {
+              "x": 320,
+              "y": 2280
+            },
+            "label": "💸 Chave PIX Celular Thaíse",
+            "config": {
+              "pixKey": "71992287791",
+              "beneficiaryName": "THAISE OLIVEIRA LIMA",
+              "amount": "14.90",
+              "message": "✅ Acesso vitalício\n🔑 Chave Pix TELEFONE\n*PIX (celular):* 71992287791\n*BANCO:* NUBANK\n*NOME:* THAISE OLIVEIRA LIMA\n\n*👇 Só copiar e colar o TELEFONE👇*"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_10_18",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 2420
+            },
+            "label": "📦 Molde Amostra Bolsa Jeans PDF",
+            "config": {
+              "mediaUrl": "funil10/200_MOLDES_-_BOLSA_JEANS.pdf",
+              "filename": "200_MOLDES_-_BOLSA_JEANS.pdf",
+              "caption": "Molde Bolsa Jeans com Medidas e Passo a Passo"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_10_19",
+            "nodeType": "PIX_VERIFIER",
+            "position": {
+              "x": 320,
+              "y": 2560
+            },
+            "label": "🧠 Auditoria Comprovante IA Gemini",
+            "config": {
+              "expectedAmount": "14.90",
+              "beneficiary": "THAISE OLIVEIRA LIMA"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_10_20",
+            "nodeType": "META_CAPI",
+            "position": {
+              "x": 320,
+              "y": 2700
+            },
+            "label": "🎯 Conversão Meta Ads (CAPI)",
+            "config": {
+              "value": 14.9,
+              "confirmationText": "🎉 Pagamento de R$ 14,90 confirmado com sucesso! Seu certificado e acesso vitalício aos +200 moldes estão liberados!"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "edgeId": "e_node_flow_funil_10_1_node_flow_funil_10_2",
+            "sourceNodeId": "node_flow_funil_10_1",
+            "targetNodeId": "node_flow_funil_10_2",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_10_2_node_flow_funil_10_3",
+            "sourceNodeId": "node_flow_funil_10_2",
+            "targetNodeId": "node_flow_funil_10_3",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_10_3_node_flow_funil_10_4",
+            "sourceNodeId": "node_flow_funil_10_3",
+            "targetNodeId": "node_flow_funil_10_4",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_10_4_node_flow_funil_10_5",
+            "sourceNodeId": "node_flow_funil_10_4",
+            "targetNodeId": "node_flow_funil_10_5",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_10_5_node_flow_funil_10_6",
+            "sourceNodeId": "node_flow_funil_10_5",
+            "targetNodeId": "node_flow_funil_10_6",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_10_6_node_flow_funil_10_7",
+            "sourceNodeId": "node_flow_funil_10_6",
+            "targetNodeId": "node_flow_funil_10_7",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_10_7_node_flow_funil_10_8",
+            "sourceNodeId": "node_flow_funil_10_7",
+            "targetNodeId": "node_flow_funil_10_8",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_10_8_node_flow_funil_10_9",
+            "sourceNodeId": "node_flow_funil_10_8",
+            "targetNodeId": "node_flow_funil_10_9",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_10_9_node_flow_funil_10_10",
+            "sourceNodeId": "node_flow_funil_10_9",
+            "targetNodeId": "node_flow_funil_10_10",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_10_10_node_flow_funil_10_11",
+            "sourceNodeId": "node_flow_funil_10_10",
+            "targetNodeId": "node_flow_funil_10_11",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_10_11_node_flow_funil_10_12",
+            "sourceNodeId": "node_flow_funil_10_11",
+            "targetNodeId": "node_flow_funil_10_12",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_10_12_node_flow_funil_10_13",
+            "sourceNodeId": "node_flow_funil_10_12",
+            "targetNodeId": "node_flow_funil_10_13",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_10_13_node_flow_funil_10_14",
+            "sourceNodeId": "node_flow_funil_10_13",
+            "targetNodeId": "node_flow_funil_10_14",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_10_14_node_flow_funil_10_15",
+            "sourceNodeId": "node_flow_funil_10_14",
+            "targetNodeId": "node_flow_funil_10_15",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_10_15_node_flow_funil_10_16",
+            "sourceNodeId": "node_flow_funil_10_15",
+            "targetNodeId": "node_flow_funil_10_16",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_10_16_node_flow_funil_10_17",
+            "sourceNodeId": "node_flow_funil_10_16",
+            "targetNodeId": "node_flow_funil_10_17",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_10_17_node_flow_funil_10_18",
+            "sourceNodeId": "node_flow_funil_10_17",
+            "targetNodeId": "node_flow_funil_10_18",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_10_18_node_flow_funil_10_19",
+            "sourceNodeId": "node_flow_funil_10_18",
+            "targetNodeId": "node_flow_funil_10_19",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_10_19_node_flow_funil_10_20_success",
+            "sourceNodeId": "node_flow_funil_10_19",
+            "targetNodeId": "node_flow_funil_10_20",
+            "sourceHandle": "success",
+            "animated": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "_id": "flow_funil_11",
+    "botId": "bot_whatsapp_principal",
+    "name": "Funil 11: Projeto Mente Viva - Estimulação Cognitiva (Gatilho: teste11) - 11 5229-1989",
+    "description": "Pasta: funil 11/ | Foto Selma, 2 Áudios MP3, Vídeo Demonstração, 2 Apostilas PDF, Foto App Mente Viva, PIX Projeto Viva Luz e IA",
+    "isMainFlow": false,
+    "isDeployed": true,
+    "productionVersion": 1,
+    "createdAt": "2026-10-30T18:59:28.000Z",
+    "updatedAt": "2026-11-10T03:30:00.000Z",
+    "draftVersion": {
+      "version": 1,
+      "flowData": {
+        "nodes": [
+          {
+            "nodeId": "node_flow_funil_11_1",
+            "nodeType": "START",
+            "position": {
+              "x": 320,
+              "y": 40
+            },
+            "label": "Início (Gatilho: teste11)",
+            "config": {
+              "trigger": "teste11"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_11_2",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 180
+            },
+            "label": "🖼️ Foto Selma & Acolhimento",
+            "config": {
+              "mediaUrl": "funil11/foto_selma.jpeg",
+              "filename": "foto_selma.jpeg",
+              "caption": "Olá, meu anjo! Tudo bem?\nEu sou a Selma, do Projeto Mente Viva 💙\nJá salva meu contato, assim você não perde nenhum arquivo ou orientação"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_11_3",
+            "nodeType": "AUDIO",
+            "position": {
+              "x": 320,
+              "y": 320
+            },
+            "label": "🎙️ Áudio Apresentação Selma",
+            "config": {
+              "audioUrl": "funil11/audio_apresentacao.mp3",
+              "recordingDurationSeconds": 4,
+              "fallbackText": "Áudio explicando a importância da estimulação cognitiva na rotina."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_11_4",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 460
+            },
+            "label": "🎥 Vídeo Demonstração Atividades",
+            "config": {
+              "mediaUrl": "funil11/video_demonstracao.mp4",
+              "filename": "video_demonstracao.mp4",
+              "caption": "Demonstração das atividades impressas"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_11_5",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 600
+            },
+            "label": "Envio Sem Pagar Nada Antes",
+            "config": {
+              "text": "Viu como fica bonita no papel? 😊\nEu te mando as apostilas aqui, sem pagar nada antes.\n\nPosso mandar?"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_11_6",
+            "nodeType": "INPUT",
+            "position": {
+              "x": 320,
+              "y": 740
+            },
+            "label": "Aguardando Resposta (Posso mandar?)",
+            "config": {
+              "placeholder": "Aguardando Sim/Pode do lead...",
+              "variableName": "lead_confirm"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_11_7",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 880
+            },
+            "label": "Envio das Apostilas",
+            "config": {
+              "text": "Vou te enviar! Segue aqui os materiais 👇"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_11_8",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 1020
+            },
+            "label": "📦 Apostilas Mente Viva 50 e 2.0",
+            "config": {
+              "mediaUrl": "funil11/Mente Viva 50 - GVL.pdf",
+              "filename": "Mente Viva 50 - GVL.pdf",
+              "caption": "Apostilas Mente Viva 50 e 2.0 em PDF"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_11_9",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 1160
+            },
+            "label": "Orientações de Impressão",
+            "config": {
+              "text": "Você já pode imprimir as atividades e começar hoje mesmo, no seu tempo e no conforto da sua casa 💛\nEspero que goste do material 🥰"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_11_10",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 1300
+            },
+            "label": "🖼️ Foto App Mente Viva",
+            "config": {
+              "mediaUrl": "funil11/foto_app.jpeg",
+              "filename": "foto_app.jpeg",
+              "caption": "E tem mais um presente: o app Mente Viva 📱\nSão 400 atividades direto no celular, sem imprimir.\nA letra aumenta e ele lê a atividade pra você.\nVai junto com a contribuição de R$ 30 💛"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_11_11",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 1440
+            },
+            "label": "Tabela de Apoio Voluntário",
+            "config": {
+              "text": "Nós mantemos o projeto Mente Viva pela contribuição de quem recebe e gosta 😊\n\n💰O apoio mínimo é de R$20.\n✨ R$ 30, o apoio mais escolhido, e vai junto o app Mente Viva ✨\n💎 R$ 50+ — uma forma especial de me ajudar a chegar a mais pessoas 💎\n\nCada apoio ajuda este projeto a continuar levando atividades que estimulam a mente e fazem a diferença na rotina de muitas pessoas. 💙"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_11_12",
+            "nodeType": "PIX",
+            "position": {
+              "x": 320,
+              "y": 1580
+            },
+            "label": "💸 Chave PIX Telefone Viva Luz",
+            "config": {
+              "pixKey": "31975362565",
+              "beneficiaryName": "Projeto Viva Luz",
+              "amount": "20.00",
+              "message": "💌 PIX: 31975362565\nNome: Projeto Viva Luz\nVou deixar a chave aqui para facilitar👇"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_11_13",
+            "nodeType": "AUDIO",
+            "position": {
+              "x": 320,
+              "y": 1720
+            },
+            "label": "🎙️ Áudio Confiança Selma",
+            "config": {
+              "audioUrl": "funil11/audio_confianca.mp3",
+              "recordingDurationSeconds": 3,
+              "fallbackText": "Áudio agradecendo o apoio e reforçando os bônus."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_11_14",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 1860
+            },
+            "label": "Bônus Extras e Liberação do App",
+            "config": {
+              "text": "Quando você fizer a contribuição, é só me enviar o comprovante 😊\nAssim que confirmar, eu te envio os bônus:\n\n📙 80 Atividades Mentais Extras\n💪 Corpo Ativo em Casa\n🧘 Guia de Alongamentos\n📱 E com R$ 30 ou mais, o app Mente Viva, liberado no seu número na hora que eu conferir\n\nEstou por aqui! 🙏"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_11_15",
+            "nodeType": "PIX_VERIFIER",
+            "position": {
+              "x": 320,
+              "y": 2000
+            },
+            "label": "🧠 Auditoria Comprovante IA Gemini",
+            "config": {
+              "expectedAmount": "20.00",
+              "beneficiary": "Projeto Viva Luz"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_11_16",
+            "nodeType": "META_CAPI",
+            "position": {
+              "x": 320,
+              "y": 2140
+            },
+            "label": "🎯 Conversão Meta Ads (CAPI)",
+            "config": {
+              "value": 20.0,
+              "confirmationText": "🎉 Pagamento de R$ 20,00 confirmado com sucesso! O aplicativo e todos os bônus estão liberados!"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "edgeId": "e_node_flow_funil_11_1_node_flow_funil_11_2",
+            "sourceNodeId": "node_flow_funil_11_1",
+            "targetNodeId": "node_flow_funil_11_2",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_11_2_node_flow_funil_11_3",
+            "sourceNodeId": "node_flow_funil_11_2",
+            "targetNodeId": "node_flow_funil_11_3",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_11_3_node_flow_funil_11_4",
+            "sourceNodeId": "node_flow_funil_11_3",
+            "targetNodeId": "node_flow_funil_11_4",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_11_4_node_flow_funil_11_5",
+            "sourceNodeId": "node_flow_funil_11_4",
+            "targetNodeId": "node_flow_funil_11_5",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_11_5_node_flow_funil_11_6",
+            "sourceNodeId": "node_flow_funil_11_5",
+            "targetNodeId": "node_flow_funil_11_6",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_11_6_node_flow_funil_11_7",
+            "sourceNodeId": "node_flow_funil_11_6",
+            "targetNodeId": "node_flow_funil_11_7",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_11_7_node_flow_funil_11_8",
+            "sourceNodeId": "node_flow_funil_11_7",
+            "targetNodeId": "node_flow_funil_11_8",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_11_8_node_flow_funil_11_9",
+            "sourceNodeId": "node_flow_funil_11_8",
+            "targetNodeId": "node_flow_funil_11_9",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_11_9_node_flow_funil_11_10",
+            "sourceNodeId": "node_flow_funil_11_9",
+            "targetNodeId": "node_flow_funil_11_10",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_11_10_node_flow_funil_11_11",
+            "sourceNodeId": "node_flow_funil_11_10",
+            "targetNodeId": "node_flow_funil_11_11",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_11_11_node_flow_funil_11_12",
+            "sourceNodeId": "node_flow_funil_11_11",
+            "targetNodeId": "node_flow_funil_11_12",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_11_12_node_flow_funil_11_13",
+            "sourceNodeId": "node_flow_funil_11_12",
+            "targetNodeId": "node_flow_funil_11_13",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_11_13_node_flow_funil_11_14",
+            "sourceNodeId": "node_flow_funil_11_13",
+            "targetNodeId": "node_flow_funil_11_14",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_11_14_node_flow_funil_11_15",
+            "sourceNodeId": "node_flow_funil_11_14",
+            "targetNodeId": "node_flow_funil_11_15",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_11_15_node_flow_funil_11_16_success",
+            "sourceNodeId": "node_flow_funil_11_15",
+            "targetNodeId": "node_flow_funil_11_16",
+            "sourceHandle": "success",
+            "animated": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "_id": "flow_funil_12",
+    "botId": "bot_whatsapp_principal",
+    "name": "Funil 12: Cardápio Adventista (90 Dias Saúde) - Déb (Gatilho: teste12) - 11 5229-1989",
+    "description": "Pasta: funil 12/ | 3 Áudios MP3, Foto Cardápio, 3 Livros em PDF, PIX Celular RP Empreendimentos e IA",
+    "isMainFlow": false,
+    "isDeployed": true,
+    "productionVersion": 1,
+    "createdAt": "2026-10-30T18:59:28.000Z",
+    "updatedAt": "2026-11-10T03:30:00.000Z",
+    "draftVersion": {
+      "version": 1,
+      "flowData": {
+        "nodes": [
+          {
+            "nodeId": "node_flow_funil_12_1",
+            "nodeType": "START",
+            "position": {
+              "x": 320,
+              "y": 40
+            },
+            "label": "Início (Gatilho: teste12)",
+            "config": {
+              "trigger": "teste12"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_12_2",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 180
+            },
+            "label": "Saudação & Alimentação Bíblica",
+            "config": {
+              "text": "Oii, tudo bem? Que a paz de Deus esteja com você! Já vou te mandar o seu material agora mesmo 🙏🏼✨\n\nSe você é Adventista do Sétimo Dia, sabe o desafio que é manter uma alimentação 100% de acordo com o que a Bíblia ensina. Por isso eu organizei o Cardápio Adventista: com receitas saborosas, naturais, sem açúcar refinado, sem carnes impuras e saudável de verdade e além disso que agrada toda a família... 🥗\n\nVou te explicar em alguns segundos como você vai ter acesso a tudo isso!"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_12_3",
+            "nodeType": "AUDIO",
+            "position": {
+              "x": 320,
+              "y": 320
+            },
+            "label": "🎙️ Áudio 1 Apresentação Déb",
+            "config": {
+              "audioUrl": "funil12/audio_apresentacao.mp3",
+              "recordingDurationSeconds": 4,
+              "fallbackText": "Áudio explicando a proposta bíblica do cardápio adventista."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_12_4",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 460
+            },
+            "label": "Posso te explicar?",
+            "config": {
+              "text": "Posso te explicar?"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_12_5",
+            "nodeType": "INPUT",
+            "position": {
+              "x": 320,
+              "y": 600
+            },
+            "label": "Aguardando Resposta (Posso explicar?)",
+            "config": {
+              "placeholder": "Aguardando Sim/Pode do lead...",
+              "variableName": "lead_confirm_info"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_12_6",
+            "nodeType": "AUDIO",
+            "position": {
+              "x": 320,
+              "y": 740
+            },
+            "label": "🎙️ Áudio 2 Explicação das Receitas",
+            "config": {
+              "audioUrl": "funil12/audio_explicacao.mp3",
+              "recordingDurationSeconds": 4,
+              "fallbackText": "Áudio com o detalhamento das 150 receitas para 90 dias."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_12_7",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 880
+            },
+            "label": "🖼️ Foto Cardápio Adventista",
+            "config": {
+              "mediaUrl": "funil12/foto_cardapio.jpeg",
+              "filename": "foto_cardapio.jpeg",
+              "caption": "O Menu - Cardápio Adventista é o material completo para você organizar a sua cozinha com saúde e sabor — com tudo o que você precisa para preparar refeições incríveis, 100% naturais e alinhadas com os princípios bíblicos.\n\n✅ +150 Receitas Saudáveis e Testadas\n✅ Cafés da Manhã Nutritivos\n✅ Almoços Completos & Ricos\n✅ Jantares Leves\n✅ Lanches Práticos e Rápidos\n✅ Organização para 90 Dias\n✅ Listas de Ingredientes Simples\n\nE muito mais! 🥗🥑"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_12_8",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 1020
+            },
+            "label": "Preço R$ 19,90 & Envio Antes",
+            "config": {
+              "text": "O material é 100% digital, em formato PDF de alta resolução, enviado direto aqui no seu WhatsApp para você usar no celular ou imprimir quando quiser. 📱📄\n\nA contribuição é de apenas R$ 19,90 — um valor simbólico que me ajuda a cobrir os custos de pesquisa, edição e produção dessas receitas, permitindo que a gente continue mantendo esse projeto ativo e ajudando cada vez mais nossos irmãos e irmãs a cuidarem do corpo e da alimentação seguindo a Palavra.\n\nLembrando, que eu te envio todo o material antes para você analisar e só depois se gostar, nos ajudar com a contribuição, ok?\n\nPosso te enviar o material primeiro e depois você faz a sua contribuição?"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_12_9",
+            "nodeType": "INPUT",
+            "position": {
+              "x": 320,
+              "y": 1160
+            },
+            "label": "Aguardando Confirmação de Envio",
+            "config": {
+              "placeholder": "Aguardando Sim/Pode do lead...",
+              "variableName": "lead_confirm_envio"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_12_10",
+            "nodeType": "AUDIO",
+            "position": {
+              "x": 320,
+              "y": 1300
+            },
+            "label": "🎙️ Áudio 3 Envio dos Arquivos",
+            "config": {
+              "audioUrl": "funil12/audio_envio.mp3",
+              "recordingDurationSeconds": 3,
+              "fallbackText": "Estou te enviando todos os livros agora!"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_12_11",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 1440
+            },
+            "label": "📦 Entrega 3 Livros em PDF",
+            "config": {
+              "mediaUrl": "funil12/MENU - CARDÁPIO ADVENTISTA.pdf",
+              "filename": "MENU - CARDÁPIO ADVENTISTA.pdf",
+              "caption": "Menu Cardápio + Receitas para o Sábado + 25 Sobremesas Saudáveis"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_12_12",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 1580
+            },
+            "label": "Tabela de Contribuição",
+            "config": {
+              "text": "Agora confio no seu coração e no agir de Deus ✝️🤍\n\nO Cardápio Adventista já foi enviado todinho para você! Agora é a sua vez de enviar o PIX para ajudar a esse material chegar mais a frente, combinado?\n\n🙏 VOCÊ PODE CONTRIBUIR COM:\n💰 R$ 19,90\n💰 R$ 24,90\n💰 R$ 29,90\n⭐ R$ 49,90\n\nOu o valor que o seu coração mandar. A maioria dos irmãos e irmãs estão contribuindo com R$ 29,90 ou mais... Contribua com o que DEUS tocou no seu coração! 💖\n\n. Nome: RP Empreendimentos Digitais LTDA.\n. Banco: STONE IP PAGAMENTOS\n\nPara facilitar, vou te enviar a chave Pix separada para você só copiar e colar 👇👇"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_12_13",
+            "nodeType": "PIX",
+            "position": {
+              "x": 320,
+              "y": 1720
+            },
+            "label": "💸 Chave PIX Celular RP Empreendimentos",
+            "config": {
+              "pixKey": "71993667052",
+              "beneficiaryName": "RP Empreendimentos Digitais LTDA",
+              "amount": "19.90",
+              "message": "Chave PIX Celular: 71993667052\nNome: RP Empreendimentos Digitais LTDA."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_12_14",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 1860
+            },
+            "label": "Bônus Ellen White & Lista Econômica",
+            "config": {
+              "text": "Assim que você me mandar o comprovante da sua contribuição aqui, eu mesma vou te enviar na hora o restante do seu Pacote de Bônus Exclusivos! 🎁✨\n\nNele eu fiz questão de colocar:\n✅ Bônus 01 — Lista Inteligente & Econômica de Compras\n✅ Bônus 02 — Guia Alimentar dos Princípios de Ellen White\n\nJá te mandei a nossa chave pix. É só fazer a sua contribuição e me mandar o comprovante, desde já, agradeço."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_12_15",
+            "nodeType": "PIX_VERIFIER",
+            "position": {
+              "x": 320,
+              "y": 2000
+            },
+            "label": "🧠 Auditoria Comprovante IA Gemini",
+            "config": {
+              "expectedAmount": "19.90",
+              "beneficiary": "RP Empreendimentos Digitais LTDA"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_12_16",
+            "nodeType": "META_CAPI",
+            "position": {
+              "x": 320,
+              "y": 2140
+            },
+            "label": "🎯 Conversão Meta Ads (CAPI)",
+            "config": {
+              "value": 19.9,
+              "confirmationText": "🎉 Pagamento de R$ 19,90 confirmado com sucesso! Todos os bônus e o guia de Ellen White foram liberados!"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "edgeId": "e_node_flow_funil_12_1_node_flow_funil_12_2",
+            "sourceNodeId": "node_flow_funil_12_1",
+            "targetNodeId": "node_flow_funil_12_2",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_12_2_node_flow_funil_12_3",
+            "sourceNodeId": "node_flow_funil_12_2",
+            "targetNodeId": "node_flow_funil_12_3",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_12_3_node_flow_funil_12_4",
+            "sourceNodeId": "node_flow_funil_12_3",
+            "targetNodeId": "node_flow_funil_12_4",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_12_4_node_flow_funil_12_5",
+            "sourceNodeId": "node_flow_funil_12_4",
+            "targetNodeId": "node_flow_funil_12_5",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_12_5_node_flow_funil_12_6",
+            "sourceNodeId": "node_flow_funil_12_5",
+            "targetNodeId": "node_flow_funil_12_6",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_12_6_node_flow_funil_12_7",
+            "sourceNodeId": "node_flow_funil_12_6",
+            "targetNodeId": "node_flow_funil_12_7",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_12_7_node_flow_funil_12_8",
+            "sourceNodeId": "node_flow_funil_12_7",
+            "targetNodeId": "node_flow_funil_12_8",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_12_8_node_flow_funil_12_9",
+            "sourceNodeId": "node_flow_funil_12_8",
+            "targetNodeId": "node_flow_funil_12_9",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_12_9_node_flow_funil_12_10",
+            "sourceNodeId": "node_flow_funil_12_9",
+            "targetNodeId": "node_flow_funil_12_10",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_12_10_node_flow_funil_12_11",
+            "sourceNodeId": "node_flow_funil_12_10",
+            "targetNodeId": "node_flow_funil_12_11",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_12_11_node_flow_funil_12_12",
+            "sourceNodeId": "node_flow_funil_12_11",
+            "targetNodeId": "node_flow_funil_12_12",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_12_12_node_flow_funil_12_13",
+            "sourceNodeId": "node_flow_funil_12_12",
+            "targetNodeId": "node_flow_funil_12_13",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_12_13_node_flow_funil_12_14",
+            "sourceNodeId": "node_flow_funil_12_13",
+            "targetNodeId": "node_flow_funil_12_14",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_12_14_node_flow_funil_12_15",
+            "sourceNodeId": "node_flow_funil_12_14",
+            "targetNodeId": "node_flow_funil_12_15",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_12_15_node_flow_funil_12_16_success",
+            "sourceNodeId": "node_flow_funil_12_15",
+            "targetNodeId": "node_flow_funil_12_16",
+            "sourceHandle": "success",
+            "animated": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "_id": "flow_funil_13",
+    "botId": "bot_whatsapp_principal",
+    "name": "Funil 13: Devocional Pelos Filhos - Missionária Maria (Gatilho: teste13) - 11 5229-1989",
+    "description": "Pasta: funil 13/ | 4 Áudios MP3, Fotos Testemunho e Caixa, 2 PDFs Devocionais, PIX Celular DAYZA LTDA e IA",
+    "isMainFlow": false,
+    "isDeployed": true,
+    "productionVersion": 1,
+    "createdAt": "2026-10-30T18:59:28.000Z",
+    "updatedAt": "2026-11-10T03:30:00.000Z",
+    "draftVersion": {
+      "version": 1,
+      "flowData": {
+        "nodes": [
+          {
+            "nodeId": "node_flow_funil_13_1",
+            "nodeType": "START",
+            "position": {
+              "x": 320,
+              "y": 40
+            },
+            "label": "Início (Gatilho: teste13)",
+            "config": {
+              "trigger": "teste13"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_13_2",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 180
+            },
+            "label": "Saudação Missionária Maria",
+            "config": {
+              "text": "A paz do Senhor, minha irmã! Que Deus abençoe ✨\n\nSó 1 minuto, que vou te mandar um áudio explicando sobre o Devocional."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_13_3",
+            "nodeType": "AUDIO",
+            "position": {
+              "x": 320,
+              "y": 320
+            },
+            "label": "🎙️ Áudio 1 Apresentação Maria",
+            "config": {
+              "audioUrl": "funil13/audio_apresentacao.mp3",
+              "recordingDurationSeconds": 4,
+              "fallbackText": "A paz do Senhor! Vou te explicar sobre o Devocional Pelos Filhos."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_13_4",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 460
+            },
+            "label": "Pergunta do Nome do Filho",
+            "config": {
+              "text": "Deixa eu te perguntar mais uma coisa: como se chama o seu filho ou filha que se afastou?"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_13_5",
+            "nodeType": "INPUT",
+            "position": {
+              "x": 320,
+              "y": 600
+            },
+            "label": "Aguardando Nome do Filho",
+            "config": {
+              "placeholder": "Lead enviando o nome do filho/filha...",
+              "variableName": "child_name"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_13_6",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 740
+            },
+            "label": "Oração & Conexão",
+            "config": {
+              "text": "Sei que o coração aperta, mas Deus não esquece, vamos orar juntos pra que dê tudo certo 🙏\n\nMas sabe o que realmente toca o meu coração, irmã?"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_13_7",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 880
+            },
+            "label": "🖼️ Foto Testemunho Restauração",
+            "config": {
+              "mediaUrl": "funil13/foto_testemunho_1.jpeg",
+              "filename": "foto_testemunho_1.jpeg",
+              "caption": "Os testemunhos das mulheres que fazem o devocional"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_13_8",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 1020
+            },
+            "label": "Você acredita no milagre?",
+            "config": {
+              "text": "E eu sei que Deus pode fazer um milagre na sua família também! *Você acredita?* 🙏🏼"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_13_9",
+            "nodeType": "AUDIO",
+            "position": {
+              "x": 320,
+              "y": 1160
+            },
+            "label": "🎙️ Áudio 2 Explicação do Devocional",
+            "config": {
+              "audioUrl": "funil13/audio_explicacao.mp3",
+              "recordingDurationSeconds": 4,
+              "fallbackText": "Áudio explicando os passos dos 21 dias de oração."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_13_10",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 1300
+            },
+            "label": "Posso mandar o Devocional agora?",
+            "config": {
+              "text": "Posso mandar o Devocional agora e contar com sua contribuição, com o que Deus tocar no seu coração? 🙏🏻"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_13_11",
+            "nodeType": "INPUT",
+            "position": {
+              "x": 320,
+              "y": 1440
+            },
+            "label": "Aguardando Confirmação da Mãe",
+            "config": {
+              "placeholder": "Aguardando Sim/Pode enviar...",
+              "variableName": "lead_confirm_devocional"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_13_12",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 1580
+            },
+            "label": "Glória a Deus & Envio dos PDFs",
+            "config": {
+              "text": "Glória a Deus! Em breve quero ouvir seu testemunho, irmã! Vou te enviar agora ⬇️"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_13_13",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 1720
+            },
+            "label": "📦 Entrega 2 PDFs Devocionais",
+            "config": {
+              "mediaUrl": "funil13/Devocional 7 dias.pdf",
+              "filename": "Devocional 7 dias.pdf",
+              "caption": "Devocional Pelos Filhos (7 e 21 dias)"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_13_14",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 1860
+            },
+            "label": "Link Acesso Direto Online",
+            "config": {
+              "text": "Caso a senhora não consiga abrir pelo PDF, vou te mandar o link pra abrir direto 👇🏻\nhttps://cutt.ly/devocional-libertacao"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_13_15",
+            "nodeType": "AUDIO",
+            "position": {
+              "x": 320,
+              "y": 2000
+            },
+            "label": "🎙️ Áudio 3 Devocional Online",
+            "config": {
+              "audioUrl": "funil13/audio_devocional_online.mp3",
+              "recordingDurationSeconds": 4,
+              "fallbackText": "Áudio explicando como acessar a plataforma online."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_13_16",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 2140
+            },
+            "label": "🖼️ Foto Caixa Devocional",
+            "config": {
+              "mediaUrl": "funil13/foto_caixa_devocional.jpeg",
+              "filename": "foto_caixa_devocional.jpeg",
+              "caption": "Kit Caixa Devocional Pelos Filhos"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_13_17",
+            "nodeType": "PIX",
+            "position": {
+              "x": 320,
+              "y": 2280
+            },
+            "label": "💸 Chave PIX Telefone DAYZA LTDA",
+            "config": {
+              "pixKey": "33999826417",
+              "beneficiaryName": "DAYZA LTDA",
+              "amount": "5.00",
+              "message": "Agora eu conto com sua honestidade para manter esse projeto vivo 🙏🏻\n\nInformações para contribuição:\n📌 Chave Pix (telefone): 33999826417\n📌 Nome que aparece: *DAYZA LTDA*\n📌 Valor: *O que Deus tocar no seu coração*\n\nAqui é a chave PIX no número de celular separada para você só copiar e colar Irmã👇👇👇"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_13_18",
+            "nodeType": "AUDIO",
+            "position": {
+              "x": 320,
+              "y": 2420
+            },
+            "label": "🎙️ Áudio 4 Oração Final",
+            "config": {
+              "audioUrl": "funil13/audio_oracao_final.mp3",
+              "recordingDurationSeconds": 4,
+              "fallbackText": "Áudio com a oração pelas mães e filhos."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_13_19",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 2560
+            },
+            "label": "Grupo de Oração no WhatsApp",
+            "config": {
+              "text": "Me manda o comprovante, irmã, que eu já coloco a senhora no nosso grupo de oração do WhatsApp 🙏🏼"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_13_20",
+            "nodeType": "PIX_VERIFIER",
+            "position": {
+              "x": 320,
+              "y": 2700
+            },
+            "label": "🧠 Auditoria Comprovante IA Gemini",
+            "config": {
+              "expectedAmount": "5.00",
+              "beneficiary": "DAYZA LTDA"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_13_21",
+            "nodeType": "META_CAPI",
+            "position": {
+              "x": 320,
+              "y": 2840
+            },
+            "label": "🎯 Conversão Meta Ads (CAPI)",
+            "config": {
+              "value": 5.0,
+              "confirmationText": "🎉 Pagamento confirmado com sucesso! O nome do seu filho foi entregue no altar de oração!"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "edgeId": "e_node_flow_funil_13_1_node_flow_funil_13_2",
+            "sourceNodeId": "node_flow_funil_13_1",
+            "targetNodeId": "node_flow_funil_13_2",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_13_2_node_flow_funil_13_3",
+            "sourceNodeId": "node_flow_funil_13_2",
+            "targetNodeId": "node_flow_funil_13_3",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_13_3_node_flow_funil_13_4",
+            "sourceNodeId": "node_flow_funil_13_3",
+            "targetNodeId": "node_flow_funil_13_4",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_13_4_node_flow_funil_13_5",
+            "sourceNodeId": "node_flow_funil_13_4",
+            "targetNodeId": "node_flow_funil_13_5",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_13_5_node_flow_funil_13_6",
+            "sourceNodeId": "node_flow_funil_13_5",
+            "targetNodeId": "node_flow_funil_13_6",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_13_6_node_flow_funil_13_7",
+            "sourceNodeId": "node_flow_funil_13_6",
+            "targetNodeId": "node_flow_funil_13_7",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_13_7_node_flow_funil_13_8",
+            "sourceNodeId": "node_flow_funil_13_7",
+            "targetNodeId": "node_flow_funil_13_8",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_13_8_node_flow_funil_13_9",
+            "sourceNodeId": "node_flow_funil_13_8",
+            "targetNodeId": "node_flow_funil_13_9",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_13_9_node_flow_funil_13_10",
+            "sourceNodeId": "node_flow_funil_13_9",
+            "targetNodeId": "node_flow_funil_13_10",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_13_10_node_flow_funil_13_11",
+            "sourceNodeId": "node_flow_funil_13_10",
+            "targetNodeId": "node_flow_funil_13_11",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_13_11_node_flow_funil_13_12",
+            "sourceNodeId": "node_flow_funil_13_11",
+            "targetNodeId": "node_flow_funil_13_12",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_13_12_node_flow_funil_13_13",
+            "sourceNodeId": "node_flow_funil_13_12",
+            "targetNodeId": "node_flow_funil_13_13",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_13_13_node_flow_funil_13_14",
+            "sourceNodeId": "node_flow_funil_13_13",
+            "targetNodeId": "node_flow_funil_13_14",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_13_14_node_flow_funil_13_15",
+            "sourceNodeId": "node_flow_funil_13_14",
+            "targetNodeId": "node_flow_funil_13_15",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_13_15_node_flow_funil_13_16",
+            "sourceNodeId": "node_flow_funil_13_15",
+            "targetNodeId": "node_flow_funil_13_16",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_13_16_node_flow_funil_13_17",
+            "sourceNodeId": "node_flow_funil_13_16",
+            "targetNodeId": "node_flow_funil_13_17",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_13_17_node_flow_funil_13_18",
+            "sourceNodeId": "node_flow_funil_13_17",
+            "targetNodeId": "node_flow_funil_13_18",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_13_18_node_flow_funil_13_19",
+            "sourceNodeId": "node_flow_funil_13_18",
+            "targetNodeId": "node_flow_funil_13_19",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_13_19_node_flow_funil_13_20",
+            "sourceNodeId": "node_flow_funil_13_19",
+            "targetNodeId": "node_flow_funil_13_20",
+            "animated": true
+          },
+          {
+            "edgeId": "e_node_flow_funil_13_20_node_flow_funil_13_21_success",
+            "sourceNodeId": "node_flow_funil_13_20",
+            "targetNodeId": "node_flow_funil_13_21",
+            "sourceHandle": "success",
+            "animated": true
+          }
+        ]
+      }
+    }
+  }
+]
