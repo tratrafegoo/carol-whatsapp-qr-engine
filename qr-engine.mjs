@@ -704,10 +704,11 @@ try {
     if (fs.existsSync(defFlowsPath)) {
         const defFlows = JSON.parse(fs.readFileSync(defFlowsPath, 'utf-8'));
         const currentFlows = store.flows['bot_whatsapp_principal'] || [];
-        if (currentFlows.length === 0 || currentFlows.some(f => f._id === 'flow_principal' || (f.draftVersion?.flowData?.nodes?.length || 0) <= 4)) {
+        const isOutdated = currentFlows.length < 13 || currentFlows.some(f => f._id === 'flow_funil_4' && (f.draftVersion?.flowData?.nodes?.length || 0) < 17);
+        if (currentFlows.length === 0 || isOutdated) {
             store.flows['bot_whatsapp_principal'] = defFlows;
             saveStore(store);
-            console.log('[Store Init] 🚀 13 Funis Visuais Ricos carregados em store.flows!');
+            console.log('[Store Init] 🚀 13 Funis Visuais Ricos Atualizados (PDFs Individuais) carregados em store.flows!');
         }
     }
 } catch (err) {
@@ -6292,7 +6293,8 @@ app.use((req, res, next) => {
 });
 
 app.use(cors({ origin: true, credentials: true }));
-app.use(express.json({ limit: '15mb' }));
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ limit: '100mb', extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/api/health', (_req, res) => {
@@ -6302,6 +6304,81 @@ app.get('/api/health', (_req, res) => {
         cloudWorkerUrl: CLOUD_WORKER_URL,
         timestamp: new Date().toISOString(),
     });
+});
+
+// Catálogo de todas as mídias disponíveis no servidor
+app.get('/api/media/catalog', (_req, res) => {
+    try {
+        const publicDir = path.join(__dirname, 'public');
+        const catalog = [];
+        if (fs.existsSync(publicDir)) {
+            const scan = (dir, relPath = '') => {
+                const items = fs.readdirSync(dir);
+                for (const item of items) {
+                    if (item.startsWith('.')) continue;
+                    const full = path.join(dir, item);
+                    const rel = relPath ? `${relPath}/${item}` : item;
+                    const stat = fs.statSync(full);
+                    if (stat.isDirectory()) {
+                        scan(full, rel);
+                    } else {
+                        const ext = path.extname(item).toLowerCase();
+                        let type = 'OTHER';
+                        if (['.ogg', '.mp3', '.wav', '.m4a', '.opus'].includes(ext)) type = 'AUDIO';
+                        else if (['.pdf'].includes(ext)) type = 'DOCUMENT';
+                        else if (['.jpg', '.jpeg', '.png', '.webp'].includes(ext)) type = 'IMAGE';
+                        else if (['.mp4', '.mov', '.avi'].includes(ext)) type = 'VIDEO';
+                        catalog.push({
+                            name: item,
+                            path: rel,
+                            type,
+                            size: stat.size,
+                            folder: relPath || 'root'
+                        });
+                    }
+                }
+            };
+            scan(publicDir);
+        }
+        res.json({ success: true, count: catalog.length, data: catalog });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err?.message });
+    }
+});
+
+// Upload direto de mídias (áudio, PDF, imagens, vídeos)
+app.post('/api/media/upload', async (req, res) => {
+    try {
+        const { filename, data, folder, mimetype } = req.body || {};
+        if (!filename || !data) {
+            return res.status(400).json({ success: false, error: 'Arquivo inválido ou ausente' });
+        }
+        const safeFolder = (folder || 'uploads').replace(/[^a-zA-Z0-9_\-\/]/g, '').replace(/^\/+|\/+$/g, '') || 'uploads';
+        const targetDir = path.join(__dirname, 'public', safeFolder);
+        if (!fs.existsSync(targetDir)) {
+            fs.mkdirSync(targetDir, { recursive: true });
+        }
+        const cleanName = path.basename(filename).replace(/[^a-zA-Z0-9_.\-\s()]/g, '_');
+        const filePath = path.join(targetDir, cleanName);
+        
+        const base64Data = data.includes(';base64,') ? data.split(';base64,')[1] : data;
+        const buffer = Buffer.from(base64Data, 'base64');
+        fs.writeFileSync(filePath, buffer);
+        
+        const relativeUrl = `${safeFolder}/${cleanName}`;
+        console.log(`[Media Upload] ✅ Salvo com sucesso: ${filePath} (${buffer.length} bytes) -> url: ${relativeUrl}`);
+        
+        return res.json({
+            success: true,
+            url: relativeUrl,
+            filename: cleanName,
+            size: buffer.length,
+            mimetype: mimetype || 'application/octet-stream'
+        });
+    } catch (err) {
+        console.error('[Media Upload] ❌ Erro ao processar upload:', err?.message);
+        return res.status(500).json({ success: false, error: err?.message || 'Erro interno no upload' });
+    }
 });
 
 app.get('/api/bots/:botId/whatsapp/qr/status', (req, res) => {
