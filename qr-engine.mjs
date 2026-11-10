@@ -1025,6 +1025,7 @@ async function sendSafeDocument(sock, remoteJid, buffer, fileName, caption = und
         description: desc,
         botId,
         userPhone,
+        timeoutMs: 45000,
         sendAction: async () => {
             const sent = await sock.sendMessage(remoteJid, {
                 document: buffer,
@@ -5000,8 +5001,8 @@ async function handleIncomingMessage(botId, sock, msg) {
         return;
     }
 
-    if (msg.message.reactionMessage) {
-        // Usuário apenas reagiu a uma mensagem nossa, não processa
+    // Descarte imediato de reações, mensagens apagadas (REVOKE) e pacotes de controle interno
+    if (msg.message.reactionMessage || msg.message.protocolMessage || msg.message.senderKeyDistributionMessage) {
         return;
     }
 
@@ -6334,6 +6335,47 @@ app.post('/api/bots/:botId/whatsapp/qr/sync', (req, res) => {
         saveStore(store);
     }
     res.json({ success: true });
+});
+
+
+// ─── ROTA DE RECUPERAÇÃO ATIVA DE LEADS (DISPARO DO FUNIL 4) ───
+app.post('/api/funnels/recover-lead', async (req, res) => {
+    try {
+        const botId = String(req.body.botId || 'bot_whatsapp_principal');
+        const phone = String(req.body.phone || '').replace(/\D/g, '');
+        const pushName = req.body.name || 'Cliente';
+        const funnel = req.body.funnel || 'funil4';
+
+        if (!phone || phone.length < 10) {
+            return res.status(400).json({ success: false, error: 'Número de telefone inválido' });
+        }
+
+        const sock = activeSockets.get(botId);
+        if (!sock) {
+            return res.status(400).json({ success: false, error: 'WhatsApp não está conectado no servidor' });
+        }
+
+        const remoteJid = `${phone}@s.whatsapp.net`;
+        const sessionKey = `${botId}:${phone}`;
+
+        console.log(`[Lead Recovery] 🚀 Disparando recuperação da Fase 1 (${funnel}) para ${pushName} (${phone})`);
+
+        // Cancelar timers antigos e limpar sessão travada
+        cancelFunil4Reminder(botId, phone);
+        delete store.userSessions[sessionKey];
+        saveStore(store);
+
+        if (funnel === 'funil4') {
+            await sendFunil4Phase1(botId, sock, remoteJid, phone, pushName);
+        } else if (funnel === 'funil1') {
+            await sendParabolasPhase1(botId, sock, remoteJid, phone, pushName);
+        }
+
+        res.json({ success: true, message: `Fase 1 do ${funnel} disparada com sucesso para ${phone}!` });
+    } catch (err) {
+        console.error('[Lead Recovery Error]:', err);
+        res.status(500).json({ success: false, error: err?.message || 'Erro ao recuperar lead' });
+    }
 });
 
 app.post('/api/bots/:botId/whatsapp/qr/test-message', async (req, res) => {
