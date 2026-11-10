@@ -705,14 +705,14 @@ try {
         const defFlows = JSON.parse(fs.readFileSync(defFlowsPath, 'utf-8'));
         const currentFlows = store.flows['bot_whatsapp_principal'] || [];
         const isOutdated = currentFlows.length < 13 || 
-            currentFlows.some(f => f._id === 'flow_funil_4' && (f.draftVersion?.flowData?.nodes?.length || 0) < 20) ||
-            store.flows_schema_version !== 'v5_reminders_unbroken_20261110_v3';
+            currentFlows.some(f => f._id === 'flow_funil_4' && (f.draftVersion?.flowData?.nodes?.length || 0) < 22) ||
+            store.flows_schema_version !== 'v6_persistent_delays_20261110_v1';
         if (currentFlows.length === 0 || isOutdated) {
             const customFlows = currentFlows.filter(f => !defFlows.some(df => df._id === f._id));
             store.flows['bot_whatsapp_principal'] = [...defFlows, ...customFlows];
-            store.flows_schema_version = 'v5_reminders_unbroken_20261110_v3';
+            store.flows_schema_version = 'v6_persistent_delays_20261110_v1';
             saveStore(store);
-            console.log(`[Store Init] 🚀 13 Funis Visuais Ricos V5 (com Lembretes Follow-up e Edges Contínuos) Carregados (Total: ${store.flows['bot_whatsapp_principal'].length} funis)!`);
+            console.log(`[Store Init] 🚀 13 Funis Visuais Ricos V6 (com DELAYS Reais e Remarketing Persistente) Carregados (Total: ${store.flows['bot_whatsapp_principal'].length} funis)!`);
         }
     }
 } catch (err) {
@@ -3370,6 +3370,15 @@ function cancelAllUserTimers(botId, userPhone) {
     cancelFunil11Reminder(botId, userPhone);
     cancelFunil12Reminder(botId, userPhone);
     cancelFunil13Reminder(botId, userPhone);
+
+    if (store && store.scheduledJobs && store.scheduledJobs.length > 0) {
+        const countBefore = store.scheduledJobs.length;
+        store.scheduledJobs = store.scheduledJobs.filter(j => j.userPhone !== userPhone);
+        if (store.scheduledJobs.length !== countBefore) {
+            console.log(`[Visual Flow Scheduler] 🛑 Cancelados ${countBefore - store.scheduledJobs.length} job(s) agendados de delay/remarketing para ${userPhone}`);
+            saveStore(store);
+        }
+    }
 }
 
 function scheduleVisualReminder(botId, sock, remoteJid, userPhone, delayMinutes, text) {
@@ -5193,30 +5202,40 @@ async function handleIncomingMessage(botId, sock, msg) {
             }
 
             // B) Lead enviou comprovante para auditoria (nó PIX_VERIFIER)
-            if (session.waitingFor === 'PIX_RECEIPT' && hasMediaReceipt) {
+            const verifierNode = nodes.find(n => (n.nodeType || '').toUpperCase() === 'PIX_VERIFIER');
+            const isWaitingReceipt = session.waitingFor === 'PIX_RECEIPT' || (verifierNode && !session.paid);
+
+            if (isWaitingReceipt && hasMediaReceipt) {
                 console.log(`[Visual Flow] 🧾 Auditando comprovante com IA Gemini para ${userPhone}...`);
                 const mediaBuffer = await getMediaBuffer(msg, sock);
                 let auditResult = { isValid: false, reason: 'Arquivo ilegível' };
+                const expectedAmount = Number(session.expectedAmount || verifierNode?.config?.expectedAmount || 19.90);
+                const beneficiary = session.beneficiary || verifierNode?.config?.beneficiary || '';
+
                 if (mediaBuffer) {
                     const mime = msg.message.imageMessage ? 'image/jpeg' : 'application/pdf';
-                    auditResult = await auditPixReceiptWithGemini(mediaBuffer, mime, session.expectedAmount || 19.90, session.beneficiary || '');
+                    auditResult = await auditPixReceiptWithGemini(mediaBuffer, mime, expectedAmount, beneficiary);
                 }
 
                 if (auditResult && auditResult.isValid) {
                     console.log(`[Visual Flow] ✅ Comprovante APROVADO para ${userPhone}!`);
                     cancelAllTimers();
-                    const successEdge = edges.find(e => (e.sourceNodeId || e.source) === session.currentNodeId && e.sourceHandle === 'success') ||
+                    const verifierNodeId = verifierNode ? verifierNode.nodeId : session.currentNodeId;
+                    const successEdge = edges.find(e => (e.sourceNodeId || e.source) === verifierNodeId && e.sourceHandle === 'success') ||
+                                        edges.find(e => (e.sourceNodeId || e.source) === verifierNodeId) ||
                                         edges.find(e => (e.sourceNodeId || e.source) === session.currentNodeId);
                     if (successEdge) {
                         session.waitingFor = null;
                         session.paid = true;
+                        session.currentNodeId = verifierNodeId;
                         saveStore(store);
                         await executeFromNode(botId, sock, remoteJid, session, successEdge.targetNodeId || successEdge.target, nodes, edges);
                         return;
                     }
                 } else {
                     console.warn(`[Visual Flow] ❌ Comprovante RECUSADO para ${userPhone}: ${auditResult?.reason}`);
-                    const failEdge = edges.find(e => (e.sourceNodeId || e.source) === session.currentNodeId && e.sourceHandle === 'fail');
+                    const verifierNodeId = verifierNode ? verifierNode.nodeId : session.currentNodeId;
+                    const failEdge = edges.find(e => (e.sourceNodeId || e.source) === verifierNodeId && e.sourceHandle === 'fail');
                     if (failEdge) {
                         await executeFromNode(botId, sock, remoteJid, session, failEdge.targetNodeId || failEdge.target, nodes, edges);
                         return;
@@ -6033,9 +6052,63 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
         }
 
         case 'DELAY': {
-            const delaySec = Math.min(Math.max(Number(config.delaySeconds) || 2, 1), 60);
-            await new Promise((r) => setTimeout(r, delaySec * 1000));
-            break;
+            const unit = ((config.delayUnit || 'seconds') + '').toLowerCase();
+            let totalSeconds = 0;
+            if (config.delayValue !== undefined && !isNaN(Number(config.delayValue))) {
+                const val = Number(config.delayValue);
+                if (unit === 'days') totalSeconds = val * 86400;
+                else if (unit === 'hours') totalSeconds = val * 3600;
+                else if (unit === 'minutes') totalSeconds = val * 60;
+                else totalSeconds = val;
+            } else if (config.delaySeconds !== undefined && !isNaN(Number(config.delaySeconds))) {
+                totalSeconds = Number(config.delaySeconds);
+            } else {
+                totalSeconds = 5;
+            }
+
+            totalSeconds = Math.max(1, Math.round(totalSeconds));
+
+            // Delays curtos (<= 15 segundos) executam diretamente inline
+            if (totalSeconds <= 15) {
+                console.log(`[Visual Flow] ⏳ Delay curto (${totalSeconds}s) em execução direta para ${session.userPhone}`);
+                await new Promise((r) => setTimeout(r, totalSeconds * 1000));
+                break;
+            }
+
+            // Delays longos (> 15 segundos) são agendados de forma persistente no store
+            const nextEdge = edges.find((e) => (e.source || e.sourceNodeId) === node.nodeId);
+            if (!nextEdge) {
+                console.log(`[Visual Flow] ⚠️ Delay finalizado sem próximo nó conectado (${node.nodeId})`);
+                return;
+            }
+
+            const targetNodeId = nextEdge.target || nextEdge.targetNodeId;
+            const resumeAt = Date.now() + (totalSeconds * 1000);
+
+            store.scheduledJobs = store.scheduledJobs || [];
+            // Remove jobs anteriores deste usuário e fluxo para evitar duplicações
+            store.scheduledJobs = store.scheduledJobs.filter(j => !(j.userPhone === session.userPhone && j.flowId === session.flowId));
+
+            const newJob = {
+                jobId: `job_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+                botId,
+                userPhone: session.userPhone,
+                remoteJid,
+                flowId: session.flowId,
+                flowName: session.flowName,
+                targetNodeId,
+                resumeAt,
+                delaySeconds: totalSeconds,
+                scheduledAt: new Date().toISOString(),
+                resumeAtFormatted: new Date(resumeAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })
+            };
+
+            store.scheduledJobs.push(newJob);
+            saveStore(store);
+
+            console.log(`[Visual Flow Scheduler] ⏰ Job persistente agendado com sucesso!`);
+            console.log(`   Lead: ${session.userPhone} | Alvo: ${targetNodeId} | Retomada em: ${newJob.resumeAtFormatted} (${totalSeconds}s)`);
+            return; // Encerra a thread atual. O Scheduler Worker retomará a partir de targetNodeId no momento exato!
         }
 
         case 'AUDIO': {
@@ -6356,6 +6429,88 @@ async function sendRealisticText(botId, sock, remoteJid, userPhone, text, option
             return sent;
         }
     });
+}
+
+// ─── Visual Flow Scheduler Worker (Delays Longos & Remarketing Persistente) ───
+let schedulerWorkerInterval = null;
+
+function initSchedulerWorker(intervalMs = 15000) {
+    if (schedulerWorkerInterval) {
+        clearInterval(schedulerWorkerInterval);
+    }
+
+    console.log(`[Visual Flow Scheduler] 🔄 Worker de agendamento persistente iniciado (verificação a cada ${intervalMs / 1000}s)...`);
+
+    schedulerWorkerInterval = setInterval(async () => {
+        try {
+            if (!store.scheduledJobs || store.scheduledJobs.length === 0) return;
+
+            const now = Date.now();
+            const readyJobs = store.scheduledJobs.filter(j => Number(j.resumeAt) <= now);
+            if (readyJobs.length === 0) return;
+
+            for (const job of readyJobs) {
+                // Remove job da fila para não executar duas vezes
+                store.scheduledJobs = store.scheduledJobs.filter(j => j.jobId !== job.jobId);
+                saveStore(store);
+
+                const sessionKey = `${job.botId}:${job.userPhone}`;
+                const session = store.userSessions ? store.userSessions[sessionKey] : null;
+
+                // Se o lead já pagou, descarta a continuação da fila de remarketing
+                if (session && session.paid) {
+                    console.log(`[Visual Flow Scheduler] ⏩ Ignorando job ${job.jobId} para ${job.userPhone}: Lead já pagou.`);
+                    continue;
+                }
+
+                const sock = activeSockets.get(job.botId);
+                if (!sock) {
+                    console.warn(`[Visual Flow Scheduler] ⚠️ Bot ${job.botId} não conectado. Reagendando job ${job.jobId} para daqui a 30s...`);
+                    job.resumeAt = Date.now() + 30000;
+                    store.scheduledJobs.push(job);
+                    saveStore(store);
+                    continue;
+                }
+
+                const flows = store.flows[job.botId] || [];
+                let flow = flows.find(f => f._id === job.flowId || f.name === job.flowName);
+                if (!flow) {
+                    try {
+                        const defFlowsPath = path.join(__dirname, 'default_flows.json');
+                        if (fs.existsSync(defFlowsPath)) {
+                            const defFlows = JSON.parse(fs.readFileSync(defFlowsPath, 'utf-8'));
+                            flow = defFlows.find(f => f._id === job.flowId || f.name === job.flowName);
+                        }
+                    } catch {}
+                }
+
+                if (!flow || !flow.draftVersion?.flowData) {
+                    console.warn(`[Visual Flow Scheduler] ❌ Fluxo "${job.flowId}" não encontrado para retomar nó ${job.targetNodeId}.`);
+                    continue;
+                }
+
+                const nodes = flow.draftVersion.flowData.nodes || [];
+                const edges = flow.draftVersion.flowData.edges || [];
+
+                console.log(`[Visual Flow Scheduler] 🚀 Executando nó retomado ${job.targetNodeId} para ${job.userPhone}...`);
+
+                const currentSession = session || {
+                    botId: job.botId,
+                    userPhone: job.userPhone,
+                    flowId: job.flowId,
+                    flowName: job.flowName,
+                    currentNodeId: job.targetNodeId,
+                    waitingFor: null,
+                    userName: 'Amigo(a)',
+                    updatedAt: new Date().toISOString()
+                };
+
+                await executeFromNode(job.botId, sock, job.remoteJid, currentSession, job.targetNodeId, nodes, edges);
+            }
+        } catch (workerErr) {
+            console.error('[Visual Flow Scheduler Worker Error]:', workerErr?.message);
+        }
+    }, intervalMs);
 }
 
 // Express Server Setup
@@ -7362,9 +7517,18 @@ if (fs.existsSync(CLIENT_DIST_DIR)) {
     });
 }
 
+app.get('/api/scheduler/jobs', (_req, res) => {
+    res.json({
+        success: true,
+        count: store.scheduledJobs?.length || 0,
+        jobs: store.scheduledJobs || []
+    });
+});
+
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Motor QR Code + Cloud KV Sync rodando em http://localhost:${PORT}`);
     startQrSession('bot_whatsapp_principal', false).catch(console.error);
+    initSchedulerWorker();
 });
 
 // ─── Rotina Keep-Alive Anti-Sleep Universal (Render Free Tier) ───
