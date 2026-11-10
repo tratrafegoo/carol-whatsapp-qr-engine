@@ -861,18 +861,28 @@ async function sendPttVoiceNote(sock, remoteJid, filePath, botId = null, userPho
     }
 
     const audioBuffer = fs.readFileSync(targetPath);
-    await sock.sendMessage(remoteJid, {
-        audio: audioBuffer,
-        mimetype,
-        ptt: true
-    }, quoteOptions);
-
     const isOgg = targetPath.endsWith('.ogg');
-    if (botId && userPhone) {
-        logConversation(botId, userPhone, 'BOT', 'AUDIO', `🎙️ [${label} (${isOgg ? 'OGG Opus' : 'MP3'})]`);
-    }
-    console.log(`[sendPttVoiceNote] 🎙️ ${label} enviado com sucesso (${isOgg ? 'OGG Opus 100% iOS/Android' : 'MP3'}) para ${userPhone || remoteJid}`);
-    return true;
+
+    return safeDispatchBlock({
+        sock,
+        remoteJid,
+        blockType: 'AUDIO',
+        description: `${label} (${isOgg ? 'OGG Opus' : 'MP3'})`,
+        botId: botId || 'bot_whatsapp_principal',
+        userPhone: userPhone || '',
+        sendAction: async () => {
+            const sent = await sock.sendMessage(remoteJid, {
+                audio: audioBuffer,
+                mimetype,
+                ptt: true
+            }, quoteOptions);
+            if (botId && userPhone) {
+                logConversation(botId, userPhone, 'BOT', 'AUDIO', `🎙️ [${label} (${isOgg ? 'OGG Opus' : 'MP3'})]`);
+            }
+            console.log(`[sendPttVoiceNote] 🎙️ ${label} enviado com sucesso (${isOgg ? 'OGG Opus 100% iOS/Android' : 'MP3'}) para ${userPhone || remoteJid}`);
+            return sent;
+        }
+    });
 }
 
 function resolvePttAudio(audioPath) {
@@ -905,6 +915,152 @@ function resolvePttAudio(audioPath) {
         };
     }
     return null;
+}
+
+// ============================================================
+// DESPACHANTE RESILIENTE UNIVERSAL: CONFERÊNCIA ULTRA RÁPIDA,
+// RETRY AUTOMÁTICO E NOTIFICAÇÕES PUSH DUPLAS NO NTFY (FALHA + RECUPERAÇÃO)
+// ============================================================
+async function safeDispatchBlock({
+    sock,
+    remoteJid,
+    blockType,
+    description,
+    sendAction,
+    botId = 'bot_whatsapp_principal',
+    userPhone = '',
+    maxRetries = 5,
+    timeoutMs = 12000,
+    baseBackoffMs = 1500
+}) {
+    let attempt = 0;
+    let hadError = false;
+    let lastErr = null;
+    const phoneLabel = userPhone || (remoteJid ? String(remoteJid).replace(/[^0-9]/g, '') : 'Lead');
+
+    while (attempt < maxRetries) {
+        attempt++;
+        try {
+            let timer;
+            const timeoutPromise = new Promise((_, reject) => {
+                timer = setTimeout(() => {
+                    reject(new Error(`Timeout de entrega (${timeoutMs / 1000}s) excedido para ${blockType}`));
+                }, timeoutMs);
+            });
+
+            const sendPromise = Promise.resolve().then(() => sendAction());
+            const result = await Promise.race([sendPromise, timeoutPromise]);
+            clearTimeout(timer);
+
+            if (result === false) {
+                throw new Error(`Falha reportada na ação de envio do ${blockType}`);
+            }
+
+            // Se houve falha anterior e agora deu certo: DISPARA ALERTA DE RECUPERAÇÃO NO NTFY!
+            if (hadError) {
+                console.log(`[SafeDispatch] 🎉 [${blockType}] Recuperado com sucesso na tentativa ${attempt}/${maxRetries} para ${phoneLabel}!`);
+                sendNtfyEmergencyAlert({
+                    title: `✅ RECUPERADO COM SUCESSO: ${blockType.toUpperCase()}`,
+                    message: `🎉 O item [${blockType}] "${description}" foi reenviado e CONFIRMADO com sucesso para ${phoneLabel} na tentativa ${attempt}!
+O funil retomou normalmente sem perder nenhuma mensagem.`,
+                    priority: 'default',
+                    tags: 'white_check_mark,tada,repeat',
+                    alertKey: `recov_${blockType}_${phoneLabel}`,
+                    cooldownSec: 10
+                }).catch(() => {});
+            } else {
+                console.log(`[SafeDispatch] ⚡ [${blockType}] Conferência instantânea OK (tentativa ${attempt}) para ${phoneLabel}: "${description}"`);
+            }
+
+            return result || true;
+        } catch (err) {
+            lastErr = err;
+            hadError = true;
+            console.warn(`[SafeDispatch] ⚠️ Falha na tentativa ${attempt}/${maxRetries} ao enviar ${blockType} (${description}) para ${phoneLabel}:`, err?.message || err);
+
+            // Disparo de alerta de erro no ntfy na primeira falha imediata
+            if (attempt === 1) {
+                sendNtfyEmergencyAlert({
+                    title: `⚠️ ERRO DE ENVIO NO FUNIL: ${blockType.toUpperCase()}`,
+                    message: `🚨 Falha ao enviar [${blockType}] "${description}" para o lead ${phoneLabel}!
+Erro: ${err?.message || 'Falha de entrega'}
+⏳ Reenviando automaticamente agora (Tentativa 1/${maxRetries})...`,
+                    priority: 'high',
+                    tags: 'warning,repeat,rotating_light',
+                    alertKey: `err_${blockType}_${phoneLabel}`,
+                    cooldownSec: 30
+                }).catch(() => {});
+            }
+
+            if (attempt < maxRetries) {
+                const waitTime = baseBackoffMs * attempt;
+                console.log(`[SafeDispatch] ⏳ Aguardando ${waitTime}ms antes da tentativa ${attempt + 1}/${maxRetries}...`);
+                await new Promise((r) => setTimeout(r, waitTime));
+            }
+        }
+    }
+
+    // Se esgotou todas as tentativas, alerta crítico no ntfy
+    sendNtfyEmergencyAlert({
+        title: `🚨 FALHA CRÍTICA DE ENVIO: ${blockType.toUpperCase()}`,
+        message: `❌ Esgotadas ${maxRetries} tentativas de envio do [${blockType}] "${description}" para ${phoneLabel}!
+Último erro: ${lastErr?.message}
+⚠️ O funil foi pausado neste ponto para evitar mensagens incompletas ao lead.`,
+        priority: 'urgent',
+        tags: 'rotating_light,skull,no_entry',
+        alertKey: `crit_${blockType}_${phoneLabel}`,
+        cooldownSec: 60
+    }).catch(() => {});
+
+    throw new Error(`Falha definitiva ao enviar ${blockType} após ${maxRetries} tentativas: ${lastErr?.message}`);
+}
+
+async function sendSafeDocument(sock, remoteJid, buffer, fileName, caption = undefined, botId = 'bot_whatsapp_principal', userPhone = '', description = '') {
+    const desc = description || `Documento: ${fileName}`;
+    return safeDispatchBlock({
+        sock,
+        remoteJid,
+        blockType: 'PDF',
+        description: desc,
+        botId,
+        userPhone,
+        sendAction: async () => {
+            const sent = await sock.sendMessage(remoteJid, {
+                document: buffer,
+                fileName,
+                mimetype: 'application/pdf',
+                caption: caption || undefined,
+            });
+            if (botId && userPhone) {
+                logConversation(botId, userPhone, 'BOT', 'DOCUMENT', `📄 [${desc}]`);
+            }
+            console.log(`[SafeDispatch] 📄 Documento enviado com sucesso para ${userPhone || remoteJid}: ${fileName}`);
+            return sent;
+        }
+    });
+}
+
+async function sendSafeImage(sock, remoteJid, buffer, caption = undefined, botId = 'bot_whatsapp_principal', userPhone = '', description = '') {
+    const desc = description || 'Imagem';
+    return safeDispatchBlock({
+        sock,
+        remoteJid,
+        blockType: 'IMAGE',
+        description: desc,
+        botId,
+        userPhone,
+        sendAction: async () => {
+            const sent = await sock.sendMessage(remoteJid, {
+                image: buffer,
+                caption: caption || undefined,
+            });
+            if (botId && userPhone) {
+                logConversation(botId, userPhone, 'BOT', 'IMAGE', `🖼️ [${desc}]`);
+            }
+            console.log(`[SafeDispatch] 🖼️ Imagem enviada com sucesso para ${userPhone || remoteJid}: ${desc}`);
+            return sent;
+        }
+    });
 }
 
 
@@ -3882,26 +4038,17 @@ async function sendFunil4Phase2(botId, sock, remoteJid, userPhone, pushName, quo
         const item = pdfs[i];
         const fullPdfPath = path.join(__dirname, 'public', 'funil4', item.file);
         if (fs.existsSync(fullPdfPath)) {
-            try {
-                const pdfBuffer = fs.readFileSync(fullPdfPath);
-                await sock.sendMessage(remoteJid, {
-                    document: pdfBuffer,
-                    fileName: item.name,
-                    mimetype: 'application/pdf',
-                });
-                logConversation(botId, userPhone, 'BOT', 'DOCUMENT', `📄 [PDF ${i + 1}/5]: ${item.name}`);
-                console.log(`[Funil 4] 📄 PDF ${i + 1}/5 enviado com sucesso: ${item.name}`);
-            } catch (pdfErr) {
-                console.warn(`[Funil 4 PDF ${i + 1} Error]:`, pdfErr?.message);
-                sendNtfyEmergencyAlert({
-                    title: '⚠️ ALERTA X1: FALHA AO ENVIAR PDF',
-                    message: `⚠️ Ocorreu um erro ao enviar o PDF "${item.name}" para ${userPhone}!\nErro: ${pdfErr?.message}`,
-                    priority: 'high',
-                    tags: 'warning,page_facing_up',
-                    alertKey: 'pdf_send_error_' + i,
-                    cooldownSec: 180
-                }).catch(() => {});
-            }
+            const pdfBuffer = fs.readFileSync(fullPdfPath);
+            await sendSafeDocument(
+                sock,
+                remoteJid,
+                pdfBuffer,
+                item.name,
+                undefined,
+                botId,
+                userPhone,
+                `[PDF ${i + 1}/5]: ${item.name}`
+            );
         } else {
             console.warn(`[Funil 4 PDF Missing]: Arquivo não encontrado: ${fullPdfPath}`);
             sendNtfyEmergencyAlert({
@@ -4021,8 +4168,19 @@ async function sendFunil4Phase2(botId, sock, remoteJid, userPhone, pushName, quo
     await new Promise((r) => setTimeout(r, 600));
 
     const codeBlockPix = '```' + pixKey + '```';
-    await sock.sendMessage(remoteJid, { text: codeBlockPix });
-    logConversation(botId, userPhone, 'BOT', 'PIX', `Chave PIX: ${pixKey}`);
+    await safeDispatchBlock({
+        sock,
+        remoteJid,
+        blockType: 'PIX',
+        description: `Código PIX Copia e Cola: ${pixKey}`,
+        botId,
+        userPhone,
+        sendAction: async () => {
+            const sent = await sock.sendMessage(remoteJid, { text: codeBlockPix });
+            logConversation(botId, userPhone, 'BOT', 'PIX', `Chave PIX: ${pixKey}`);
+            return sent;
+        }
+    });
     await new Promise((r) => setTimeout(r, 800));
 
     const bonusNotice = `Após o pagamento, me envie o comprovante aqui, que eu vou te enviar como BÔNUS:\n7 ESTUDOS DO APOCALIPSE EM PDF 🎁`;
@@ -5797,41 +5955,31 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
             await new Promise((r) => setTimeout(r, durationSec * 1000));
 
             const audioUrl = config.audioUrl || 'audio.mp3';
-            let sentAudio = false;
-            try {
-                const media = await resolveMediaBuffer(audioUrl, 'audio.mp3');
-                if (media && media.buffer) {
-                    const isMp3 = media.filename.toLowerCase().endsWith('.mp3');
-                    const sendAudioMsg = async () => {
-                        await sock.sendMessage(remoteJid, {
+            const media = await resolveMediaBuffer(audioUrl, 'audio.mp3');
+            if (media && media.buffer) {
+                const isMp3 = media.filename.toLowerCase().endsWith('.mp3');
+                await safeDispatchBlock({
+                    sock,
+                    remoteJid,
+                    blockType: 'AUDIO',
+                    description: `Áudio: ${media.filename}`,
+                    botId,
+                    userPhone: session.userPhone,
+                    sendAction: async () => {
+                        const sent = await sock.sendMessage(remoteJid, {
                             audio: media.buffer,
                             mimetype: isMp3 ? 'audio/mpeg' : 'audio/ogg; codecs=opus',
                             ptt: true,
                         });
-                    };
-                    try {
-                        await sendAudioMsg();
-                        sentAudio = true;
-                    } catch (firstErr) {
-                        console.warn('[Audio Send Retry]:', firstErr?.message);
-                        await new Promise((r) => setTimeout(r, 1000));
-                        await sendAudioMsg();
-                        sentAudio = true;
-                    }
-                    if (sentAudio) {
                         logConversation(botId, session.userPhone, 'BOT', 'AUDIO', `🎙️ [Áudio enviado: ${media.filename}]`);
+                        return sent;
                     }
-                }
-            } catch (err) {
-                console.error('[Audio Send Error]:', err?.message);
-            }
-
-            if (!sentAudio) {
+                });
+            } else {
                 const text =
                     config.fallbackText ||
                     `🎙️ *Olá, ${session.userName}!* Que alegria ter você aqui! Já separei o seu material completo para te entregar agora mesmo.`;
-                await sock.sendMessage(remoteJid, { text });
-                logConversation(botId, session.userPhone, 'BOT', 'AUDIO', text);
+                await sendRealisticText(botId, sock, remoteJid, session.userPhone, text);
             }
             try {
                 await sock.sendPresenceUpdate('paused', remoteJid);
@@ -5847,34 +5995,38 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
             } catch {}
             await new Promise((r) => setTimeout(r, 1200));
 
-            let sentMedia = false;
-            try {
-                const media = await resolveMediaBuffer(mediaUrl, config.filename || 'Material.pdf');
-                if (media && media.buffer) {
-                    const isImage = /\.(jpe?g|png|webp)$/i.test(media.filename);
-                    const isVideo = /\.(mp4|mov|avi)$/i.test(media.filename);
-                    if (isImage) {
-                        await sock.sendMessage(remoteJid, { image: media.buffer, caption: caption || undefined });
-                    } else if (isVideo) {
-                        await sock.sendMessage(remoteJid, { video: media.buffer, caption: caption || undefined, mimetype: 'video/mp4' });
-                    } else {
-                        await sock.sendMessage(remoteJid, {
-                            document: media.buffer,
-                            mimetype: 'application/pdf',
-                            fileName: config.filename || media.filename,
-                            caption: caption || undefined,
-                        });
+            const media = await resolveMediaBuffer(mediaUrl, config.filename || 'Material.pdf');
+            if (media && media.buffer) {
+                const isImage = /\.(jpe?g|png|webp)$/i.test(media.filename);
+                const isVideo = /\.(mp4|mov|avi)$/i.test(media.filename);
+                const blockType = isImage ? 'IMAGE' : isVideo ? 'VIDEO' : 'PDF';
+                await safeDispatchBlock({
+                    sock,
+                    remoteJid,
+                    blockType,
+                    description: `Arquivo: ${media.filename}`,
+                    botId,
+                    userPhone: session.userPhone,
+                    sendAction: async () => {
+                        let sent;
+                        if (isImage) {
+                            sent = await sock.sendMessage(remoteJid, { image: media.buffer, caption: caption || undefined });
+                        } else if (isVideo) {
+                            sent = await sock.sendMessage(remoteJid, { video: media.buffer, caption: caption || undefined, mimetype: 'video/mp4' });
+                        } else {
+                            sent = await sock.sendMessage(remoteJid, {
+                                document: media.buffer,
+                                mimetype: 'application/pdf',
+                                fileName: config.filename || media.filename,
+                                caption: caption || undefined,
+                            });
+                        }
+                        logConversation(botId, session.userPhone, 'BOT', blockType, `📦 [Arquivo Enviado]: ${media.filename}`);
+                        return sent;
                     }
-                    sentMedia = true;
-                    logConversation(botId, session.userPhone, 'BOT', isImage ? 'IMAGE' : isVideo ? 'VIDEO' : 'DOCUMENT', `📦 [Arquivo Enviado]: ${media.filename}`);
-                }
-            } catch (err) {
-                console.error('[Media Send Error]:', err?.message);
-            }
-
-            if (!sentMedia) {
-                await sock.sendMessage(remoteJid, { text: `📦 ${caption}` });
-                logConversation(botId, session.userPhone, 'BOT', 'DOCUMENT', `📦 ${caption}`);
+                });
+            } else if (caption) {
+                await sendRealisticText(botId, sock, remoteJid, session.userPhone, `📦 ${caption}`);
             }
             store.funnelStats.materialDeliveredCount += 1;
             saveStore(store);
@@ -6000,8 +6152,19 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
             // Garante 100% de conversão em qualquer versão do WhatsApp (iPhone, Android ou Web)
             // sem nunca deixar espaço em branco!
             await new Promise((r) => setTimeout(r, 600));
-            await sock.sendMessage(remoteJid, { text: pixKey });
-            logConversation(botId, session.userPhone, 'BOT', 'PIX', `Chave PIX: ${pixKey}`);
+            await safeDispatchBlock({
+                sock,
+                remoteJid,
+                blockType: 'PIX',
+                description: `Chave PIX Texto: ${pixKey}`,
+                botId,
+                userPhone: session.userPhone,
+                sendAction: async () => {
+                    const sent = await sock.sendMessage(remoteJid, { text: pixKey });
+                    logConversation(botId, session.userPhone, 'BOT', 'PIX', `Chave PIX: ${pixKey}`);
+                    return sent;
+                }
+            });
 
             await new Promise((r) => setTimeout(r, 700));
             await sendRealisticText(
@@ -6060,15 +6223,27 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
 }
 
 async function sendRealisticText(botId, sock, remoteJid, userPhone, text, options = {}) {
-    try {
-        await sock.sendPresenceUpdate('composing', remoteJid);
-    } catch {}
-    await new Promise((r) => setTimeout(r, 1200));
-    await sock.sendMessage(remoteJid, { text }, options);
-    logConversation(botId, userPhone, 'BOT', 'TEXT', text);
-    try {
-        await sock.sendPresenceUpdate('paused', remoteJid);
-    } catch {}
+    const preview = (text || '').length > 60 ? (text || '').substring(0, 57) + '...' : text;
+    return safeDispatchBlock({
+        sock,
+        remoteJid,
+        blockType: 'TEXT',
+        description: preview,
+        botId,
+        userPhone,
+        sendAction: async () => {
+            try {
+                await sock.sendPresenceUpdate('composing', remoteJid);
+            } catch {}
+            await new Promise((r) => setTimeout(r, 1200));
+            const sent = await sock.sendMessage(remoteJid, { text }, options);
+            logConversation(botId, userPhone, 'BOT', 'TEXT', text);
+            try {
+                await sock.sendPresenceUpdate('paused', remoteJid);
+            } catch {}
+            return sent;
+        }
+    });
 }
 
 // Express Server Setup
