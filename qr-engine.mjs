@@ -387,6 +387,33 @@ async function getMediaBuffer(msg, sock) {
     return null;
 }
 
+function detectPaymentRefusal(text) {
+    if (!text || typeof text !== 'string') return false;
+    const norm = text
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+
+    const patterns = [
+        /\b(nao|nunca)\s+(vou|posso|consigo|quero)\s+(pagar|comprar|fazer|enviar)\b/i,
+        /\b(nao\s+vou\s+querer|nao\s+quero\s+mais|nao\s+tenho\s+interesse|perdi\s+o\s+interesse)\b/i,
+        /\b(muito|achei|ta|tava)\s+caro\b/i,
+        /\b(caro\s+demais|puxado|sem\s+condicoes)\b/i,
+        /\b(sem\s+dinheiro|sem\s+grana|nao\s+tenho\s+dinheiro|to\s+sem\s+dinheiro|to\s+liso|sem\s+limite)\b/i,
+        /\b(cancela|cancelar|cancelamento|cancela\s+ai|pode\s+cancelar)\b/i,
+        /\b(deixa\s+pra\s+la|deixa\s+quieto|esquece|esquece\s+isso|desisto|desisti)\b/i,
+        /\b(pensei|achei|achava)\s+que\s+(era|fosse)\s+gratis\b/i,
+        /\b(pensei|achei|achava)\s+que\s+(era|fosse)\s+de\s+graca\b/i,
+        /\b(e\s+pago|tem\s+que\s+pagar|cobrando)\b/i,
+        /\b(nao\s+vou\s+levar|nao\s+tenho\s+interesse)\b/i,
+        /\b(golpe|fraude|enganacao)\b/i,
+        /\b(nao\s+obrigado|nao\s+obrigada|obrigado\s+mas\s+nao|obrigada\s+mas\s+nao|nao\s+vlw|nao\s+valeu)\b/i
+    ];
+
+    return patterns.some(pat => pat.test(norm));
+}
+
 async function auditPixReceiptWithGemini(mediaBuffer, mimeType, expectedAmount = 19.90, beneficiary = 'Carol') {
     if (!GEMINI_API_KEY) {
         console.warn('[PIX Auditor] Nenhuma chave GEMINI_API_KEY configurada.');
@@ -5252,6 +5279,9 @@ async function handleIncomingMessage(botId, sock, msg) {
                 if (auditResult && auditResult.isValid) {
                     console.log(`[Visual Flow] ✅ Comprovante APROVADO para ${userPhone}!`);
                     cancelAllTimers();
+                    if (store.scheduledJobs) {
+                        store.scheduledJobs = store.scheduledJobs.filter(j => j.userPhone !== userPhone);
+                    }
                     const verifierNodeId = verifierNode ? verifierNode.nodeId : session.currentNodeId;
                     const successEdge = edges.find(e => (e.sourceNodeId || e.source) === verifierNodeId && e.sourceHandle === 'success') ||
                                         edges.find(e => (e.sourceNodeId || e.source) === verifierNodeId) ||
@@ -5273,6 +5303,39 @@ async function handleIncomingMessage(botId, sock, msg) {
                         return;
                     } else {
                         await sendRealisticText(botId, sock, remoteJid, userPhone, 'Não consegui identificar o valor ou destinatário com clareza na imagem enviada. Poderia me enviar o comprovante oficial completo em PDF ou imagem nítida, por favor? 🙏');
+                        return;
+                    }
+                }
+            }
+
+            // C) Lead enviou mensagem de TEXTO durante a espera do comprovante
+            if (isWaitingReceipt && !hasMediaReceipt && textContent) {
+                const detectRefusal = verifierNode?.config?.detectRefusalAi !== false;
+                const isRefusal = detectRefusal && detectPaymentRefusal(textContent);
+
+                if (isRefusal) {
+                    console.warn(`[Visual Flow] 🛑 Lead ${userPhone} expressou recusa/objeção de pagamento: "${textContent}"`);
+                    cancelAllTimers();
+                    if (store.scheduledJobs) {
+                        store.scheduledJobs = store.scheduledJobs.filter(j => j.userPhone !== userPhone);
+                    }
+
+                    const verifierNodeId = verifierNode ? verifierNode.nodeId : session.currentNodeId;
+                    const failEdge = edges.find(e => (e.sourceNodeId || e.source) === verifierNodeId && e.sourceHandle === 'fail');
+                    if (failEdge) {
+                        session.waitingFor = null;
+                        session.rejectedPayment = true;
+                        session.currentNodeId = verifierNodeId;
+                        saveStore(store);
+                        await executeFromNode(botId, sock, remoteJid, session, failEdge.targetNodeId || failEdge.target, nodes, edges);
+                        return;
+                    } else {
+                        const refusalMsg = verifierNode?.config?.refusalMessage || 
+                            'Entendido perfeitamente! Sem problemas, ficamos à disposição caso mude de ideia ou precise de qualquer ajuda no futuro. Que Deus abençoe! 🙏';
+                        session.waitingFor = null;
+                        session.rejectedPayment = true;
+                        saveStore(store);
+                        await sendRealisticText(botId, sock, remoteJid, userPhone, refusalMsg);
                         return;
                     }
                 }
@@ -6404,8 +6467,57 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
         }
 
         case 'PIX_VERIFIER': {
+            const verifierNodeId = node.nodeId || node.id;
             session.waitingFor = 'PIX_RECEIPT';
+            session.pixVerifierNodeId = verifierNodeId;
+            session.pixVerifierStartedAt = Date.now();
+            session.expectedAmount = Number(config.expectedAmount || session.expectedAmount || 19.90);
+            session.beneficiary = config.beneficiaryName || session.beneficiary || '';
+            session.currentNodeId = verifierNodeId;
             saveStore(store);
+
+            console.log(`[Visual Flow] 🧠 Nó PIX_VERIFIER (${node.label || verifierNodeId}) ativado para ${session.userPhone}. Aguardando comprovante...`);
+
+            // 1. Inicia esteira lateral de remarketing se houver aresta no handle 'timeout'
+            const timeoutEdge = edges.find(e => 
+                ((e.sourceNodeId || e.source) === verifierNodeId) && 
+                (e.sourceHandle === 'timeout' || e.sourceHandle === 'reminder')
+            );
+            if (timeoutEdge) {
+                const targetNodeId = timeoutEdge.targetNodeId || timeoutEdge.target;
+                const targetNode = nodes.find(n => (n.nodeId || n.id) === targetNodeId);
+                console.log(`[Visual Flow] ⏱️ Disparando esteira lateral de remarketing (saída 'timeout') ➔ ${targetNode?.label || targetNodeId}`);
+                executeFromNode(botId, sock, remoteJid, session, targetNodeId, nodes, edges).catch(err => {
+                    console.error(`[Visual Flow] Erro na esteira lateral de remarketing:`, err);
+                });
+            }
+
+            // 2. Agenda tempo limite sem comprovante para expiração automática (saída 'fail')
+            const enableTimeoutLimit = config.enableTimeoutLimit !== false;
+            const timeoutHours = Number(config.timeoutHours || 24);
+            if (enableTimeoutLimit && timeoutHours > 0) {
+                store.scheduledJobs = store.scheduledJobs || [];
+                store.scheduledJobs = store.scheduledJobs.filter(j => !(j.userPhone === session.userPhone && j.isPixTimeout));
+                const expireResumeAt = Date.now() + (timeoutHours * 3600 * 1000);
+                const expireJob = {
+                    jobId: `pix_timeout_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+                    botId,
+                    userPhone: session.userPhone,
+                    remoteJid,
+                    flowId: session.flowId,
+                    flowName: session.flowName,
+                    isPixTimeout: true,
+                    verifierNodeId,
+                    resumeAt: expireResumeAt,
+                    delaySeconds: timeoutHours * 3600,
+                    scheduledAt: new Date().toISOString(),
+                    resumeAtFormatted: new Date(expireResumeAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })
+                };
+                store.scheduledJobs.push(expireJob);
+                saveStore(store);
+                console.log(`[Visual Flow] ⏳ Tempo limite sem comprovante agendado (${timeoutHours}h) para ${session.userPhone} (Retomada: ${expireJob.resumeAtFormatted})`);
+            }
+
             return;
         }
 
@@ -6559,6 +6671,26 @@ function initSchedulerWorker(intervalMs = 15000) {
 
                 const nodes = flow.draftVersion.flowData.nodes || [];
                 const edges = flow.draftVersion.flowData.edges || [];
+
+                // Tratamento especial para expiração de comprovante PIX (timeout de espera sem resposta)
+                if (job.isPixTimeout) {
+                    if (session && session.waitingFor === 'PIX_RECEIPT' && !session.paid) {
+                        console.warn(`[Visual Flow Scheduler] ⌛ Tempo limite sem comprovante expirado para ${job.userPhone}!`);
+                        session.waitingFor = null;
+                        session.expired = true;
+                        saveStore(store);
+
+                        const failEdge = edges.find(e => (e.sourceNodeId || e.source) === job.verifierNodeId && e.sourceHandle === 'fail');
+                        if (failEdge) {
+                            await executeFromNode(job.botId, sock, job.remoteJid, session, failEdge.targetNodeId || failEdge.target, nodes, edges);
+                        } else {
+                            const verifierNode = nodes.find(n => (n.nodeId || n.id) === job.verifierNodeId);
+                            const timeoutMsg = verifierNode?.config?.failureMessage || 'Percebemos que o comprovante não foi enviado e o atendimento foi encerrado. Caso deseje reabrir, basta nos mandar uma mensagem!';
+                            await sendRealisticText(job.botId, sock, job.remoteJid, job.userPhone, timeoutMsg);
+                        }
+                    }
+                    continue;
+                }
 
                 console.log(`[Visual Flow Scheduler] 🚀 Executando nó retomado ${job.targetNodeId} para ${job.userPhone}...`);
 

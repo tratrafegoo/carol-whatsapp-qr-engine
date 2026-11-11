@@ -254,8 +254,8 @@
               "delaySeconds": 900
             },
             "position": {
-              "x": 320,
-              "y": 2280
+              "x": 740,
+              "y": 2300
             }
           },
           {
@@ -267,8 +267,8 @@
               "messageText": "Todo seu material foi enviado!\nFico no seu aguardo!"
             },
             "position": {
-              "x": 320,
-              "y": 2420
+              "x": 740,
+              "y": 2435
             }
           },
           {
@@ -281,8 +281,8 @@
               "delaySeconds": 3600
             },
             "position": {
-              "x": 320,
-              "y": 2560
+              "x": 740,
+              "y": 2570
             }
           },
           {
@@ -294,8 +294,8 @@
               "messageText": "Você irá realizar o pagamento hoje?"
             },
             "position": {
-              "x": 320,
-              "y": 2700
+              "x": 740,
+              "y": 2705
             }
           },
           {
@@ -308,7 +308,7 @@
               "delaySeconds": 7200
             },
             "position": {
-              "x": 320,
+              "x": 740,
               "y": 2840
             }
           },
@@ -321,8 +321,8 @@
               "messageText": "Oi?"
             },
             "position": {
-              "x": 320,
-              "y": 2980
+              "x": 740,
+              "y": 2975
             }
           },
           {
@@ -335,8 +335,8 @@
               "delaySeconds": 10800
             },
             "position": {
-              "x": 320,
-              "y": 3120
+              "x": 740,
+              "y": 3110
             }
           },
           {
@@ -348,8 +348,8 @@
               "messageText": "Confiei em você e enviei todo o material, fico no aguardo do comprovante\n\nQualquer valor ajuda!\nPode ser 20, 10 ou 5 reais!"
             },
             "position": {
-              "x": 320,
-              "y": 3260
+              "x": 740,
+              "y": 3245
             }
           },
           {
@@ -357,12 +357,15 @@
             "nodeType": "PIX_VERIFIER",
             "position": {
               "x": 320,
-              "y": 3400
+              "y": 2300
             },
             "label": "🧠 Auditoria Comprovante IA Gemini",
             "config": {
               "expectedAmount": "25.00",
-              "beneficiary": "GPS EBOOKS DIGITAIS LTDA"
+              "beneficiary": "GPS EBOOKS DIGITAIS LTDA",
+              "detectRefusalAi": true,
+              "enableTimeoutLimit": true,
+              "timeoutHours": 24
             },
             "id": "node_flow_funil_1_13"
           },
@@ -371,8 +374,8 @@
             "id": "node_flow_funil_1_bonus_media",
             "nodeType": "MEDIA",
             "position": {
-              "x": 250,
-              "y": 3540
+              "x": 320,
+              "y": 2460
             },
             "label": "🎁 Entrega Bônus: Curiosidades & Versão Simplificada",
             "config": {
@@ -387,8 +390,8 @@
             "id": "node_flow_funil_1_meta_capi",
             "nodeType": "META_CAPI",
             "position": {
-              "x": 250,
-              "y": 3680
+              "x": 320,
+              "y": 2610
             },
             "label": "🎯 Conversão Meta Ads (CAPI - Purchase)",
             "config": {
@@ -401,8 +404,8 @@
             "id": "node_flow_funil_1_final_msg",
             "nodeType": "MESSAGE",
             "position": {
-              "x": 250,
-              "y": 3820
+              "x": 320,
+              "y": 2760
             },
             "label": "Agradecimento Final & Acesso Vitalício",
             "config": {
@@ -547,15 +550,6 @@
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_1_12_flow_funil_1_delay_1",
-            "edgeId": "e_node_flow_funil_1_12_flow_funil_1_delay_1",
-            "source": "node_flow_funil_1_12",
-            "sourceNodeId": "node_flow_funil_1_12",
-            "target": "flow_funil_1_delay_1",
-            "targetNodeId": "flow_funil_1_delay_1",
-            "animated": true
-          },
-          {
             "id": "e_flow_funil_1_delay_1_flow_funil_1_msg_rem1",
             "edgeId": "e_flow_funil_1_delay_1_flow_funil_1_msg_rem1",
             "source": "flow_funil_1_delay_1",
@@ -619,25 +613,6 @@
             "animated": true
           },
           {
-            "id": "e_flow_funil_1_msg_rem4_node_flow_funil_1_13",
-            "edgeId": "e_flow_funil_1_msg_rem4_node_flow_funil_1_13",
-            "source": "flow_funil_1_msg_rem4",
-            "sourceNodeId": "flow_funil_1_msg_rem4",
-            "target": "node_flow_funil_1_13",
-            "targetNodeId": "node_flow_funil_1_13",
-            "animated": true
-          },
-          {
-            "id": "e_node_flow_funil_1_13_node_flow_funil_1_bonus_media",
-            "edgeId": "e_node_flow_funil_1_13_node_flow_funil_1_bonus_media",
-            "source": "node_flow_funil_1_13",
-            "sourceNodeId": "node_flow_funil_1_13",
-            "target": "node_flow_funil_1_bonus_media",
-            "targetNodeId": "node_flow_funil_1_bonus_media",
-            "animated": true,
-            "sourceHandle": "success"
-          },
-          {
             "id": "e_node_flow_funil_1_bonus_media_node_flow_funil_1_meta_capi",
             "edgeId": "e_node_flow_funil_1_bonus_media_node_flow_funil_1_meta_capi",
             "source": "node_flow_funil_1_bonus_media",
@@ -653,6 +628,35 @@
             "sourceNodeId": "node_flow_funil_1_meta_capi",
             "target": "node_flow_funil_1_final_msg",
             "targetNodeId": "node_flow_funil_1_final_msg",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_1_12_node_flow_funil_1_13",
+            "edgeId": "e_node_flow_funil_1_12_node_flow_funil_1_13",
+            "source": "node_flow_funil_1_12",
+            "sourceNodeId": "node_flow_funil_1_12",
+            "target": "node_flow_funil_1_13",
+            "targetNodeId": "node_flow_funil_1_13",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_1_13_node_flow_funil_1_bonus_media",
+            "edgeId": "e_node_flow_funil_1_13_node_flow_funil_1_bonus_media",
+            "source": "node_flow_funil_1_13",
+            "sourceNodeId": "node_flow_funil_1_13",
+            "target": "node_flow_funil_1_bonus_media",
+            "targetNodeId": "node_flow_funil_1_bonus_media",
+            "sourceHandle": "success",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_1_13_flow_funil_1_delay_1_timeout",
+            "edgeId": "e_node_flow_funil_1_13_flow_funil_1_delay_1_timeout",
+            "source": "node_flow_funil_1_13",
+            "sourceNodeId": "node_flow_funil_1_13",
+            "target": "flow_funil_1_delay_1",
+            "targetNodeId": "flow_funil_1_delay_1",
+            "sourceHandle": "timeout",
             "animated": true
           }
         ]
@@ -913,8 +917,8 @@
               "delaySeconds": 1200
             },
             "position": {
-              "x": 320,
-              "y": 2280
+              "x": 740,
+              "y": 2300
             }
           },
           {
@@ -926,8 +930,8 @@
               "messageText": "Olá! 🙏\n\nConseguiu ver o MATERIAL?\n\nSe o material agregou você, conto com sua contribuição para manter esse projeto e continuar criando novos materiais. 🔧\n\nApós o comprovante, libero também seus bônus exclusivos.\n\nDeus abençoe! ✝️"
             },
             "position": {
-              "x": 320,
-              "y": 2420
+              "x": 740,
+              "y": 2435
             }
           },
           {
@@ -935,12 +939,15 @@
             "nodeType": "PIX_VERIFIER",
             "position": {
               "x": 320,
-              "y": 2560
+              "y": 2300
             },
             "label": "🧠 Auditoria Comprovante IA Gemini",
             "config": {
               "expectedAmount": "10.00",
-              "beneficiary": "SANTOS LIVROS"
+              "beneficiary": "SANTOS LIVROS",
+              "detectRefusalAi": true,
+              "enableTimeoutLimit": true,
+              "timeoutHours": 24
             },
             "id": "node_flow_funil_2_14"
           },
@@ -949,8 +956,8 @@
             "id": "node_flow_funil_2_bonus_media",
             "nodeType": "MEDIA",
             "position": {
-              "x": 250,
-              "y": 2700
+              "x": 320,
+              "y": 2460
             },
             "label": "🎁 Entrega Bônus: Técnicas de Massagem e Conforto",
             "config": {
@@ -965,8 +972,8 @@
             "id": "node_flow_funil_2_meta_capi",
             "nodeType": "META_CAPI",
             "position": {
-              "x": 250,
-              "y": 2840
+              "x": 320,
+              "y": 2610
             },
             "label": "🎯 Conversão Meta Ads (CAPI - Purchase)",
             "config": {
@@ -979,8 +986,8 @@
             "id": "node_flow_funil_2_final_msg",
             "nodeType": "MESSAGE",
             "position": {
-              "x": 250,
-              "y": 2980
+              "x": 320,
+              "y": 2760
             },
             "label": "Agradecimento Final & Acesso Vitalício",
             "config": {
@@ -1125,15 +1132,6 @@
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_2_13_flow_funil_2_delay_1",
-            "edgeId": "e_node_flow_funil_2_13_flow_funil_2_delay_1",
-            "source": "node_flow_funil_2_13",
-            "sourceNodeId": "node_flow_funil_2_13",
-            "target": "flow_funil_2_delay_1",
-            "targetNodeId": "flow_funil_2_delay_1",
-            "animated": true
-          },
-          {
             "id": "e_flow_funil_2_delay_1_flow_funil_2_msg_rem1",
             "edgeId": "e_flow_funil_2_delay_1_flow_funil_2_msg_rem1",
             "source": "flow_funil_2_delay_1",
@@ -1141,25 +1139,6 @@
             "target": "flow_funil_2_msg_rem1",
             "targetNodeId": "flow_funil_2_msg_rem1",
             "animated": true
-          },
-          {
-            "id": "e_flow_funil_2_msg_rem1_node_flow_funil_2_14",
-            "edgeId": "e_flow_funil_2_msg_rem1_node_flow_funil_2_14",
-            "source": "flow_funil_2_msg_rem1",
-            "sourceNodeId": "flow_funil_2_msg_rem1",
-            "target": "node_flow_funil_2_14",
-            "targetNodeId": "node_flow_funil_2_14",
-            "animated": true
-          },
-          {
-            "id": "e_node_flow_funil_2_14_node_flow_funil_2_bonus_media",
-            "edgeId": "e_node_flow_funil_2_14_node_flow_funil_2_bonus_media",
-            "source": "node_flow_funil_2_14",
-            "sourceNodeId": "node_flow_funil_2_14",
-            "target": "node_flow_funil_2_bonus_media",
-            "targetNodeId": "node_flow_funil_2_bonus_media",
-            "animated": true,
-            "sourceHandle": "success"
           },
           {
             "id": "e_node_flow_funil_2_bonus_media_node_flow_funil_2_meta_capi",
@@ -1177,6 +1156,35 @@
             "sourceNodeId": "node_flow_funil_2_meta_capi",
             "target": "node_flow_funil_2_final_msg",
             "targetNodeId": "node_flow_funil_2_final_msg",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_2_13_node_flow_funil_2_14",
+            "edgeId": "e_node_flow_funil_2_13_node_flow_funil_2_14",
+            "source": "node_flow_funil_2_13",
+            "sourceNodeId": "node_flow_funil_2_13",
+            "target": "node_flow_funil_2_14",
+            "targetNodeId": "node_flow_funil_2_14",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_2_14_node_flow_funil_2_bonus_media",
+            "edgeId": "e_node_flow_funil_2_14_node_flow_funil_2_bonus_media",
+            "source": "node_flow_funil_2_14",
+            "sourceNodeId": "node_flow_funil_2_14",
+            "target": "node_flow_funil_2_bonus_media",
+            "targetNodeId": "node_flow_funil_2_bonus_media",
+            "sourceHandle": "success",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_2_14_flow_funil_2_delay_1_timeout",
+            "edgeId": "e_node_flow_funil_2_14_flow_funil_2_delay_1_timeout",
+            "source": "node_flow_funil_2_14",
+            "sourceNodeId": "node_flow_funil_2_14",
+            "target": "flow_funil_2_delay_1",
+            "targetNodeId": "flow_funil_2_delay_1",
+            "sourceHandle": "timeout",
             "animated": true
           }
         ]
@@ -1496,8 +1504,8 @@
               "delaySeconds": 1200
             },
             "position": {
-              "x": 320,
-              "y": 2840
+              "x": 740,
+              "y": 2860
             }
           },
           {
@@ -1509,8 +1517,8 @@
               "messageText": "Irmã, a Paz do Senhor! 🙏\n\nConseguiu conferir os 500 Esboços?\n\nFico no aguardo do comprovante para te enviar o acesso à Comunidade VIP e todos os 4 bônus exclusivos! Que Deus te abençoe! 💛"
             },
             "position": {
-              "x": 320,
-              "y": 2980
+              "x": 740,
+              "y": 2995
             }
           },
           {
@@ -1523,8 +1531,8 @@
               "delaySeconds": 14400
             },
             "position": {
-              "x": 320,
-              "y": 3120
+              "x": 740,
+              "y": 3130
             }
           },
           {
@@ -1536,8 +1544,8 @@
               "messageText": "A paz do Senhor, minha irmã! Conseguiu realizar sua contribuição? 🙏\n\nPeço com carinho que não deixe nosso projeto no prejuízo, pois preparamos e enviamos o material com confiança. Esse trabalho ajuda muitas famílias, e sua honestidade diante de Deus faz toda diferença. 💛"
             },
             "position": {
-              "x": 320,
-              "y": 3260
+              "x": 740,
+              "y": 3265
             }
           },
           {
@@ -1545,12 +1553,15 @@
             "nodeType": "PIX_VERIFIER",
             "position": {
               "x": 320,
-              "y": 3400
+              "y": 2860
             },
             "label": "🧠 Auditoria Comprovante IA Gemini",
             "config": {
               "expectedAmount": "10.00",
-              "beneficiary": "Marco Antonio"
+              "beneficiary": "Marco Antonio",
+              "detectRefusalAi": true,
+              "enableTimeoutLimit": true,
+              "timeoutHours": 24
             },
             "id": "node_flow_funil_3_17"
           },
@@ -1559,8 +1570,8 @@
             "id": "node_flow_funil_3_bonus_media",
             "nodeType": "MEDIA",
             "position": {
-              "x": 250,
-              "y": 3540
+              "x": 320,
+              "y": 3020
             },
             "label": "🎁 Entrega Bônus: Checklist da Pregadora & Planner",
             "config": {
@@ -1575,8 +1586,8 @@
             "id": "node_flow_funil_3_meta_capi",
             "nodeType": "META_CAPI",
             "position": {
-              "x": 250,
-              "y": 3680
+              "x": 320,
+              "y": 3170
             },
             "label": "🎯 Conversão Meta Ads (CAPI - Purchase)",
             "config": {
@@ -1589,8 +1600,8 @@
             "id": "node_flow_funil_3_final_msg",
             "nodeType": "MESSAGE",
             "position": {
-              "x": 250,
-              "y": 3820
+              "x": 320,
+              "y": 3320
             },
             "label": "Agradecimento Final & Acesso Vitalício",
             "config": {
@@ -1771,15 +1782,6 @@
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_3_16_flow_funil_3_delay_1",
-            "edgeId": "e_node_flow_funil_3_16_flow_funil_3_delay_1",
-            "source": "node_flow_funil_3_16",
-            "sourceNodeId": "node_flow_funil_3_16",
-            "target": "flow_funil_3_delay_1",
-            "targetNodeId": "flow_funil_3_delay_1",
-            "animated": true
-          },
-          {
             "id": "e_flow_funil_3_delay_1_flow_funil_3_msg_rem1",
             "edgeId": "e_flow_funil_3_delay_1_flow_funil_3_msg_rem1",
             "source": "flow_funil_3_delay_1",
@@ -1807,25 +1809,6 @@
             "animated": true
           },
           {
-            "id": "e_flow_funil_3_msg_rem2_node_flow_funil_3_17",
-            "edgeId": "e_flow_funil_3_msg_rem2_node_flow_funil_3_17",
-            "source": "flow_funil_3_msg_rem2",
-            "sourceNodeId": "flow_funil_3_msg_rem2",
-            "target": "node_flow_funil_3_17",
-            "targetNodeId": "node_flow_funil_3_17",
-            "animated": true
-          },
-          {
-            "id": "e_node_flow_funil_3_17_node_flow_funil_3_bonus_media",
-            "edgeId": "e_node_flow_funil_3_17_node_flow_funil_3_bonus_media",
-            "source": "node_flow_funil_3_17",
-            "sourceNodeId": "node_flow_funil_3_17",
-            "target": "node_flow_funil_3_bonus_media",
-            "targetNodeId": "node_flow_funil_3_bonus_media",
-            "animated": true,
-            "sourceHandle": "success"
-          },
-          {
             "id": "e_node_flow_funil_3_bonus_media_node_flow_funil_3_meta_capi",
             "edgeId": "e_node_flow_funil_3_bonus_media_node_flow_funil_3_meta_capi",
             "source": "node_flow_funil_3_bonus_media",
@@ -1841,6 +1824,35 @@
             "sourceNodeId": "node_flow_funil_3_meta_capi",
             "target": "node_flow_funil_3_final_msg",
             "targetNodeId": "node_flow_funil_3_final_msg",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_3_16_node_flow_funil_3_17",
+            "edgeId": "e_node_flow_funil_3_16_node_flow_funil_3_17",
+            "source": "node_flow_funil_3_16",
+            "sourceNodeId": "node_flow_funil_3_16",
+            "target": "node_flow_funil_3_17",
+            "targetNodeId": "node_flow_funil_3_17",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_3_17_node_flow_funil_3_bonus_media",
+            "edgeId": "e_node_flow_funil_3_17_node_flow_funil_3_bonus_media",
+            "source": "node_flow_funil_3_17",
+            "sourceNodeId": "node_flow_funil_3_17",
+            "target": "node_flow_funil_3_bonus_media",
+            "targetNodeId": "node_flow_funil_3_bonus_media",
+            "sourceHandle": "success",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_3_17_flow_funil_3_delay_1_timeout",
+            "edgeId": "e_node_flow_funil_3_17_flow_funil_3_delay_1_timeout",
+            "source": "node_flow_funil_3_17",
+            "sourceNodeId": "node_flow_funil_3_17",
+            "target": "flow_funil_3_delay_1",
+            "targetNodeId": "flow_funil_3_delay_1",
+            "sourceHandle": "timeout",
             "animated": true
           }
         ]
@@ -2087,8 +2099,8 @@
               "delaySeconds": 900
             },
             "position": {
-              "x": 320,
-              "y": 2140
+              "x": 740,
+              "y": 2160
             }
           },
           {
@@ -2100,8 +2112,8 @@
               "messageText": "Faltou alguma coisa?"
             },
             "position": {
-              "x": 320,
-              "y": 2280
+              "x": 740,
+              "y": 2295
             }
           },
           {
@@ -2114,8 +2126,8 @@
               "delaySeconds": 7200
             },
             "position": {
-              "x": 320,
-              "y": 2420
+              "x": 740,
+              "y": 2430
             }
           },
           {
@@ -2127,8 +2139,8 @@
               "messageText": "Paz de Deus! Conseguiu abrir os livros da Jornada da Bíblia? Se tiver qualquer dúvida ou se precisar de uma condição especial para sua contribuição, me avisa aqui! 🙏"
             },
             "position": {
-              "x": 320,
-              "y": 2560
+              "x": 740,
+              "y": 2565
             }
           },
           {
@@ -2136,12 +2148,15 @@
             "nodeType": "PIX_VERIFIER",
             "position": {
               "x": 320,
-              "y": 2700
+              "y": 2160
             },
             "label": "🧠 Auditoria Comprovante IA Gemini",
             "config": {
               "expectedAmount": "20.00",
-              "beneficiary": "Pastor Guilherme"
+              "beneficiary": "Pastor Guilherme",
+              "detectRefusalAi": true,
+              "enableTimeoutLimit": true,
+              "timeoutHours": 24
             },
             "id": "node_flow_funil_4_12"
           },
@@ -2150,8 +2165,8 @@
             "id": "node_flow_funil_4_bonus_media",
             "nodeType": "MEDIA",
             "position": {
-              "x": 250,
-              "y": 2840
+              "x": 320,
+              "y": 2320
             },
             "label": "🎁 Entrega Bônus Especial: 7 Estudos do Apocalipse",
             "config": {
@@ -2166,8 +2181,8 @@
             "id": "node_flow_funil_4_meta_capi",
             "nodeType": "META_CAPI",
             "position": {
-              "x": 250,
-              "y": 2980
+              "x": 320,
+              "y": 2470
             },
             "label": "🎯 Conversão Meta Ads (CAPI - Purchase)",
             "config": {
@@ -2180,8 +2195,8 @@
             "id": "node_flow_funil_4_final_msg",
             "nodeType": "MESSAGE",
             "position": {
-              "x": 250,
-              "y": 3120
+              "x": 320,
+              "y": 2620
             },
             "label": "Agradecimento Final & Acesso Vitalício",
             "config": {
@@ -2317,15 +2332,6 @@
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_4_11_flow_funil_4_delay_1",
-            "edgeId": "e_node_flow_funil_4_11_flow_funil_4_delay_1",
-            "source": "node_flow_funil_4_11",
-            "sourceNodeId": "node_flow_funil_4_11",
-            "target": "flow_funil_4_delay_1",
-            "targetNodeId": "flow_funil_4_delay_1",
-            "animated": true
-          },
-          {
             "id": "e_flow_funil_4_delay_1_flow_funil_4_msg_rem1",
             "edgeId": "e_flow_funil_4_delay_1_flow_funil_4_msg_rem1",
             "source": "flow_funil_4_delay_1",
@@ -2353,25 +2359,6 @@
             "animated": true
           },
           {
-            "id": "e_flow_funil_4_msg_rem2_node_flow_funil_4_12",
-            "edgeId": "e_flow_funil_4_msg_rem2_node_flow_funil_4_12",
-            "source": "flow_funil_4_msg_rem2",
-            "sourceNodeId": "flow_funil_4_msg_rem2",
-            "target": "node_flow_funil_4_12",
-            "targetNodeId": "node_flow_funil_4_12",
-            "animated": true
-          },
-          {
-            "id": "e_node_flow_funil_4_12_node_flow_funil_4_bonus_media",
-            "edgeId": "e_node_flow_funil_4_12_node_flow_funil_4_bonus_media",
-            "source": "node_flow_funil_4_12",
-            "sourceNodeId": "node_flow_funil_4_12",
-            "target": "node_flow_funil_4_bonus_media",
-            "targetNodeId": "node_flow_funil_4_bonus_media",
-            "animated": true,
-            "sourceHandle": "success"
-          },
-          {
             "id": "e_node_flow_funil_4_bonus_media_node_flow_funil_4_meta_capi",
             "edgeId": "e_node_flow_funil_4_bonus_media_node_flow_funil_4_meta_capi",
             "source": "node_flow_funil_4_bonus_media",
@@ -2387,6 +2374,35 @@
             "sourceNodeId": "node_flow_funil_4_meta_capi",
             "target": "node_flow_funil_4_final_msg",
             "targetNodeId": "node_flow_funil_4_final_msg",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_4_11_node_flow_funil_4_12",
+            "edgeId": "e_node_flow_funil_4_11_node_flow_funil_4_12",
+            "source": "node_flow_funil_4_11",
+            "sourceNodeId": "node_flow_funil_4_11",
+            "target": "node_flow_funil_4_12",
+            "targetNodeId": "node_flow_funil_4_12",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_4_12_node_flow_funil_4_bonus_media",
+            "edgeId": "e_node_flow_funil_4_12_node_flow_funil_4_bonus_media",
+            "source": "node_flow_funil_4_12",
+            "sourceNodeId": "node_flow_funil_4_12",
+            "target": "node_flow_funil_4_bonus_media",
+            "targetNodeId": "node_flow_funil_4_bonus_media",
+            "sourceHandle": "success",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_4_12_flow_funil_4_delay_1_timeout",
+            "edgeId": "e_node_flow_funil_4_12_flow_funil_4_delay_1_timeout",
+            "source": "node_flow_funil_4_12",
+            "sourceNodeId": "node_flow_funil_4_12",
+            "target": "flow_funil_4_delay_1",
+            "targetNodeId": "flow_funil_4_delay_1",
+            "sourceHandle": "timeout",
             "animated": true
           }
         ]
@@ -2782,8 +2798,8 @@
               "delaySeconds": 600
             },
             "position": {
-              "x": 320,
-              "y": 3540
+              "x": 740,
+              "y": 3560
             }
           },
           {
@@ -2795,8 +2811,8 @@
               "messageText": "Paz.. Fiquei aqui esperando o pagamento, confiei na sua palavra..."
             },
             "position": {
-              "x": 320,
-              "y": 3680
+              "x": 740,
+              "y": 3695
             }
           },
           {
@@ -2809,8 +2825,8 @@
               "delaySeconds": 1200
             },
             "position": {
-              "x": 320,
-              "y": 3820
+              "x": 740,
+              "y": 3830
             }
           },
           {
@@ -2822,8 +2838,8 @@
               "messageText": "Você consegue fazer a sua contribuição agora? Se sim vou agradecer e muito! 🙏\n\nNosso PIX, só você copiar e colar 👇\n(CNPJ)\n64158407000124\n\nFico no aguardo amém ?"
             },
             "position": {
-              "x": 320,
-              "y": 3960
+              "x": 740,
+              "y": 3965
             }
           },
           {
@@ -2836,7 +2852,7 @@
               "delaySeconds": 900
             },
             "position": {
-              "x": 320,
+              "x": 740,
               "y": 4100
             }
           },
@@ -2849,8 +2865,8 @@
               "messageText": "Conforme combinamos, os materiais e os bônus já foram enviados, e você *confirmou* o recebimento.\n\nAgora estou aguardando apenas a contribuição combinada. Assim que realizar, me envie o comprovante por aqui. Deus abençoe.\n\n🔑 CHAVE PIX *CNPJ* : 64158407000124\n\n*VALOR*: R$19,90\n\n*NOME:* Vitor Bueno de Carvalho"
             },
             "position": {
-              "x": 320,
-              "y": 4240
+              "x": 740,
+              "y": 4235
             }
           },
           {
@@ -2863,8 +2879,8 @@
               "delaySeconds": 3000
             },
             "position": {
-              "x": 320,
-              "y": 4380
+              "x": 740,
+              "y": 4370
             }
           },
           {
@@ -2877,8 +2893,8 @@
               "fallbackText": "🎙️ Irmão, estou passando aqui só para conferir se deu certo a sua contribuição dos materiais do Acervo. Posso contar com sua ajuda hoje?"
             },
             "position": {
-              "x": 320,
-              "y": 4520
+              "x": 740,
+              "y": 4505
             }
           },
           {
@@ -2886,12 +2902,15 @@
             "nodeType": "PIX_VERIFIER",
             "position": {
               "x": 320,
-              "y": 4660
+              "y": 3560
             },
             "label": "🧠 Auditoria Comprovante IA Gemini",
             "config": {
               "expectedAmount": "19.90",
-              "beneficiary": "Vitor Bueno de Carvalho"
+              "beneficiary": "Vitor Bueno de Carvalho",
+              "detectRefusalAi": true,
+              "enableTimeoutLimit": true,
+              "timeoutHours": 24
             },
             "id": "node_flow_funil_5_19"
           },
@@ -2900,8 +2919,8 @@
             "id": "node_flow_funil_5_bonus_media",
             "nodeType": "MEDIA",
             "position": {
-              "x": 250,
-              "y": 4800
+              "x": 320,
+              "y": 3720
             },
             "label": "🎁 Entrega Bônus: 20 Mil Esboços Adicionais",
             "config": {
@@ -2916,8 +2935,8 @@
             "id": "node_flow_funil_5_meta_capi",
             "nodeType": "META_CAPI",
             "position": {
-              "x": 250,
-              "y": 4940
+              "x": 320,
+              "y": 3870
             },
             "label": "🎯 Conversão Meta Ads (CAPI - Purchase)",
             "config": {
@@ -2930,8 +2949,8 @@
             "id": "node_flow_funil_5_final_msg",
             "nodeType": "MESSAGE",
             "position": {
-              "x": 250,
-              "y": 5080
+              "x": 320,
+              "y": 4020
             },
             "label": "Agradecimento Final & Acesso Vitalício",
             "config": {
@@ -3157,15 +3176,6 @@
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_5_18_flow_funil_5_delay_1",
-            "edgeId": "e_node_flow_funil_5_18_flow_funil_5_delay_1",
-            "source": "node_flow_funil_5_18",
-            "sourceNodeId": "node_flow_funil_5_18",
-            "target": "flow_funil_5_delay_1",
-            "targetNodeId": "flow_funil_5_delay_1",
-            "animated": true
-          },
-          {
             "id": "e_flow_funil_5_delay_1_flow_funil_5_msg_rem1",
             "edgeId": "e_flow_funil_5_delay_1_flow_funil_5_msg_rem1",
             "source": "flow_funil_5_delay_1",
@@ -3229,25 +3239,6 @@
             "animated": true
           },
           {
-            "id": "e_flow_funil_5_audio_rem4_node_flow_funil_5_19",
-            "edgeId": "e_flow_funil_5_audio_rem4_node_flow_funil_5_19",
-            "source": "flow_funil_5_audio_rem4",
-            "sourceNodeId": "flow_funil_5_audio_rem4",
-            "target": "node_flow_funil_5_19",
-            "targetNodeId": "node_flow_funil_5_19",
-            "animated": true
-          },
-          {
-            "id": "e_node_flow_funil_5_19_node_flow_funil_5_bonus_media",
-            "edgeId": "e_node_flow_funil_5_19_node_flow_funil_5_bonus_media",
-            "source": "node_flow_funil_5_19",
-            "sourceNodeId": "node_flow_funil_5_19",
-            "target": "node_flow_funil_5_bonus_media",
-            "targetNodeId": "node_flow_funil_5_bonus_media",
-            "animated": true,
-            "sourceHandle": "success"
-          },
-          {
             "id": "e_node_flow_funil_5_bonus_media_node_flow_funil_5_meta_capi",
             "edgeId": "e_node_flow_funil_5_bonus_media_node_flow_funil_5_meta_capi",
             "source": "node_flow_funil_5_bonus_media",
@@ -3263,6 +3254,35 @@
             "sourceNodeId": "node_flow_funil_5_meta_capi",
             "target": "node_flow_funil_5_final_msg",
             "targetNodeId": "node_flow_funil_5_final_msg",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_5_18_node_flow_funil_5_19",
+            "edgeId": "e_node_flow_funil_5_18_node_flow_funil_5_19",
+            "source": "node_flow_funil_5_18",
+            "sourceNodeId": "node_flow_funil_5_18",
+            "target": "node_flow_funil_5_19",
+            "targetNodeId": "node_flow_funil_5_19",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_5_19_node_flow_funil_5_bonus_media",
+            "edgeId": "e_node_flow_funil_5_19_node_flow_funil_5_bonus_media",
+            "source": "node_flow_funil_5_19",
+            "sourceNodeId": "node_flow_funil_5_19",
+            "target": "node_flow_funil_5_bonus_media",
+            "targetNodeId": "node_flow_funil_5_bonus_media",
+            "sourceHandle": "success",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_5_19_flow_funil_5_delay_1_timeout",
+            "edgeId": "e_node_flow_funil_5_19_flow_funil_5_delay_1_timeout",
+            "source": "node_flow_funil_5_19",
+            "sourceNodeId": "node_flow_funil_5_19",
+            "target": "flow_funil_5_delay_1",
+            "targetNodeId": "flow_funil_5_delay_1",
+            "sourceHandle": "timeout",
             "animated": true
           }
         ]
@@ -3563,8 +3583,8 @@
               "delaySeconds": 1200
             },
             "position": {
-              "x": 320,
-              "y": 2700
+              "x": 740,
+              "y": 2720
             }
           },
           {
@@ -3576,8 +3596,8 @@
               "messageText": "A paz do Senhor, irmã! Conseguiu ver o devocional?\n\nFico no aguardo do comprovante para te colocar no nosso altar de oração e liberar o sorteio da Caixa Devocional! 🙏❤️"
             },
             "position": {
-              "x": 320,
-              "y": 2840
+              "x": 740,
+              "y": 2855
             }
           },
           {
@@ -3585,12 +3605,15 @@
             "nodeType": "PIX_VERIFIER",
             "position": {
               "x": 320,
-              "y": 2980
+              "y": 2720
             },
             "label": "🧠 Auditoria Comprovante IA Gemini",
             "config": {
               "expectedAmount": "5.00",
-              "beneficiary": "DIGITAL DSX LTDA"
+              "beneficiary": "DIGITAL DSX LTDA",
+              "detectRefusalAi": true,
+              "enableTimeoutLimit": true,
+              "timeoutHours": 24
             },
             "id": "node_flow_funil_6_19"
           },
@@ -3599,8 +3622,8 @@
             "id": "node_flow_funil_6_bonus_media",
             "nodeType": "MEDIA",
             "position": {
-              "x": 250,
-              "y": 3120
+              "x": 320,
+              "y": 2880
             },
             "label": "🎁 Entrega Bônus: Devocional 21 Dias Pelos Filhos",
             "config": {
@@ -3615,8 +3638,8 @@
             "id": "node_flow_funil_6_meta_capi",
             "nodeType": "META_CAPI",
             "position": {
-              "x": 250,
-              "y": 3260
+              "x": 320,
+              "y": 3030
             },
             "label": "🎯 Conversão Meta Ads (CAPI - Purchase)",
             "config": {
@@ -3629,8 +3652,8 @@
             "id": "node_flow_funil_6_final_msg",
             "nodeType": "MESSAGE",
             "position": {
-              "x": 250,
-              "y": 3400
+              "x": 320,
+              "y": 3180
             },
             "label": "Agradecimento Final & Acesso Vitalício",
             "config": {
@@ -3802,15 +3825,6 @@
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_6_18_flow_funil_6_delay_1",
-            "edgeId": "e_node_flow_funil_6_18_flow_funil_6_delay_1",
-            "source": "node_flow_funil_6_18",
-            "sourceNodeId": "node_flow_funil_6_18",
-            "target": "flow_funil_6_delay_1",
-            "targetNodeId": "flow_funil_6_delay_1",
-            "animated": true
-          },
-          {
             "id": "e_flow_funil_6_delay_1_flow_funil_6_msg_rem1",
             "edgeId": "e_flow_funil_6_delay_1_flow_funil_6_msg_rem1",
             "source": "flow_funil_6_delay_1",
@@ -3818,25 +3832,6 @@
             "target": "flow_funil_6_msg_rem1",
             "targetNodeId": "flow_funil_6_msg_rem1",
             "animated": true
-          },
-          {
-            "id": "e_flow_funil_6_msg_rem1_node_flow_funil_6_19",
-            "edgeId": "e_flow_funil_6_msg_rem1_node_flow_funil_6_19",
-            "source": "flow_funil_6_msg_rem1",
-            "sourceNodeId": "flow_funil_6_msg_rem1",
-            "target": "node_flow_funil_6_19",
-            "targetNodeId": "node_flow_funil_6_19",
-            "animated": true
-          },
-          {
-            "id": "e_node_flow_funil_6_19_node_flow_funil_6_bonus_media",
-            "edgeId": "e_node_flow_funil_6_19_node_flow_funil_6_bonus_media",
-            "source": "node_flow_funil_6_19",
-            "sourceNodeId": "node_flow_funil_6_19",
-            "target": "node_flow_funil_6_bonus_media",
-            "targetNodeId": "node_flow_funil_6_bonus_media",
-            "animated": true,
-            "sourceHandle": "success"
           },
           {
             "id": "e_node_flow_funil_6_bonus_media_node_flow_funil_6_meta_capi",
@@ -3854,6 +3849,35 @@
             "sourceNodeId": "node_flow_funil_6_meta_capi",
             "target": "node_flow_funil_6_final_msg",
             "targetNodeId": "node_flow_funil_6_final_msg",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_6_18_node_flow_funil_6_19",
+            "edgeId": "e_node_flow_funil_6_18_node_flow_funil_6_19",
+            "source": "node_flow_funil_6_18",
+            "sourceNodeId": "node_flow_funil_6_18",
+            "target": "node_flow_funil_6_19",
+            "targetNodeId": "node_flow_funil_6_19",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_6_19_node_flow_funil_6_bonus_media",
+            "edgeId": "e_node_flow_funil_6_19_node_flow_funil_6_bonus_media",
+            "source": "node_flow_funil_6_19",
+            "sourceNodeId": "node_flow_funil_6_19",
+            "target": "node_flow_funil_6_bonus_media",
+            "targetNodeId": "node_flow_funil_6_bonus_media",
+            "sourceHandle": "success",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_6_19_flow_funil_6_delay_1_timeout",
+            "edgeId": "e_node_flow_funil_6_19_flow_funil_6_delay_1_timeout",
+            "source": "node_flow_funil_6_19",
+            "sourceNodeId": "node_flow_funil_6_19",
+            "target": "flow_funil_6_delay_1",
+            "targetNodeId": "flow_funil_6_delay_1",
+            "sourceHandle": "timeout",
             "animated": true
           }
         ]
@@ -4191,8 +4215,8 @@
               "delaySeconds": 1200
             },
             "position": {
-              "x": 320,
-              "y": 2980
+              "x": 740,
+              "y": 3000
             }
           },
           {
@@ -4204,8 +4228,8 @@
               "messageText": "Oi! Conseguiu imprimir o construtor de palavras para o seu pequeno?\n\nFico no aguardo do comprovante para liberar o material completo de alfabetização e os 5 jogos extras! 🎈"
             },
             "position": {
-              "x": 320,
-              "y": 3120
+              "x": 740,
+              "y": 3135
             }
           },
           {
@@ -4213,12 +4237,15 @@
             "nodeType": "PIX_VERIFIER",
             "position": {
               "x": 320,
-              "y": 3260
+              "y": 3000
             },
             "label": "🧠 Auditoria Comprovante IA Gemini",
             "config": {
               "expectedAmount": "11.90",
-              "beneficiary": "Editora Branth"
+              "beneficiary": "Editora Branth",
+              "detectRefusalAi": true,
+              "enableTimeoutLimit": true,
+              "timeoutHours": 24
             },
             "id": "node_flow_funil_7_16"
           },
@@ -4227,8 +4254,8 @@
             "id": "node_flow_funil_7_bonus_media",
             "nodeType": "MEDIA",
             "position": {
-              "x": 250,
-              "y": 3400
+              "x": 320,
+              "y": 3160
             },
             "label": "🎁 Entrega Bônus: Ditado Silábico Gênios & Jogos",
             "config": {
@@ -4243,8 +4270,8 @@
             "id": "node_flow_funil_7_meta_capi",
             "nodeType": "META_CAPI",
             "position": {
-              "x": 250,
-              "y": 3540
+              "x": 320,
+              "y": 3310
             },
             "label": "🎯 Conversão Meta Ads (CAPI - Purchase)",
             "config": {
@@ -4257,8 +4284,8 @@
             "id": "node_flow_funil_7_final_msg",
             "nodeType": "MESSAGE",
             "position": {
-              "x": 250,
-              "y": 3680
+              "x": 320,
+              "y": 3460
             },
             "label": "Agradecimento Final & Acesso Vitalício",
             "config": {
@@ -4448,15 +4475,6 @@
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_7_15_flow_funil_7_delay_1",
-            "edgeId": "e_node_flow_funil_7_15_flow_funil_7_delay_1",
-            "source": "node_flow_funil_7_15",
-            "sourceNodeId": "node_flow_funil_7_15",
-            "target": "flow_funil_7_delay_1",
-            "targetNodeId": "flow_funil_7_delay_1",
-            "animated": true
-          },
-          {
             "id": "e_flow_funil_7_delay_1_flow_funil_7_msg_rem1",
             "edgeId": "e_flow_funil_7_delay_1_flow_funil_7_msg_rem1",
             "source": "flow_funil_7_delay_1",
@@ -4464,25 +4482,6 @@
             "target": "flow_funil_7_msg_rem1",
             "targetNodeId": "flow_funil_7_msg_rem1",
             "animated": true
-          },
-          {
-            "id": "e_flow_funil_7_msg_rem1_node_flow_funil_7_16",
-            "edgeId": "e_flow_funil_7_msg_rem1_node_flow_funil_7_16",
-            "source": "flow_funil_7_msg_rem1",
-            "sourceNodeId": "flow_funil_7_msg_rem1",
-            "target": "node_flow_funil_7_16",
-            "targetNodeId": "node_flow_funil_7_16",
-            "animated": true
-          },
-          {
-            "id": "e_node_flow_funil_7_16_node_flow_funil_7_bonus_media",
-            "edgeId": "e_node_flow_funil_7_16_node_flow_funil_7_bonus_media",
-            "source": "node_flow_funil_7_16",
-            "sourceNodeId": "node_flow_funil_7_16",
-            "target": "node_flow_funil_7_bonus_media",
-            "targetNodeId": "node_flow_funil_7_bonus_media",
-            "animated": true,
-            "sourceHandle": "success"
           },
           {
             "id": "e_node_flow_funil_7_bonus_media_node_flow_funil_7_meta_capi",
@@ -4500,6 +4499,35 @@
             "sourceNodeId": "node_flow_funil_7_meta_capi",
             "target": "node_flow_funil_7_final_msg",
             "targetNodeId": "node_flow_funil_7_final_msg",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_7_15_node_flow_funil_7_16",
+            "edgeId": "e_node_flow_funil_7_15_node_flow_funil_7_16",
+            "source": "node_flow_funil_7_15",
+            "sourceNodeId": "node_flow_funil_7_15",
+            "target": "node_flow_funil_7_16",
+            "targetNodeId": "node_flow_funil_7_16",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_7_16_node_flow_funil_7_bonus_media",
+            "edgeId": "e_node_flow_funil_7_16_node_flow_funil_7_bonus_media",
+            "source": "node_flow_funil_7_16",
+            "sourceNodeId": "node_flow_funil_7_16",
+            "target": "node_flow_funil_7_bonus_media",
+            "targetNodeId": "node_flow_funil_7_bonus_media",
+            "sourceHandle": "success",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_7_16_flow_funil_7_delay_1_timeout",
+            "edgeId": "e_node_flow_funil_7_16_flow_funil_7_delay_1_timeout",
+            "source": "node_flow_funil_7_16",
+            "sourceNodeId": "node_flow_funil_7_16",
+            "target": "flow_funil_7_delay_1",
+            "targetNodeId": "flow_funil_7_delay_1",
+            "sourceHandle": "timeout",
             "animated": true
           }
         ]
@@ -4732,8 +4760,8 @@
               "delaySeconds": 1200
             },
             "position": {
-              "x": 320,
-              "y": 2000
+              "x": 740,
+              "y": 2020
             }
           },
           {
@@ -4745,8 +4773,8 @@
               "messageText": "Oi! Conseguiu dar uma olhada no Guia do Pet Comilão?\n\nAssim que puder me envie o comprovante do Pix para eu te enviar o cardápio e todos os bônus! 🐶💚"
             },
             "position": {
-              "x": 320,
-              "y": 2140
+              "x": 740,
+              "y": 2155
             }
           },
           {
@@ -4754,12 +4782,15 @@
             "nodeType": "PIX_VERIFIER",
             "position": {
               "x": 320,
-              "y": 2280
+              "y": 2020
             },
             "label": "🧠 Auditoria Comprovante IA Gemini",
             "config": {
               "expectedAmount": "15.00",
-              "beneficiary": "KV DIGITAL"
+              "beneficiary": "KV DIGITAL",
+              "detectRefusalAi": true,
+              "enableTimeoutLimit": true,
+              "timeoutHours": 24
             },
             "id": "node_flow_funil_8_12"
           },
@@ -4768,8 +4799,8 @@
             "id": "node_flow_funil_8_bonus_media",
             "nodeType": "MEDIA",
             "position": {
-              "x": 250,
-              "y": 2420
+              "x": 320,
+              "y": 2180
             },
             "label": "🎁 Entrega Bônus: 50 Receitas Cruas & Calculadora",
             "config": {
@@ -4784,8 +4815,8 @@
             "id": "node_flow_funil_8_meta_capi",
             "nodeType": "META_CAPI",
             "position": {
-              "x": 250,
-              "y": 2560
+              "x": 320,
+              "y": 2330
             },
             "label": "🎯 Conversão Meta Ads (CAPI - Purchase)",
             "config": {
@@ -4798,8 +4829,8 @@
             "id": "node_flow_funil_8_final_msg",
             "nodeType": "MESSAGE",
             "position": {
-              "x": 250,
-              "y": 2700
+              "x": 320,
+              "y": 2480
             },
             "label": "Agradecimento Final & Acesso Vitalício",
             "config": {
@@ -4926,15 +4957,6 @@
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_8_11_flow_funil_8_delay_1",
-            "edgeId": "e_node_flow_funil_8_11_flow_funil_8_delay_1",
-            "source": "node_flow_funil_8_11",
-            "sourceNodeId": "node_flow_funil_8_11",
-            "target": "flow_funil_8_delay_1",
-            "targetNodeId": "flow_funil_8_delay_1",
-            "animated": true
-          },
-          {
             "id": "e_flow_funil_8_delay_1_flow_funil_8_msg_rem1",
             "edgeId": "e_flow_funil_8_delay_1_flow_funil_8_msg_rem1",
             "source": "flow_funil_8_delay_1",
@@ -4942,25 +4964,6 @@
             "target": "flow_funil_8_msg_rem1",
             "targetNodeId": "flow_funil_8_msg_rem1",
             "animated": true
-          },
-          {
-            "id": "e_flow_funil_8_msg_rem1_node_flow_funil_8_12",
-            "edgeId": "e_flow_funil_8_msg_rem1_node_flow_funil_8_12",
-            "source": "flow_funil_8_msg_rem1",
-            "sourceNodeId": "flow_funil_8_msg_rem1",
-            "target": "node_flow_funil_8_12",
-            "targetNodeId": "node_flow_funil_8_12",
-            "animated": true
-          },
-          {
-            "id": "e_node_flow_funil_8_12_node_flow_funil_8_bonus_media",
-            "edgeId": "e_node_flow_funil_8_12_node_flow_funil_8_bonus_media",
-            "source": "node_flow_funil_8_12",
-            "sourceNodeId": "node_flow_funil_8_12",
-            "target": "node_flow_funil_8_bonus_media",
-            "targetNodeId": "node_flow_funil_8_bonus_media",
-            "animated": true,
-            "sourceHandle": "success"
           },
           {
             "id": "e_node_flow_funil_8_bonus_media_node_flow_funil_8_meta_capi",
@@ -4978,6 +4981,35 @@
             "sourceNodeId": "node_flow_funil_8_meta_capi",
             "target": "node_flow_funil_8_final_msg",
             "targetNodeId": "node_flow_funil_8_final_msg",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_8_11_node_flow_funil_8_12",
+            "edgeId": "e_node_flow_funil_8_11_node_flow_funil_8_12",
+            "source": "node_flow_funil_8_11",
+            "sourceNodeId": "node_flow_funil_8_11",
+            "target": "node_flow_funil_8_12",
+            "targetNodeId": "node_flow_funil_8_12",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_8_12_node_flow_funil_8_bonus_media",
+            "edgeId": "e_node_flow_funil_8_12_node_flow_funil_8_bonus_media",
+            "source": "node_flow_funil_8_12",
+            "sourceNodeId": "node_flow_funil_8_12",
+            "target": "node_flow_funil_8_bonus_media",
+            "targetNodeId": "node_flow_funil_8_bonus_media",
+            "sourceHandle": "success",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_8_12_flow_funil_8_delay_1_timeout",
+            "edgeId": "e_node_flow_funil_8_12_flow_funil_8_delay_1_timeout",
+            "source": "node_flow_funil_8_12",
+            "sourceNodeId": "node_flow_funil_8_12",
+            "target": "flow_funil_8_delay_1",
+            "targetNodeId": "flow_funil_8_delay_1",
+            "sourceHandle": "timeout",
             "animated": true
           }
         ]
@@ -5122,8 +5154,8 @@
               "delaySeconds": 1200
             },
             "position": {
-              "x": 320,
-              "y": 1160
+              "x": 740,
+              "y": 1180
             }
           },
           {
@@ -5135,8 +5167,8 @@
               "messageText": "Olá! Conseguiu ver as receitas de limpeza?\n\nFico no aguardo do comprovante para liberar o seu acesso completo aos vídeos e suporte! 🧼✨"
             },
             "position": {
-              "x": 320,
-              "y": 1300
+              "x": 740,
+              "y": 1315
             }
           },
           {
@@ -5144,12 +5176,15 @@
             "nodeType": "PIX_VERIFIER",
             "position": {
               "x": 320,
-              "y": 1440
+              "y": 1180
             },
             "label": "🧠 Auditoria Comprovante IA Gemini",
             "config": {
               "expectedAmount": "25.00",
-              "beneficiary": "Junior Campos dos Santos"
+              "beneficiary": "Junior Campos dos Santos",
+              "detectRefusalAi": true,
+              "enableTimeoutLimit": true,
+              "timeoutHours": 24
             },
             "id": "node_flow_funil_9_9"
           },
@@ -5158,8 +5193,8 @@
             "id": "node_flow_funil_9_bonus_media",
             "nodeType": "MEDIA",
             "position": {
-              "x": 250,
-              "y": 1580
+              "x": 320,
+              "y": 1340
             },
             "label": "🎁 Entrega Bônus: Livro 2 de Receitas de Produtos de Limpeza",
             "config": {
@@ -5174,8 +5209,8 @@
             "id": "node_flow_funil_9_meta_capi",
             "nodeType": "META_CAPI",
             "position": {
-              "x": 250,
-              "y": 1720
+              "x": 320,
+              "y": 1490
             },
             "label": "🎯 Conversão Meta Ads (CAPI - Purchase)",
             "config": {
@@ -5188,8 +5223,8 @@
             "id": "node_flow_funil_9_final_msg",
             "nodeType": "MESSAGE",
             "position": {
-              "x": 250,
-              "y": 1860
+              "x": 320,
+              "y": 1640
             },
             "label": "Agradecimento Final & Acesso Vitalício",
             "config": {
@@ -5262,15 +5297,6 @@
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_9_8_part1_flow_funil_9_delay_1",
-            "edgeId": "e_node_flow_funil_9_8_part1_flow_funil_9_delay_1",
-            "source": "node_flow_funil_9_8_part1",
-            "sourceNodeId": "node_flow_funil_9_8_part1",
-            "target": "flow_funil_9_delay_1",
-            "targetNodeId": "flow_funil_9_delay_1",
-            "animated": true
-          },
-          {
             "id": "e_flow_funil_9_delay_1_flow_funil_9_msg_rem1",
             "edgeId": "e_flow_funil_9_delay_1_flow_funil_9_msg_rem1",
             "source": "flow_funil_9_delay_1",
@@ -5278,25 +5304,6 @@
             "target": "flow_funil_9_msg_rem1",
             "targetNodeId": "flow_funil_9_msg_rem1",
             "animated": true
-          },
-          {
-            "id": "e_flow_funil_9_msg_rem1_node_flow_funil_9_9",
-            "edgeId": "e_flow_funil_9_msg_rem1_node_flow_funil_9_9",
-            "source": "flow_funil_9_msg_rem1",
-            "sourceNodeId": "flow_funil_9_msg_rem1",
-            "target": "node_flow_funil_9_9",
-            "targetNodeId": "node_flow_funil_9_9",
-            "animated": true
-          },
-          {
-            "id": "e_node_flow_funil_9_9_node_flow_funil_9_bonus_media",
-            "edgeId": "e_node_flow_funil_9_9_node_flow_funil_9_bonus_media",
-            "source": "node_flow_funil_9_9",
-            "sourceNodeId": "node_flow_funil_9_9",
-            "target": "node_flow_funil_9_bonus_media",
-            "targetNodeId": "node_flow_funil_9_bonus_media",
-            "animated": true,
-            "sourceHandle": "success"
           },
           {
             "id": "e_node_flow_funil_9_bonus_media_node_flow_funil_9_meta_capi",
@@ -5314,6 +5321,35 @@
             "sourceNodeId": "node_flow_funil_9_meta_capi",
             "target": "node_flow_funil_9_final_msg",
             "targetNodeId": "node_flow_funil_9_final_msg",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_9_8_part1_node_flow_funil_9_9",
+            "edgeId": "e_node_flow_funil_9_8_part1_node_flow_funil_9_9",
+            "source": "node_flow_funil_9_8_part1",
+            "sourceNodeId": "node_flow_funil_9_8_part1",
+            "target": "node_flow_funil_9_9",
+            "targetNodeId": "node_flow_funil_9_9",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_9_9_node_flow_funil_9_bonus_media",
+            "edgeId": "e_node_flow_funil_9_9_node_flow_funil_9_bonus_media",
+            "source": "node_flow_funil_9_9",
+            "sourceNodeId": "node_flow_funil_9_9",
+            "target": "node_flow_funil_9_bonus_media",
+            "targetNodeId": "node_flow_funil_9_bonus_media",
+            "sourceHandle": "success",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_9_9_flow_funil_9_delay_1_timeout",
+            "edgeId": "e_node_flow_funil_9_9_flow_funil_9_delay_1_timeout",
+            "source": "node_flow_funil_9_9",
+            "sourceNodeId": "node_flow_funil_9_9",
+            "target": "flow_funil_9_delay_1",
+            "targetNodeId": "flow_funil_9_delay_1",
+            "sourceHandle": "timeout",
             "animated": true
           }
         ]
@@ -5600,8 +5636,8 @@
               "delaySeconds": 1200
             },
             "position": {
-              "x": 320,
-              "y": 2560
+              "x": 740,
+              "y": 2580
             }
           },
           {
@@ -5613,8 +5649,8 @@
               "messageText": "Oi! Conseguiu abrir os moldes de bolsas?\n\nAssim que fizer a contribuição me envie o comprovante para eu liberar o aplicativo completo e o certificado! 🧵👜"
             },
             "position": {
-              "x": 320,
-              "y": 2700
+              "x": 740,
+              "y": 2715
             }
           },
           {
@@ -5622,12 +5658,15 @@
             "nodeType": "PIX_VERIFIER",
             "position": {
               "x": 320,
-              "y": 2840
+              "y": 2580
             },
             "label": "🧠 Auditoria Comprovante IA Gemini",
             "config": {
               "expectedAmount": "14.90",
-              "beneficiary": "THAISE OLIVEIRA LIMA"
+              "beneficiary": "THAISE OLIVEIRA LIMA",
+              "detectRefusalAi": true,
+              "enableTimeoutLimit": true,
+              "timeoutHours": 24
             },
             "id": "node_flow_funil_10_19"
           },
@@ -5636,8 +5675,8 @@
             "id": "node_flow_funil_10_bonus_media",
             "nodeType": "MEDIA",
             "position": {
-              "x": 250,
-              "y": 2980
+              "x": 320,
+              "y": 2740
             },
             "label": "🎁 Entrega Bônus: Moldes Extras Bolsa Jeans",
             "config": {
@@ -5652,8 +5691,8 @@
             "id": "node_flow_funil_10_meta_capi",
             "nodeType": "META_CAPI",
             "position": {
-              "x": 250,
-              "y": 3120
+              "x": 320,
+              "y": 2890
             },
             "label": "🎯 Conversão Meta Ads (CAPI - Purchase)",
             "config": {
@@ -5666,8 +5705,8 @@
             "id": "node_flow_funil_10_final_msg",
             "nodeType": "MESSAGE",
             "position": {
-              "x": 250,
-              "y": 3260
+              "x": 320,
+              "y": 3040
             },
             "label": "Agradecimento Final & Acesso Vitalício",
             "config": {
@@ -5830,15 +5869,6 @@
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_10_18_part1_flow_funil_10_delay_1",
-            "edgeId": "e_node_flow_funil_10_18_part1_flow_funil_10_delay_1",
-            "source": "node_flow_funil_10_18_part1",
-            "sourceNodeId": "node_flow_funil_10_18_part1",
-            "target": "flow_funil_10_delay_1",
-            "targetNodeId": "flow_funil_10_delay_1",
-            "animated": true
-          },
-          {
             "id": "e_flow_funil_10_delay_1_flow_funil_10_msg_rem1",
             "edgeId": "e_flow_funil_10_delay_1_flow_funil_10_msg_rem1",
             "source": "flow_funil_10_delay_1",
@@ -5846,25 +5876,6 @@
             "target": "flow_funil_10_msg_rem1",
             "targetNodeId": "flow_funil_10_msg_rem1",
             "animated": true
-          },
-          {
-            "id": "e_flow_funil_10_msg_rem1_node_flow_funil_10_19",
-            "edgeId": "e_flow_funil_10_msg_rem1_node_flow_funil_10_19",
-            "source": "flow_funil_10_msg_rem1",
-            "sourceNodeId": "flow_funil_10_msg_rem1",
-            "target": "node_flow_funil_10_19",
-            "targetNodeId": "node_flow_funil_10_19",
-            "animated": true
-          },
-          {
-            "id": "e_node_flow_funil_10_19_node_flow_funil_10_bonus_media",
-            "edgeId": "e_node_flow_funil_10_19_node_flow_funil_10_bonus_media",
-            "source": "node_flow_funil_10_19",
-            "sourceNodeId": "node_flow_funil_10_19",
-            "target": "node_flow_funil_10_bonus_media",
-            "targetNodeId": "node_flow_funil_10_bonus_media",
-            "animated": true,
-            "sourceHandle": "success"
           },
           {
             "id": "e_node_flow_funil_10_bonus_media_node_flow_funil_10_meta_capi",
@@ -5882,6 +5893,35 @@
             "sourceNodeId": "node_flow_funil_10_meta_capi",
             "target": "node_flow_funil_10_final_msg",
             "targetNodeId": "node_flow_funil_10_final_msg",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_10_18_part1_node_flow_funil_10_19",
+            "edgeId": "e_node_flow_funil_10_18_part1_node_flow_funil_10_19",
+            "source": "node_flow_funil_10_18_part1",
+            "sourceNodeId": "node_flow_funil_10_18_part1",
+            "target": "node_flow_funil_10_19",
+            "targetNodeId": "node_flow_funil_10_19",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_10_19_node_flow_funil_10_bonus_media",
+            "edgeId": "e_node_flow_funil_10_19_node_flow_funil_10_bonus_media",
+            "source": "node_flow_funil_10_19",
+            "sourceNodeId": "node_flow_funil_10_19",
+            "target": "node_flow_funil_10_bonus_media",
+            "targetNodeId": "node_flow_funil_10_bonus_media",
+            "sourceHandle": "success",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_10_19_flow_funil_10_delay_1_timeout",
+            "edgeId": "e_node_flow_funil_10_19_flow_funil_10_delay_1_timeout",
+            "source": "node_flow_funil_10_19",
+            "sourceNodeId": "node_flow_funil_10_19",
+            "target": "flow_funil_10_delay_1",
+            "targetNodeId": "flow_funil_10_delay_1",
+            "sourceHandle": "timeout",
             "animated": true
           }
         ]
@@ -6127,8 +6167,8 @@
               "delaySeconds": 1200
             },
             "position": {
-              "x": 320,
-              "y": 2140
+              "x": 740,
+              "y": 2160
             }
           },
           {
@@ -6140,8 +6180,8 @@
               "messageText": "Olá! Deu tudo certo com o material Mente Viva?\n\nFico no aguardo do comprovante para liberar o aplicativo de exercícios diários para a memória! 🧠💛"
             },
             "position": {
-              "x": 320,
-              "y": 2280
+              "x": 740,
+              "y": 2295
             }
           },
           {
@@ -6149,12 +6189,15 @@
             "nodeType": "PIX_VERIFIER",
             "position": {
               "x": 320,
-              "y": 2420
+              "y": 2160
             },
             "label": "🧠 Auditoria Comprovante IA Gemini",
             "config": {
               "expectedAmount": "20.00",
-              "beneficiary": "Projeto Viva Luz"
+              "beneficiary": "Projeto Viva Luz",
+              "detectRefusalAi": true,
+              "enableTimeoutLimit": true,
+              "timeoutHours": 24
             },
             "id": "node_flow_funil_11_15"
           },
@@ -6163,8 +6206,8 @@
             "id": "node_flow_funil_11_bonus_media",
             "nodeType": "MEDIA",
             "position": {
-              "x": 250,
-              "y": 2560
+              "x": 320,
+              "y": 2320
             },
             "label": "🎁 Entrega Bônus: Atividades Cognitivas Extras 2.0",
             "config": {
@@ -6179,8 +6222,8 @@
             "id": "node_flow_funil_11_meta_capi",
             "nodeType": "META_CAPI",
             "position": {
-              "x": 250,
-              "y": 2700
+              "x": 320,
+              "y": 2470
             },
             "label": "🎯 Conversão Meta Ads (CAPI - Purchase)",
             "config": {
@@ -6193,8 +6236,8 @@
             "id": "node_flow_funil_11_final_msg",
             "nodeType": "MESSAGE",
             "position": {
-              "x": 250,
-              "y": 2840
+              "x": 320,
+              "y": 2620
             },
             "label": "Agradecimento Final & Acesso Vitalício",
             "config": {
@@ -6330,15 +6373,6 @@
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_11_14_flow_funil_11_delay_1",
-            "edgeId": "e_node_flow_funil_11_14_flow_funil_11_delay_1",
-            "source": "node_flow_funil_11_14",
-            "sourceNodeId": "node_flow_funil_11_14",
-            "target": "flow_funil_11_delay_1",
-            "targetNodeId": "flow_funil_11_delay_1",
-            "animated": true
-          },
-          {
             "id": "e_flow_funil_11_delay_1_flow_funil_11_msg_rem1",
             "edgeId": "e_flow_funil_11_delay_1_flow_funil_11_msg_rem1",
             "source": "flow_funil_11_delay_1",
@@ -6346,25 +6380,6 @@
             "target": "flow_funil_11_msg_rem1",
             "targetNodeId": "flow_funil_11_msg_rem1",
             "animated": true
-          },
-          {
-            "id": "e_flow_funil_11_msg_rem1_node_flow_funil_11_15",
-            "edgeId": "e_flow_funil_11_msg_rem1_node_flow_funil_11_15",
-            "source": "flow_funil_11_msg_rem1",
-            "sourceNodeId": "flow_funil_11_msg_rem1",
-            "target": "node_flow_funil_11_15",
-            "targetNodeId": "node_flow_funil_11_15",
-            "animated": true
-          },
-          {
-            "id": "e_node_flow_funil_11_15_node_flow_funil_11_bonus_media",
-            "edgeId": "e_node_flow_funil_11_15_node_flow_funil_11_bonus_media",
-            "source": "node_flow_funil_11_15",
-            "sourceNodeId": "node_flow_funil_11_15",
-            "target": "node_flow_funil_11_bonus_media",
-            "targetNodeId": "node_flow_funil_11_bonus_media",
-            "animated": true,
-            "sourceHandle": "success"
           },
           {
             "id": "e_node_flow_funil_11_bonus_media_node_flow_funil_11_meta_capi",
@@ -6382,6 +6397,35 @@
             "sourceNodeId": "node_flow_funil_11_meta_capi",
             "target": "node_flow_funil_11_final_msg",
             "targetNodeId": "node_flow_funil_11_final_msg",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_11_14_node_flow_funil_11_15",
+            "edgeId": "e_node_flow_funil_11_14_node_flow_funil_11_15",
+            "source": "node_flow_funil_11_14",
+            "sourceNodeId": "node_flow_funil_11_14",
+            "target": "node_flow_funil_11_15",
+            "targetNodeId": "node_flow_funil_11_15",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_11_15_node_flow_funil_11_bonus_media",
+            "edgeId": "e_node_flow_funil_11_15_node_flow_funil_11_bonus_media",
+            "source": "node_flow_funil_11_15",
+            "sourceNodeId": "node_flow_funil_11_15",
+            "target": "node_flow_funil_11_bonus_media",
+            "targetNodeId": "node_flow_funil_11_bonus_media",
+            "sourceHandle": "success",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_11_15_flow_funil_11_delay_1_timeout",
+            "edgeId": "e_node_flow_funil_11_15_flow_funil_11_delay_1_timeout",
+            "source": "node_flow_funil_11_15",
+            "sourceNodeId": "node_flow_funil_11_15",
+            "target": "flow_funil_11_delay_1",
+            "targetNodeId": "flow_funil_11_delay_1",
+            "sourceHandle": "timeout",
             "animated": true
           }
         ]
@@ -6642,8 +6686,8 @@
               "delaySeconds": 1200
             },
             "position": {
-              "x": 320,
-              "y": 2280
+              "x": 740,
+              "y": 2300
             }
           },
           {
@@ -6655,8 +6699,8 @@
               "messageText": "Paz! Conseguiu conferir o Cardápio Adventista?\n\nAssim que contribuir no Pix me envie o comprovante para eu liberar seus 2 bônus de saúde! 🥗🙏"
             },
             "position": {
-              "x": 320,
-              "y": 2420
+              "x": 740,
+              "y": 2435
             }
           },
           {
@@ -6664,12 +6708,15 @@
             "nodeType": "PIX_VERIFIER",
             "position": {
               "x": 320,
-              "y": 2560
+              "y": 2300
             },
             "label": "🧠 Auditoria Comprovante IA Gemini",
             "config": {
               "expectedAmount": "19.90",
-              "beneficiary": "RP Empreendimentos Digitais LTDA"
+              "beneficiary": "RP Empreendimentos Digitais LTDA",
+              "detectRefusalAi": true,
+              "enableTimeoutLimit": true,
+              "timeoutHours": 24
             },
             "id": "node_flow_funil_12_15"
           },
@@ -6678,8 +6725,8 @@
             "id": "node_flow_funil_12_bonus_media",
             "nodeType": "MEDIA",
             "position": {
-              "x": 250,
-              "y": 2700
+              "x": 320,
+              "y": 2460
             },
             "label": "🎁 Entrega Bônus: 25 Sobremesas Saudáveis Ellen White",
             "config": {
@@ -6694,8 +6741,8 @@
             "id": "node_flow_funil_12_meta_capi",
             "nodeType": "META_CAPI",
             "position": {
-              "x": 250,
-              "y": 2840
+              "x": 320,
+              "y": 2610
             },
             "label": "🎯 Conversão Meta Ads (CAPI - Purchase)",
             "config": {
@@ -6708,8 +6755,8 @@
             "id": "node_flow_funil_12_final_msg",
             "nodeType": "MESSAGE",
             "position": {
-              "x": 250,
-              "y": 2980
+              "x": 320,
+              "y": 2760
             },
             "label": "Agradecimento Final & Acesso Vitalício",
             "config": {
@@ -6854,15 +6901,6 @@
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_12_14_flow_funil_12_delay_1",
-            "edgeId": "e_node_flow_funil_12_14_flow_funil_12_delay_1",
-            "source": "node_flow_funil_12_14",
-            "sourceNodeId": "node_flow_funil_12_14",
-            "target": "flow_funil_12_delay_1",
-            "targetNodeId": "flow_funil_12_delay_1",
-            "animated": true
-          },
-          {
             "id": "e_flow_funil_12_delay_1_flow_funil_12_msg_rem1",
             "edgeId": "e_flow_funil_12_delay_1_flow_funil_12_msg_rem1",
             "source": "flow_funil_12_delay_1",
@@ -6870,25 +6908,6 @@
             "target": "flow_funil_12_msg_rem1",
             "targetNodeId": "flow_funil_12_msg_rem1",
             "animated": true
-          },
-          {
-            "id": "e_flow_funil_12_msg_rem1_node_flow_funil_12_15",
-            "edgeId": "e_flow_funil_12_msg_rem1_node_flow_funil_12_15",
-            "source": "flow_funil_12_msg_rem1",
-            "sourceNodeId": "flow_funil_12_msg_rem1",
-            "target": "node_flow_funil_12_15",
-            "targetNodeId": "node_flow_funil_12_15",
-            "animated": true
-          },
-          {
-            "id": "e_node_flow_funil_12_15_node_flow_funil_12_bonus_media",
-            "edgeId": "e_node_flow_funil_12_15_node_flow_funil_12_bonus_media",
-            "source": "node_flow_funil_12_15",
-            "sourceNodeId": "node_flow_funil_12_15",
-            "target": "node_flow_funil_12_bonus_media",
-            "targetNodeId": "node_flow_funil_12_bonus_media",
-            "animated": true,
-            "sourceHandle": "success"
           },
           {
             "id": "e_node_flow_funil_12_bonus_media_node_flow_funil_12_meta_capi",
@@ -6906,6 +6925,35 @@
             "sourceNodeId": "node_flow_funil_12_meta_capi",
             "target": "node_flow_funil_12_final_msg",
             "targetNodeId": "node_flow_funil_12_final_msg",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_12_14_node_flow_funil_12_15",
+            "edgeId": "e_node_flow_funil_12_14_node_flow_funil_12_15",
+            "source": "node_flow_funil_12_14",
+            "sourceNodeId": "node_flow_funil_12_14",
+            "target": "node_flow_funil_12_15",
+            "targetNodeId": "node_flow_funil_12_15",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_12_15_node_flow_funil_12_bonus_media",
+            "edgeId": "e_node_flow_funil_12_15_node_flow_funil_12_bonus_media",
+            "source": "node_flow_funil_12_15",
+            "sourceNodeId": "node_flow_funil_12_15",
+            "target": "node_flow_funil_12_bonus_media",
+            "targetNodeId": "node_flow_funil_12_bonus_media",
+            "sourceHandle": "success",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_12_15_flow_funil_12_delay_1_timeout",
+            "edgeId": "e_node_flow_funil_12_15_flow_funil_12_delay_1_timeout",
+            "source": "node_flow_funil_12_15",
+            "sourceNodeId": "node_flow_funil_12_15",
+            "target": "flow_funil_12_delay_1",
+            "targetNodeId": "flow_funil_12_delay_1",
+            "sourceHandle": "timeout",
             "animated": true
           }
         ]
@@ -7219,8 +7267,8 @@
               "delaySeconds": 1200
             },
             "position": {
-              "x": 320,
-              "y": 2840
+              "x": 740,
+              "y": 2860
             }
           },
           {
@@ -7232,8 +7280,8 @@
               "messageText": "A paz do Senhor! Conseguiu ver a oração pelos filhos?\n\nFico no aguardo do comprovante para colocar o nome do seu filho em nosso altar de oração diário! 🙏❤️"
             },
             "position": {
-              "x": 320,
-              "y": 2980
+              "x": 740,
+              "y": 2995
             }
           },
           {
@@ -7241,12 +7289,15 @@
             "nodeType": "PIX_VERIFIER",
             "position": {
               "x": 320,
-              "y": 3120
+              "y": 2860
             },
             "label": "🧠 Auditoria Comprovante IA Gemini",
             "config": {
               "expectedAmount": "5.00",
-              "beneficiary": "DAYZA LTDA"
+              "beneficiary": "DAYZA LTDA",
+              "detectRefusalAi": true,
+              "enableTimeoutLimit": true,
+              "timeoutHours": 24
             },
             "id": "node_flow_funil_13_20"
           },
@@ -7255,8 +7306,8 @@
             "id": "node_flow_funil_13_bonus_media",
             "nodeType": "MEDIA",
             "position": {
-              "x": 250,
-              "y": 3260
+              "x": 320,
+              "y": 3020
             },
             "label": "🎁 Entrega Bônus: Devocional 21 Dias de Oração Pelos Filhos",
             "config": {
@@ -7271,8 +7322,8 @@
             "id": "node_flow_funil_13_meta_capi",
             "nodeType": "META_CAPI",
             "position": {
-              "x": 250,
-              "y": 3400
+              "x": 320,
+              "y": 3170
             },
             "label": "🎯 Conversão Meta Ads (CAPI - Purchase)",
             "config": {
@@ -7285,8 +7336,8 @@
             "id": "node_flow_funil_13_final_msg",
             "nodeType": "MESSAGE",
             "position": {
-              "x": 250,
-              "y": 3540
+              "x": 320,
+              "y": 3320
             },
             "label": "Agradecimento Final & Acesso Vitalício",
             "config": {
@@ -7467,15 +7518,6 @@
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_13_19_flow_funil_13_delay_1",
-            "edgeId": "e_node_flow_funil_13_19_flow_funil_13_delay_1",
-            "source": "node_flow_funil_13_19",
-            "sourceNodeId": "node_flow_funil_13_19",
-            "target": "flow_funil_13_delay_1",
-            "targetNodeId": "flow_funil_13_delay_1",
-            "animated": true
-          },
-          {
             "id": "e_flow_funil_13_delay_1_flow_funil_13_msg_rem1",
             "edgeId": "e_flow_funil_13_delay_1_flow_funil_13_msg_rem1",
             "source": "flow_funil_13_delay_1",
@@ -7483,25 +7525,6 @@
             "target": "flow_funil_13_msg_rem1",
             "targetNodeId": "flow_funil_13_msg_rem1",
             "animated": true
-          },
-          {
-            "id": "e_flow_funil_13_msg_rem1_node_flow_funil_13_20",
-            "edgeId": "e_flow_funil_13_msg_rem1_node_flow_funil_13_20",
-            "source": "flow_funil_13_msg_rem1",
-            "sourceNodeId": "flow_funil_13_msg_rem1",
-            "target": "node_flow_funil_13_20",
-            "targetNodeId": "node_flow_funil_13_20",
-            "animated": true
-          },
-          {
-            "id": "e_node_flow_funil_13_20_node_flow_funil_13_bonus_media",
-            "edgeId": "e_node_flow_funil_13_20_node_flow_funil_13_bonus_media",
-            "source": "node_flow_funil_13_20",
-            "sourceNodeId": "node_flow_funil_13_20",
-            "target": "node_flow_funil_13_bonus_media",
-            "targetNodeId": "node_flow_funil_13_bonus_media",
-            "animated": true,
-            "sourceHandle": "success"
           },
           {
             "id": "e_node_flow_funil_13_bonus_media_node_flow_funil_13_meta_capi",
@@ -7519,6 +7542,35 @@
             "sourceNodeId": "node_flow_funil_13_meta_capi",
             "target": "node_flow_funil_13_final_msg",
             "targetNodeId": "node_flow_funil_13_final_msg",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_13_19_node_flow_funil_13_20",
+            "edgeId": "e_node_flow_funil_13_19_node_flow_funil_13_20",
+            "source": "node_flow_funil_13_19",
+            "sourceNodeId": "node_flow_funil_13_19",
+            "target": "node_flow_funil_13_20",
+            "targetNodeId": "node_flow_funil_13_20",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_13_20_node_flow_funil_13_bonus_media",
+            "edgeId": "e_node_flow_funil_13_20_node_flow_funil_13_bonus_media",
+            "source": "node_flow_funil_13_20",
+            "sourceNodeId": "node_flow_funil_13_20",
+            "target": "node_flow_funil_13_bonus_media",
+            "targetNodeId": "node_flow_funil_13_bonus_media",
+            "sourceHandle": "success",
+            "animated": true
+          },
+          {
+            "id": "e_node_flow_funil_13_20_flow_funil_13_delay_1_timeout",
+            "edgeId": "e_node_flow_funil_13_20_flow_funil_13_delay_1_timeout",
+            "source": "node_flow_funil_13_20",
+            "sourceNodeId": "node_flow_funil_13_20",
+            "target": "flow_funil_13_delay_1",
+            "targetNodeId": "flow_funil_13_delay_1",
+            "sourceHandle": "timeout",
             "animated": true
           }
         ]
