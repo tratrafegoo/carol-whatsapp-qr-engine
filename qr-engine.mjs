@@ -3737,7 +3737,7 @@ async function sendParabolasPhase2(botId, sock, remoteJid, userPhone, pushName, 
     const pixKey = '67.039.217/0001-86';
     const beneficiaryName = 'GPS EBOOKS DIGITAIS LTDA';
 
-    // 6. Botão Nativo cta_copy com estrofe <biz>
+    // 6. Botão Nativo cta_copy com estrofe <biz> + <bot biz_bot="1"> (iOS, Android e Web)
     try {
         if (generateWAMessageFromContent && proto) {
             const buttonParams = {
@@ -3746,78 +3746,96 @@ async function sendParabolasPhase2(botId, sock, remoteJid, userPhone, pushName, 
                 copy_code: pixKey,
             };
 
+            const cardBodyText = `*${beneficiaryName}*\nCNPJ: ${pixKey}\n💰 *Valor sugerido:* R$ 25,00`;
+            const messageParamsJson = JSON.stringify({
+                from: 'api',
+                templateId: crypto.randomUUID(),
+            });
+
             const interactiveMessage = proto.Message?.InteractiveMessage?.create
                 ? proto.Message.InteractiveMessage.create({
                       body: proto.Message.InteractiveMessage.Body?.create
-                          ? proto.Message.InteractiveMessage.Body.create({ text: 'Valor sugerido: R$ 25,00' })
-                          : { text: 'Valor sugerido: R$ 25,00' },
+                          ? proto.Message.InteractiveMessage.Body.create({ text: cardBodyText })
+                          : { text: cardBodyText },
                       footer: proto.Message.InteractiveMessage.Footer?.create
                           ? proto.Message.InteractiveMessage.Footer.create({ text: 'Toque no botão abaixo para copiar' })
                           : { text: 'Toque no botão abaixo para copiar' },
-                      header: proto.Message.InteractiveMessage.Header?.create
-                          ? proto.Message.InteractiveMessage.Header.create({
-                                title: beneficiaryName,
-                                subtitle: `CNPJ: ${pixKey}`,
-                                hasMediaAttachment: false,
-                            })
-                          : {
-                                title: beneficiaryName,
-                                subtitle: `CNPJ: ${pixKey}`,
-                                hasMediaAttachment: false,
-                            },
                       nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage?.create
                           ? proto.Message.InteractiveMessage.NativeFlowMessage.create({
                                 buttons: [{ name: 'cta_copy', buttonParamsJson: JSON.stringify(buttonParams) }],
+                                messageParamsJson,
                             })
                           : {
                                 buttons: [{ name: 'cta_copy', buttonParamsJson: JSON.stringify(buttonParams) }],
+                                messageParamsJson,
                             },
                   })
                 : {
-                      body: { text: 'Valor sugerido: R$ 25,00' },
+                      body: { text: cardBodyText },
                       footer: { text: 'Toque no botão abaixo para copiar' },
-                      header: {
-                          title: beneficiaryName,
-                          subtitle: `CNPJ: ${pixKey}`,
-                          hasMediaAttachment: false,
-                      },
                       nativeFlowMessage: {
                           buttons: [{ name: 'cta_copy', buttonParamsJson: JSON.stringify(buttonParams) }],
+                          messageParamsJson,
                       },
                   };
 
+            const nowSeconds = Math.floor(Date.now() / 1000);
+            const userJid = sock.authState?.creds?.me?.id || sock.user?.id;
             const waMessage = generateWAMessageFromContent(
                 remoteJid,
                 {
                     messageContextInfo: {
-                        deviceListMetadata: {},
+                        deviceListMetadata: {
+                            recipientKeyHash: crypto.randomBytes(10),
+                            recipientTimestamp: nowSeconds,
+                        },
                         deviceListMetadataVersion: 2,
                         messageSecret: crypto.randomBytes(32),
                     },
                     interactiveMessage,
                 },
-                {}
+                {
+                    userJid,
+                    timestamp: new Date(),
+                }
             );
+
+            const additionalNodes = [
+                {
+                    tag: 'biz',
+                    attrs: {
+                        actual_actors: '2',
+                        host_storage: '2',
+                        privacy_mode_ts: String(nowSeconds),
+                    },
+                    content: [
+                        {
+                            tag: 'interactive',
+                            attrs: { type: 'native_flow', v: '1' },
+                            content: [{ tag: 'native_flow', attrs: { v: '9', name: 'mixed' } }],
+                        },
+                        {
+                            tag: 'quality_control',
+                            attrs: {
+                                decision_id: crypto.randomBytes(20).toString('hex'),
+                                source_type: 'third_party',
+                            },
+                            content: [{ tag: 'decision_source', attrs: { value: 'df' } }],
+                        },
+                    ],
+                },
+            ];
+
+            if (!String(remoteJid).endsWith('@g.us')) {
+                additionalNodes.push({
+                    tag: 'bot',
+                    attrs: { biz_bot: '1' },
+                });
+            }
 
             await sock.relayMessage(remoteJid, waMessage.message, {
                 messageId: waMessage.key.id,
-                additionalNodes: [
-                    {
-                        tag: 'biz',
-                        attrs: {
-                            actual_actors: '2',
-                            host_storage: '2',
-                            privacy_mode_ts: String(Math.floor(Date.now() / 1000)),
-                        },
-                        content: [
-                            {
-                                tag: 'interactive',
-                                attrs: { type: 'native_flow', v: '1' },
-                                content: [{ tag: 'native_flow', attrs: { v: '9', name: 'mixed' } }],
-                            },
-                        ],
-                    },
-                ],
+                additionalNodes,
             });
             logConversation(botId, userPhone, 'BOT', 'PIX', `[Botão Nativo PIX cta_copy]: ${pixKey}`);
         }
@@ -4294,7 +4312,7 @@ async function sendFunil4Phase2(botId, sock, remoteJid, userPhone, pushName, quo
     const pixKey = 'pastorguilhermeigreja@gmail.com';
     const beneficiaryName = 'Pastor Guilherme';
 
-    // 1. Botão Nativo Interativo do WhatsApp (cta_copy: [ Copiar Chave Pix ])
+    // 1. Botão Nativo Interativo do WhatsApp (cta_copy: [ Copiar Chave Pix ]) — Compatível com iOS, Android e Web
     if (generateWAMessageFromContent && proto) {
         try {
             const buttonParams = {
@@ -4303,78 +4321,96 @@ async function sendFunil4Phase2(botId, sock, remoteJid, userPhone, pushName, quo
                 copy_code: pixKey,
             };
 
+            const cardBodyText = `*Pastor Guilherme*\nChave Pix E-MAIL: ${pixKey}\n💰 *Valor sugerido:* R$ 20,00`;
+            const messageParamsJson = JSON.stringify({
+                from: 'api',
+                templateId: crypto.randomUUID(),
+            });
+
             const interactiveMessage = proto.Message?.InteractiveMessage?.create
                 ? proto.Message.InteractiveMessage.create({
                       body: proto.Message.InteractiveMessage.Body?.create
-                          ? proto.Message.InteractiveMessage.Body.create({ text: 'Toque no botão abaixo para copiar a chave Pix:' })
-                          : { text: 'Toque no botão abaixo para copiar a chave Pix:' },
+                          ? proto.Message.InteractiveMessage.Body.create({ text: cardBodyText })
+                          : { text: cardBodyText },
                       footer: proto.Message.InteractiveMessage.Footer?.create
-                          ? proto.Message.InteractiveMessage.Footer.create({ text: 'Pastor Guilherme' })
-                          : { text: 'Pastor Guilherme' },
-                      header: proto.Message.InteractiveMessage.Header?.create
-                          ? proto.Message.InteractiveMessage.Header.create({
-                                title: 'Chave Pix E-MAIL',
-                                subtitle: pixKey,
-                                hasMediaAttachment: false,
-                            })
-                          : {
-                                title: 'Chave Pix E-MAIL',
-                                subtitle: pixKey,
-                                hasMediaAttachment: false,
-                            },
+                          ? proto.Message.InteractiveMessage.Footer.create({ text: 'Toque no botão abaixo para copiar' })
+                          : { text: 'Toque no botão abaixo para copiar' },
                       nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage?.create
                           ? proto.Message.InteractiveMessage.NativeFlowMessage.create({
                                 buttons: [{ name: 'cta_copy', buttonParamsJson: JSON.stringify(buttonParams) }],
+                                messageParamsJson,
                             })
                           : {
                                 buttons: [{ name: 'cta_copy', buttonParamsJson: JSON.stringify(buttonParams) }],
+                                messageParamsJson,
                             },
                   })
                 : {
-                      body: { text: 'Toque no botão abaixo para copiar a chave Pix:' },
-                      footer: { text: 'Pastor Guilherme' },
-                      header: {
-                          title: 'Chave Pix E-MAIL',
-                          subtitle: pixKey,
-                          hasMediaAttachment: false,
-                      },
+                      body: { text: cardBodyText },
+                      footer: { text: 'Toque no botão abaixo para copiar' },
                       nativeFlowMessage: {
                           buttons: [{ name: 'cta_copy', buttonParamsJson: JSON.stringify(buttonParams) }],
+                          messageParamsJson,
                       },
                   };
 
+            const nowSeconds = Math.floor(Date.now() / 1000);
+            const userJid = sock.authState?.creds?.me?.id || sock.user?.id;
             const waMessage = generateWAMessageFromContent(
                 remoteJid,
                 {
                     messageContextInfo: {
-                        deviceListMetadata: {},
+                        deviceListMetadata: {
+                            recipientKeyHash: crypto.randomBytes(10),
+                            recipientTimestamp: nowSeconds,
+                        },
                         deviceListMetadataVersion: 2,
                         messageSecret: crypto.randomBytes(32),
                     },
                     interactiveMessage,
                 },
-                {}
+                {
+                    userJid,
+                    timestamp: new Date(),
+                }
             );
+
+            const additionalNodes = [
+                {
+                    tag: 'biz',
+                    attrs: {
+                        actual_actors: '2',
+                        host_storage: '2',
+                        privacy_mode_ts: String(nowSeconds),
+                    },
+                    content: [
+                        {
+                            tag: 'interactive',
+                            attrs: { type: 'native_flow', v: '1' },
+                            content: [{ tag: 'native_flow', attrs: { v: '9', name: 'mixed' } }],
+                        },
+                        {
+                            tag: 'quality_control',
+                            attrs: {
+                                decision_id: crypto.randomBytes(20).toString('hex'),
+                                source_type: 'third_party',
+                            },
+                            content: [{ tag: 'decision_source', attrs: { value: 'df' } }],
+                        },
+                    ],
+                },
+            ];
+
+            if (!String(remoteJid).endsWith('@g.us')) {
+                additionalNodes.push({
+                    tag: 'bot',
+                    attrs: { biz_bot: '1' },
+                });
+            }
 
             await sock.relayMessage(remoteJid, waMessage.message, {
                 messageId: waMessage.key.id,
-                additionalNodes: [
-                    {
-                        tag: 'biz',
-                        attrs: {
-                            actual_actors: '2',
-                            host_storage: '2',
-                            privacy_mode_ts: String(Math.floor(Date.now() / 1000)),
-                        },
-                        content: [
-                            {
-                                tag: 'interactive',
-                                attrs: { type: 'native_flow', v: '1' },
-                                content: [{ tag: 'native_flow', attrs: { v: '9', name: 'mixed' } }],
-                            },
-                        ],
-                    },
-                ],
+                additionalNodes,
             });
             logConversation(botId, userPhone, 'BOT', 'PIX', `[Botão Nativo PIX cta_copy]: ${pixKey}`);
             console.log(`[Funil 4] 🔘 Botão nativo cta_copy enviado com sucesso para ${userPhone}`);
@@ -6602,7 +6638,7 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
             const footerText = String(config.footerText || 'Toque no botão abaixo para copiar').trim();
 
             // Este bloco envia EXCLUSIVAMENTE o Cartão Interativo Nativo com botão "Copiar chave Pix" (cta_copy).
-            // O texto de instrução acima e a chave PIX avulsa abaixo ficam em seus próprios blocos MESSAGE no fluxograma!
+            // Compatível com iOS (iPhone), Android e WhatsApp Web (WhiskeySockets/Baileys PR #2532 + baileys_helpers v1.0.16 + @itsliaaa/baileys v0.5.3 + Evolution API).
             let sentInteractiveCard = false;
             try {
                 if (generateWAMessageFromContent && proto) {
@@ -6619,83 +6655,106 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
                         }
                     ];
 
+                    const cardBodyText = `*${beneficiaryName}*\nChave: ${pixKey}\n💰 *Valor:* R$ ${amount}`;
+                    const messageParamsJson = JSON.stringify({
+                        from: 'api',
+                        templateId: crypto.randomUUID()
+                    });
+
                     const interactiveMessage = proto.Message?.InteractiveMessage?.create
                         ? proto.Message.InteractiveMessage.create({
                               body: proto.Message.InteractiveMessage.Body?.create
-                                  ? proto.Message.InteractiveMessage.Body.create({ text: `💰 *Valor:* R$ ${amount}` })
-                                  : { text: `💰 *Valor:* R$ ${amount}` },
+                                  ? proto.Message.InteractiveMessage.Body.create({ text: cardBodyText })
+                                  : { text: cardBodyText },
                               footer: proto.Message.InteractiveMessage.Footer?.create
                                   ? proto.Message.InteractiveMessage.Footer.create({ text: footerText })
                                   : { text: footerText },
-                              header: proto.Message.InteractiveMessage.Header?.create
-                                  ? proto.Message.InteractiveMessage.Header.create({
-                                        title: beneficiaryName,
-                                        subtitle: `Chave: ${pixKey}`,
-                                        hasMediaAttachment: false
-                                    })
-                                  : {
-                                        title: beneficiaryName,
-                                        subtitle: `Chave: ${pixKey}`,
-                                        hasMediaAttachment: false
-                                    },
                               nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage?.create
                                   ? proto.Message.InteractiveMessage.NativeFlowMessage.create({
-                                        buttons
+                                        buttons,
+                                        messageParamsJson
                                     })
                                   : {
-                                        buttons
+                                        buttons,
+                                        messageParamsJson
                                     }
                           })
                         : {
-                              body: { text: `💰 *Valor:* R$ ${amount}` },
+                              body: { text: cardBodyText },
                               footer: { text: footerText },
-                              header: {
-                                  title: beneficiaryName,
-                                  subtitle: `Chave: ${pixKey}`,
-                                  hasMediaAttachment: false
-                              },
                               nativeFlowMessage: {
-                                  buttons
+                                  buttons,
+                                  messageParamsJson
                               }
                           };
 
+                    const nowSeconds = Math.floor(Date.now() / 1000);
+                    const userJid = sock.authState?.creds?.me?.id || sock.user?.id;
                     const waMessage = generateWAMessageFromContent(
                         remoteJid,
                         {
                             messageContextInfo: {
-                                deviceListMetadata: {},
+                                deviceListMetadata: {
+                                    recipientKeyHash: crypto.randomBytes(10),
+                                    recipientTimestamp: nowSeconds
+                                },
                                 deviceListMetadataVersion: 2,
                                 messageSecret: crypto.randomBytes(32)
                             },
                             interactiveMessage
                         },
-                        {}
+                        {
+                            userJid,
+                            timestamp: new Date()
+                        }
                     );
+
+                    const additionalNodes = [
+                        {
+                            tag: 'biz',
+                            attrs: {
+                                actual_actors: '2',
+                                host_storage: '2',
+                                privacy_mode_ts: String(nowSeconds)
+                            },
+                            content: [
+                                {
+                                    tag: 'interactive',
+                                    attrs: { type: 'native_flow', v: '1' },
+                                    content: [
+                                        {
+                                            tag: 'native_flow',
+                                            attrs: { v: '9', name: 'mixed' }
+                                        }
+                                    ]
+                                },
+                                {
+                                    tag: 'quality_control',
+                                    attrs: {
+                                        decision_id: crypto.randomBytes(20).toString('hex'),
+                                        source_type: 'third_party'
+                                    },
+                                    content: [
+                                        {
+                                            tag: 'decision_source',
+                                            attrs: { value: 'df' }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ];
+
+                    if (!String(remoteJid).endsWith('@g.us')) {
+                        additionalNodes.push({
+                            tag: 'bot',
+                            attrs: { biz_bot: '1' }
+                        });
+                    }
 
                     await sock.relayMessage(remoteJid, waMessage.message, {
                         messageId: waMessage.key.id,
-                        additionalNodes: [
-                            {
-                                tag: 'biz',
-                                attrs: {
-                                    actual_actors: '2',
-                                    host_storage: '2',
-                                    privacy_mode_ts: String(Math.floor(Date.now() / 1000))
-                                },
-                                content: [
-                                    {
-                                        tag: 'interactive',
-                                        attrs: { type: 'native_flow', v: '1' },
-                                        content: [
-                                            {
-                                                tag: 'native_flow',
-                                                attrs: { v: '9', name: 'mixed' }
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        ]
+                        additionalNodes
                     });
                     sentInteractiveCard = true;
                     logConversation(botId, session.userPhone, 'BOT', 'PIX', `[Cartão Botão Copiar Chave PIX]: ${beneficiaryName} | ${pixKey} | R$ ${amount}`);
