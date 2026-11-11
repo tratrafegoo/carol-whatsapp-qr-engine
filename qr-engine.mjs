@@ -5541,7 +5541,7 @@ async function handleIncomingMessage(botId, sock, msg) {
                         const audioMime = msg.message.audioMessage?.mimetype || 'audio/ogg';
                         const audioAudit = await auditAudioRefusalWithGemini(audioBuffer, audioMime);
 
-                        if (audioAudit.isRefusal) {
+                        if (audioAudit.isRefusal && !session.rejectedPayment) {
                             console.warn(`[Visual Flow] 🛑 Lead ${userPhone} expressou recusa/objeção via ÁUDIO: "${audioAudit.transcript}" (${audioAudit.refusalReason})`);
                             cancelAllTimers();
                             if (store.scheduledJobs) {
@@ -5551,8 +5551,9 @@ async function handleIncomingMessage(botId, sock, msg) {
                             const verifierNodeId = verifierNode ? verifierNode.nodeId : session.currentNodeId;
                             const failEdge = edges.find(e => (e.sourceNodeId || e.source) === verifierNodeId && e.sourceHandle === 'fail');
                             if (failEdge) {
-                                session.waitingFor = null;
+                                session.waitingFor = 'PIX_RECEIPT';
                                 session.rejectedPayment = true;
+                                session.wasInRecovery = true;
                                 session.currentNodeId = verifierNodeId;
                                 saveStore(store);
                                 await executeFromNode(botId, sock, remoteJid, session, failEdge.targetNodeId || failEdge.target, nodes, edges);
@@ -5560,17 +5561,20 @@ async function handleIncomingMessage(botId, sock, msg) {
                             } else {
                                 const refusalMsg = verifierNode?.config?.refusalMessage || 
                                     'Entendido perfeitamente! Sem problemas, ficamos à disposição caso mude de ideia ou precise de qualquer ajuda no futuro. Que Deus abençoe! 🙏';
-                                session.waitingFor = null;
+                                session.waitingFor = 'PIX_RECEIPT';
                                 session.rejectedPayment = true;
+                                session.wasInRecovery = true;
                                 saveStore(store);
                                 await sendRealisticText(botId, sock, remoteJid, userPhone, refusalMsg);
                                 return;
                             }
                         } else {
                             console.log(`[Visual Flow] 🎙️ Áudio de ${userPhone} processado. Não é recusa: "${audioAudit.transcript}". Mantendo espera.`);
+                            return;
                         }
                     }
                 }
+                return;
             }
 
             // D) Lead enviou mensagem de TEXTO durante a espera do comprovante
@@ -5578,7 +5582,7 @@ async function handleIncomingMessage(botId, sock, msg) {
                 const detectRefusal = verifierNode?.config?.detectRefusalAi !== false;
                 const isRefusal = detectRefusal && detectPaymentRefusal(textContent);
 
-                if (isRefusal) {
+                if (isRefusal && !session.rejectedPayment) {
                     console.warn(`[Visual Flow] 🛑 Lead ${userPhone} expressou recusa/objeção de pagamento: "${textContent}"`);
                     cancelAllTimers();
                     if (store.scheduledJobs) {
@@ -5588,8 +5592,9 @@ async function handleIncomingMessage(botId, sock, msg) {
                     const verifierNodeId = verifierNode ? verifierNode.nodeId : session.currentNodeId;
                     const failEdge = edges.find(e => (e.sourceNodeId || e.source) === verifierNodeId && e.sourceHandle === 'fail');
                     if (failEdge) {
-                        session.waitingFor = null;
+                        session.waitingFor = 'PIX_RECEIPT';
                         session.rejectedPayment = true;
+                        session.wasInRecovery = true;
                         session.currentNodeId = verifierNodeId;
                         saveStore(store);
                         await executeFromNode(botId, sock, remoteJid, session, failEdge.targetNodeId || failEdge.target, nodes, edges);
@@ -5597,13 +5602,17 @@ async function handleIncomingMessage(botId, sock, msg) {
                     } else {
                         const refusalMsg = verifierNode?.config?.refusalMessage || 
                             'Entendido perfeitamente! Sem problemas, ficamos à disposição caso mude de ideia ou precise de qualquer ajuda no futuro. Que Deus abençoe! 🙏';
-                        session.waitingFor = null;
+                        session.waitingFor = 'PIX_RECEIPT';
                         session.rejectedPayment = true;
+                        session.wasInRecovery = true;
                         saveStore(store);
                         await sendRealisticText(botId, sock, remoteJid, userPhone, refusalMsg);
                         return;
                     }
                 }
+                // Se o lead mandou uma mensagem comum enquanto aguarda o comprovante (ex: "Já vou mandar", "Pronto"),
+                // mantém a sessão ativa aguardando a imagem/PDF sem reiniciar o funil!
+                return;
             }
         }
     }
@@ -5613,7 +5622,7 @@ async function handleIncomingMessage(botId, sock, msg) {
 
     // Fallback 100% Visual: se for um novo lead sem sessão ativa (ex: "Oi, bom dia" ou clique de anúncio CTWA)
     // e nenhum gatilho específico bateu, roteia para o Fluxo Visual ativo (ou flow_funil_4 por padrão)
-    if (!visualFlowMatch && (!session || !session.waitingFor)) {
+    if (!visualFlowMatch && (!session || (!session.waitingFor && !session.flowId))) {
         const fallbackFlowId = (store.singleFunnelMode && store.activeFunnelId)
             ? store.activeFunnelId
             : 'flow_funil_4';
