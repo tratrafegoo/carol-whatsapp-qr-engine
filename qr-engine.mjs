@@ -370,8 +370,10 @@ async function getMediaBuffer(msg, sock) {
         }
     }
     const messageContent = msg.message;
-    const type = messageContent?.imageMessage ? 'image' : messageContent?.documentMessage ? 'document' : null;
-    const mediaObj = messageContent?.imageMessage || messageContent?.documentMessage;
+    const type = messageContent?.imageMessage ? 'image' : 
+                 messageContent?.documentMessage ? 'document' : 
+                 messageContent?.audioMessage ? 'audio' : null;
+    const mediaObj = messageContent?.imageMessage || messageContent?.documentMessage || messageContent?.audioMessage;
     if (downloadContentFromMessage && type && mediaObj) {
         try {
             const stream = await downloadContentFromMessage(mediaObj, type);
@@ -412,6 +414,75 @@ function detectPaymentRefusal(text) {
     ];
 
     return patterns.some(pat => pat.test(norm));
+}
+
+async function auditAudioRefusalWithGemini(audioBuffer, mimeType = 'audio/ogg') {
+    if (!GEMINI_API_KEY) {
+        console.warn('[Audio Auditor] Chave GEMINI_API_KEY não configurada.');
+        return { isRefusal: false, transcript: '', refusalReason: null };
+    }
+
+    try {
+        const base64Audio = audioBuffer.toString('base64');
+        const cleanMime = (mimeType && mimeType.includes('mp4')) ? 'audio/mp4' : 'audio/ogg';
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+        const prompt = `Você é uma inteligência artificial especialista em vendas no WhatsApp para infoprodutos.
+O lead enviou esta mensagem de áudio (nota de voz gravada no WhatsApp) após receber a chave PIX e a oferta.
+Analise o áudio e realize duas tarefas:
+1. Transcreva com fidelidade absoluta o que a pessoa disse em português.
+2. Analise a intenção e determine se a pessoa está RECUSANDO, DESISTINDO ou REJEITANDO o pagamento do PIX (por exemplo: dizendo que não vai pagar, que achou caro, que não tem dinheiro agora, que quer cancelar, que não tem interesse, que desiste, etc.).
+
+Retorne EXCLUSIVAMENTE um objeto JSON válido no formato:
+{
+  "transcript": "texto exato falado",
+  "isRefusal": true ou false,
+  "refusalReason": "motivo resumido da recusa ou null"
+}`;
+
+        const response = await axios.post(
+            url,
+            {
+                contents: [
+                    {
+                        parts: [
+                            { text: prompt },
+                            {
+                                inline_data: {
+                                    mime_type: cleanMime,
+                                    data: base64Audio
+                                }
+                            }
+                        ]
+                    }
+                ],
+                generationConfig: {
+                    response_mime_type: "application/json",
+                    temperature: 0.1
+                }
+            },
+            { timeout: 15000 }
+        );
+
+        const rawJson = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (rawJson) {
+            const parsed = JSON.parse(rawJson);
+            const transcript = parsed.transcript || '';
+            const isGeminiRefusal = Boolean(parsed.isRefusal);
+            const isTextRefusal = detectPaymentRefusal(transcript);
+            const finalIsRefusal = isGeminiRefusal || isTextRefusal;
+
+            return {
+                isRefusal: finalIsRefusal,
+                transcript,
+                refusalReason: parsed.refusalReason || (isTextRefusal ? 'Padrão de recusa identificado no texto transcrito' : null)
+            };
+        }
+    } catch (e) {
+        console.warn('[Audio Auditor] Erro ao analisar áudio com Gemini:', e.message);
+    }
+
+    return { isRefusal: false, transcript: '', refusalReason: null };
 }
 
 async function auditPixReceiptWithGemini(mediaBuffer, mimeType, expectedAmount = 19.90, beneficiary = 'Carol') {
@@ -5308,8 +5379,50 @@ async function handleIncomingMessage(botId, sock, msg) {
                 }
             }
 
-            // C) Lead enviou mensagem de TEXTO durante a espera do comprovante
-            if (isWaitingReceipt && !hasMediaReceipt && textContent) {
+            // C) Lead enviou mensagem de ÁUDIO (nota de voz) durante a espera do comprovante
+            if (isWaitingReceipt && hasAudio) {
+                const detectRefusal = verifierNode?.config?.detectRefusalAi !== false;
+                if (detectRefusal) {
+                    console.log(`[Visual Flow] 🎙️ Lead ${userPhone} enviou áudio durante espera do comprovante. Analisando com Gemini...`);
+                    const audioBuffer = await getMediaBuffer(msg, sock);
+                    if (audioBuffer) {
+                        const audioMime = msg.message.audioMessage?.mimetype || 'audio/ogg';
+                        const audioAudit = await auditAudioRefusalWithGemini(audioBuffer, audioMime);
+
+                        if (audioAudit.isRefusal) {
+                            console.warn(`[Visual Flow] 🛑 Lead ${userPhone} expressou recusa/objeção via ÁUDIO: "${audioAudit.transcript}" (${audioAudit.refusalReason})`);
+                            cancelAllTimers();
+                            if (store.scheduledJobs) {
+                                store.scheduledJobs = store.scheduledJobs.filter(j => j.userPhone !== userPhone);
+                            }
+
+                            const verifierNodeId = verifierNode ? verifierNode.nodeId : session.currentNodeId;
+                            const failEdge = edges.find(e => (e.sourceNodeId || e.source) === verifierNodeId && e.sourceHandle === 'fail');
+                            if (failEdge) {
+                                session.waitingFor = null;
+                                session.rejectedPayment = true;
+                                session.currentNodeId = verifierNodeId;
+                                saveStore(store);
+                                await executeFromNode(botId, sock, remoteJid, session, failEdge.targetNodeId || failEdge.target, nodes, edges);
+                                return;
+                            } else {
+                                const refusalMsg = verifierNode?.config?.refusalMessage || 
+                                    'Entendido perfeitamente! Sem problemas, ficamos à disposição caso mude de ideia ou precise de qualquer ajuda no futuro. Que Deus abençoe! 🙏';
+                                session.waitingFor = null;
+                                session.rejectedPayment = true;
+                                saveStore(store);
+                                await sendRealisticText(botId, sock, remoteJid, userPhone, refusalMsg);
+                                return;
+                            }
+                        } else {
+                            console.log(`[Visual Flow] 🎙️ Áudio de ${userPhone} processado. Não é recusa: "${audioAudit.transcript}". Mantendo espera.`);
+                        }
+                    }
+                }
+            }
+
+            // D) Lead enviou mensagem de TEXTO durante a espera do comprovante
+            if (isWaitingReceipt && !hasMediaReceipt && !hasAudio && textContent) {
                 const detectRefusal = verifierNode?.config?.detectRefusalAi !== false;
                 const isRefusal = detectRefusal && detectPaymentRefusal(textContent);
 
