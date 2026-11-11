@@ -796,7 +796,7 @@ function saveStore(data) {
 
 const store = loadStore();
 
-// Carregar automaticamente os 13 funis visuais ricos se store.flows estiver vazio ou desatualizado
+// Carregar automaticamente os funis visuais ricos se store.flows estiver vazio ou desatualizado
 try {
     const defFlowsPath = path.join(__dirname, 'default_flows.json');
     if (fs.existsSync(defFlowsPath)) {
@@ -804,13 +804,13 @@ try {
         const currentFlows = store.flows['bot_whatsapp_principal'] || [];
         const isOutdated = currentFlows.length < 13 || 
             currentFlows.some(f => f._id === 'flow_funil_4' && (f.draftVersion?.flowData?.nodes?.length || 0) < 22) ||
-            store.flows_schema_version !== 'v6_persistent_delays_20261110_v1';
+            store.flows_schema_version !== 'v8_visual_flow_strict_20261110';
         if (currentFlows.length === 0 || isOutdated) {
             const customFlows = currentFlows.filter(f => !defFlows.some(df => df._id === f._id));
             store.flows['bot_whatsapp_principal'] = [...defFlows, ...customFlows];
-            store.flows_schema_version = 'v6_persistent_delays_20261110_v1';
+            store.flows_schema_version = 'v8_visual_flow_strict_20261110';
             saveStore(store);
-            console.log(`[Store Init] 🚀 13 Funis Visuais Ricos V6 (com DELAYS Reais e Remarketing Persistente) Carregados (Total: ${store.flows['bot_whatsapp_principal'].length} funis)!`);
+            console.log(`[Store Init] 🚀 Funis Visuais V8 Carregados (Total: ${store.flows['bot_whatsapp_principal'].length} funis)!`);
         }
     }
 } catch (err) {
@@ -5108,34 +5108,114 @@ async function sendFunil8Phase2(botId, sock, remoteJid, userPhone, pushName, quo
     scheduleFunil8Reminder(botId, remoteJid, userPhone);
 }
 
+function ensureBotVisualFlowsLoaded(botId) {
+    let flows = store.flows[botId] || [];
+    if (!flows || flows.length === 0) {
+        try {
+            const defFlowsPath = path.join(__dirname, 'default_flows.json');
+            if (fs.existsSync(defFlowsPath)) {
+                flows = JSON.parse(fs.readFileSync(defFlowsPath, 'utf-8'));
+                store.flows[botId] = flows;
+                saveStore(store);
+            }
+        } catch (e) {
+            console.warn('[ensureBotVisualFlowsLoaded] Aviso:', e?.message);
+        }
+    }
+    return flows;
+}
+
+function getVisualFlowById(botId, flowId) {
+    const flows = ensureBotVisualFlowsLoaded(botId);
+    const normalizedFid = String(flowId || '').startsWith('flow_')
+        ? String(flowId)
+        : String(flowId || '').replace(/^funil(\d+)$/i, 'flow_funil_$1');
+    const flow = flows.find(f => f._id === normalizedFid || f._id === flowId);
+    if (flow && flow.isDeployed !== false && flow.draftVersion?.flowData?.nodes?.length > 2) {
+        const nodes = flow.draftVersion.flowData.nodes;
+        const edges = flow.draftVersion.flowData.edges || [];
+        const startNode = nodes.find(n => (n.nodeType || '').toUpperCase() === 'START') || nodes[0];
+        return { flow, startNode, nodes, edges };
+    }
+    return null;
+}
+
 function findDeployedFlowForTrigger(botId, text) {
-    const flows = store.flows[botId] || [];
-    const triggerMap = {
-        'teste1': 'flow_funil_1',
-        'teste2': 'flow_funil_2',
-        'teste3': 'flow_funil_3',
-        'teste4': 'flow_funil_4',
-        'teste5': 'flow_funil_5',
-        'teste6': 'flow_funil_6',
-        'teste7': 'flow_funil_7',
-        'teste8': 'flow_funil_8',
-        'teste9': 'flow_funil_9',
-        'teste10': 'flow_funil_10',
-        'teste11': 'flow_funil_11',
-        'teste12': 'flow_funil_12',
-        'teste13': 'flow_funil_13',
-    };
+    const flows = ensureBotVisualFlowsLoaded(botId);
+    const cleanText = String(text || '').trim().toLowerCase();
+    const bareText = cleanText.replace(/^[#!/]+/, '').trim();
+
+    // ─── 1º LUGAR ABSOLUTO: Verificar os gatilhos reais (config.trigger / label) de TODOS os fluxos do painel ───
+    // Ordena por tamanho do gatilho (decrescente) para que 'teste4_copia' ou 'teste10' tenham prioridade sobre 'teste4' ou 'teste1'
+    const candidateTriggers = [];
+    for (const flow of flows) {
+        if (flow.isDeployed === false) continue;
+        const nodes = flow.draftVersion?.flowData?.nodes || [];
+        if (nodes.length <= 2) continue;
+        const edges = flow.draftVersion?.flowData?.edges || [];
+        const startNode = nodes.find(n => (n.nodeType || '').toUpperCase() === 'START') || nodes[0];
+
+        const rawTriggers = new Set();
+        const cfgTrig = String(startNode?.config?.trigger || '').trim().toLowerCase();
+        if (cfgTrig) rawTriggers.add(cfgTrig);
+
+        const labelMatch = String(startNode?.label || '').match(/gatilho:\s*([^\)\]]+)/i);
+        if (labelMatch && labelMatch[1]) rawTriggers.add(labelMatch[1].trim().toLowerCase());
+
+        const nameMatch = String(flow.name || '').match(/gatilho:\s*([^\)\]]+)/i);
+        if (nameMatch && nameMatch[1]) rawTriggers.add(nameMatch[1].trim().toLowerCase());
+
+        for (const trig of rawTriggers) {
+            if (!trig) continue;
+            candidateTriggers.push({ trig, flow, startNode, nodes, edges });
+        }
+    }
+
+    candidateTriggers.sort((a, b) => b.trig.length - a.trig.length);
+
+    for (const item of candidateTriggers) {
+        const t = item.trig;
+        const spacedVariant = /^teste\d+$/.test(t) ? t.replace(/^teste(\d+)$/, 'teste $1') : null;
+        if (
+            cleanText === t ||
+            bareText === t ||
+            cleanText.startsWith(t + ' ') ||
+            bareText.startsWith(t + ' ') ||
+            (spacedVariant && (cleanText === spacedVariant || bareText === spacedVariant || cleanText.startsWith(spacedVariant + ' ')))
+        ) {
+            console.log(`[Visual Flow Router] 🎯 Gatilho exato do fluxograma encontrado: "${t}" ➔ "${item.flow.name}" (${item.flow._id})`);
+            return { flow: item.flow, startNode: item.startNode, nodes: item.nodes, edges: item.edges };
+        }
+    }
+
+    // ─── 2º LUGAR: Mapa canônico de teste1 a teste13 (ordenado do maior para o menor) ───
+    const triggerMap = [
+        ['teste13', 'flow_funil_13'],
+        ['teste12', 'flow_funil_12'],
+        ['teste11', 'flow_funil_11'],
+        ['teste10', 'flow_funil_10'],
+        ['teste9', 'flow_funil_9'],
+        ['teste8', 'flow_funil_8'],
+        ['teste7', 'flow_funil_7'],
+        ['teste6', 'flow_funil_6'],
+        ['teste5', 'flow_funil_5'],
+        ['teste4', 'flow_funil_4'],
+        ['teste3', 'flow_funil_3'],
+        ['teste2', 'flow_funil_2'],
+        ['teste1', 'flow_funil_1'],
+    ];
 
     let matchedFlowId = null;
-    for (const [trig, fid] of Object.entries(triggerMap)) {
+    for (const [trig, fid] of triggerMap) {
         const variants = [trig, trig.replace('teste', 'teste '), '#' + trig, '!' + trig, '/' + trig];
-        if (variants.some(k => text === k || text.startsWith(k + ' '))) {
+        if (variants.some(k => cleanText === k || cleanText.startsWith(k + ' '))) {
             matchedFlowId = fid;
             break;
         }
     }
 
-    if (!matchedFlowId) {
+    // ─── 3º LUGAR: Palavras-chave de anúncios CTWA (apenas se não for comando de teste) ───
+    if (!matchedFlowId && !bareText.startsWith('teste')) {
         const keywordMap = {
             'flow_funil_1': ['parábolas', 'parabolas', 'maria gps'],
             'flow_funil_2': ['acamada', 'acamado', 'cuidados com pessoa'],
@@ -5152,42 +5232,26 @@ function findDeployedFlowForTrigger(botId, text) {
             'flow_funil_13': ['missionária maria', 'missionaria maria', 'devocional pelos filhos - maria']
         };
         for (const [fid, keywords] of Object.entries(keywordMap)) {
-            if (keywords.some(kw => text.includes(kw))) {
+            if (keywords.some(kw => cleanText.includes(kw))) {
                 matchedFlowId = fid;
                 break;
             }
         }
     }
 
-    // Se o Modo Funil Único estiver ativo e for um lead novo sem trigger específico, atribui ao funil ativo
-    if (!matchedFlowId && store.singleFunnelMode && store.activeFunnelId) {
+    // ─── 4º LUGAR (Fallback): Modo Funil Único (apenas para leads reais sem comando de teste) ───
+    if (!matchedFlowId && store.singleFunnelMode && store.activeFunnelId && !bareText.startsWith('teste')) {
         const rawFid = store.activeFunnelId;
-        const normalizedFid = rawFid.startsWith('flow_') ? rawFid : ('flow_' + rawFid);
-        matchedFlowId = normalizedFid;
+        const normalizedFid = rawFid.startsWith('flow_') ? rawFid : rawFid.replace(/^funil(\d+)$/i, 'flow_funil_$1');
+        matchedFlowId = normalizedFid.startsWith('flow_') ? normalizedFid : ('flow_' + normalizedFid);
         console.log(`[Visual Flow] 🎯 Modo Funil Único Ativo: roteando lead automaticamente para ${matchedFlowId}`);
     }
 
     if (matchedFlowId) {
-        const flow = flows.find(f => f._id === matchedFlowId);
-        if (flow && flow.isDeployed !== false && flow.draftVersion?.flowData?.nodes?.length > 4) {
-            const nodes = flow.draftVersion.flowData.nodes;
-            const edges = flow.draftVersion.flowData.edges || [];
-            const startNode = nodes.find(n => (n.nodeType || '').toUpperCase() === 'START') || nodes[0];
-            return { flow, startNode, nodes, edges };
-        }
+        const resolved = getVisualFlowById(botId, matchedFlowId);
+        if (resolved) return resolved;
     }
 
-    for (const flow of flows) {
-        if (flow.isDeployed === false) continue;
-        const nodes = flow.draftVersion?.flowData?.nodes || [];
-        const startNode = nodes.find(n => (n.nodeType || '').toUpperCase() === 'START');
-        const trigger = (startNode?.config?.trigger || '').trim().toLowerCase();
-        if (trigger && (text === trigger || text.startsWith(trigger + ' '))) {
-            if (nodes.length > 2) {
-                return { flow, startNode, nodes, edges: flow.draftVersion?.flowData?.edges || [] };
-            }
-        }
-    }
     return null;
 }
 
@@ -5457,9 +5521,22 @@ async function handleIncomingMessage(botId, sock, msg) {
     }
 
     // ─── 1. Roteador de Gatilhos de Fluxos Visuais Deployed ───
-    const visualFlowMatch = findDeployedFlowForTrigger(botId, normalizedText);
+    let visualFlowMatch = findDeployedFlowForTrigger(botId, normalizedText);
+
+    // Fallback 100% Visual: se for um novo lead sem sessão ativa (ex: "Oi, bom dia" ou clique de anúncio CTWA)
+    // e nenhum gatilho específico bateu, roteia para o Fluxo Visual ativo (ou flow_funil_4 por padrão)
+    if (!visualFlowMatch && (!session || !session.waitingFor)) {
+        const fallbackFlowId = (store.singleFunnelMode && store.activeFunnelId)
+            ? store.activeFunnelId
+            : 'flow_funil_4';
+        visualFlowMatch = getVisualFlowById(botId, fallbackFlowId) || getVisualFlowById(botId, 'flow_funil_4');
+        if (visualFlowMatch) {
+            console.log(`[Visual Flow Anti-Refugo] 🎯 Novo lead sem gatilho específico (${userPhone}: "${textContent}") -> Executando Fluxo Visual "${visualFlowMatch.flow.name}"`);
+        }
+    }
+
     if (visualFlowMatch) {
-        console.log(`[Visual Flow Engine] 🚀 Executando fluxo visual deployado "${visualFlowMatch.flow.name}" para ${userPhone}`);
+        console.log(`[Visual Flow Engine] 🚀 Executando fluxo visual deployado "${visualFlowMatch.flow.name}" (${visualFlowMatch.flow._id}) para ${userPhone}`);
         cancelAllTimers();
         session = {
             botId,
@@ -5469,6 +5546,7 @@ async function handleIncomingMessage(botId, sock, msg) {
             flowId: visualFlowMatch.flow._id,
             flowName: visualFlowMatch.flow.name,
             currentNodeId: visualFlowMatch.startNode.nodeId,
+            adData: session?.adData || detectedAd || undefined,
             updatedAt: new Date().toISOString()
         };
         store.userSessions[sessionKey] = session;
@@ -6419,27 +6497,30 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
         }
 
         case 'PIX': {
-            const pixKey = config.pixKey || 'pagamentos@seunegocio.com';
-            const beneficiaryName = config.beneficiaryName || 'Carol';
+            const pixKey = String(config.pixKey || 'pagamentos@seunegocio.com').trim();
+            const copyCode = String(config.copyPasteCode || pixKey).trim();
+            const beneficiaryName = String(config.beneficiaryName || 'Favorecido').trim();
             const amount = config.amount || '19.90';
-            const msg = config.message || `O valor simbólico é de apenas *R$ ${amount}*!`;
+            const msg = String(config.instructionText ?? config.message ?? '').trim();
 
-            await sendRealisticText(
-                botId,
-                sock,
-                remoteJid,
-                session.userPhone,
-                `💸 ${msg}\n\n👇 *Só copiar a chave:*`
-            );
-            await new Promise((r) => setTimeout(r, 600));
+            if (msg) {
+                await sendRealisticText(
+                    botId,
+                    sock,
+                    remoteJid,
+                    session.userPhone,
+                    msg
+                );
+                await new Promise((r) => setTimeout(r, 600));
+            }
 
-            // Tenta enviar o cartão com botão nativo "Copiar chave Pix" (cta_copy)
+            // Envia o cartão interativo com botão nativo "Copiar chave Pix" (cta_copy)
             try {
                 if (generateWAMessageFromContent && proto) {
                     const buttonParams = {
                         display_text: 'Copiar chave Pix',
                         id: 'copy_pix_key',
-                        copy_code: pixKey
+                        copy_code: copyCode
                     };
 
                     const buttons = [
@@ -6533,49 +6614,28 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
                 console.error('[PIX Native Button Error]:', interactiveErr?.message);
             }
 
-            // Envia SEMPRE a chave PIX avulsa em texto logo em seguida.
-            // Garante 100% de conversão em qualquer versão do WhatsApp (iPhone, Android ou Web)
-            // sem nunca deixar espaço em branco!
+            // Envia a chave PIX avulsa em texto logo em seguida para facilitar copiar e colar em qualquer aparelho
             await new Promise((r) => setTimeout(r, 600));
             await safeDispatchBlock({
                 sock,
                 remoteJid,
                 blockType: 'PIX',
-                description: `Chave PIX Texto: ${pixKey}`,
+                description: `Chave PIX Texto: ${copyCode}`,
                 botId,
                 userPhone: session.userPhone,
                 sendAction: async () => {
-                    const sent = await sock.sendMessage(remoteJid, { text: pixKey });
-                    logConversation(botId, session.userPhone, 'BOT', 'PIX', `Chave PIX: ${pixKey}`);
+                    const sent = await sock.sendMessage(remoteJid, { text: copyCode });
+                    logConversation(botId, session.userPhone, 'BOT', 'PIX', `Chave PIX: ${copyCode}`);
                     return sent;
                 }
             });
-
-            await new Promise((r) => setTimeout(r, 700));
-            await sendRealisticText(
-                botId,
-                sock,
-                remoteJid,
-                session.userPhone,
-                '👆 *Copie a chave PIX acima* e, assim que concluir, *me envie a foto ou o PDF do comprovante aqui mesmo*!'
-            );
 
             session.expectedAmount = Number(amount) || 19.90;
             session.beneficiary = beneficiaryName;
             store.funnelStats.pixSentCount += 1;
             saveStore(store);
 
-            const nextEdge = edges.find((e) => (e.source || e.sourceNodeId) === node.nodeId);
-            if (nextEdge) {
-                const nextTargetId = nextEdge.target || nextEdge.targetNodeId;
-                const nextNode = nodes.find((n) => n.nodeId === nextTargetId);
-                if (nextNode && (nextNode.nodeType || '').toUpperCase() === 'PIX_VERIFIER') {
-                    session.currentNodeId = nextNode.nodeId;
-                    session.waitingFor = 'PIX_RECEIPT';
-                    saveStore(store);
-                    return;
-                }
-            }
+            // Segue estritamente para o próximo nó conectado no fluxograma visual (ex: Bônus 7 ➔ PIX_VERIFIER)
             break;
         }
 
@@ -6636,10 +6696,9 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
 
         case 'META_CAPI': {
             const value = Number(config.value || config.eventValue || session.expectedAmount || 19.90);
-            const confirmText =
-                config.confirmationText ||
-                `🎉 *Pagamento de R$ ${value.toFixed(2).replace('.', ',')} confirmado com sucesso!*\n\nMuito obrigada pela confiança, ${session.userName}! Seu acesso completo já está 100% liberado!`;
-            await sendRealisticText(botId, sock, remoteJid, session.userPhone, confirmText);
+            if (config.confirmationText) {
+                await sendRealisticText(botId, sock, remoteJid, session.userPhone, String(config.confirmationText));
+            }
 
             // Registro oficial da transação para o MetaHub e disparo no Meta Conversions API (CAPI)
             const transactionRecord = {
@@ -6996,8 +7055,71 @@ app.post('/bots/:botId/whatsapp/qr/sync', (req, res) => {
 
 app.get(['/api/bots/:botId/flows', '/bots/:botId/flows'], (req, res) => {
     const botId = String(req.params.botId || 'bot_whatsapp_principal');
-    const flows = store.flows[botId] || [];
+    const flows = ensureBotVisualFlowsLoaded(botId);
     res.json({ success: true, data: flows });
+});
+
+app.get(['/api/bots/:botId/flows/:flowId', '/bots/:botId/flows/:flowId'], (req, res) => {
+    const botId = String(req.params.botId || 'bot_whatsapp_principal');
+    const flowId = String(req.params.flowId);
+    const flows = ensureBotVisualFlowsLoaded(botId);
+    const flow = flows.find(f => f._id === flowId) || flows[0];
+    if (!flow) return res.status(404).json({ success: false, error: 'Funil não encontrado' });
+    res.json({ success: true, data: flow });
+});
+
+app.put(['/api/bots/:botId/flows/:flowId/draft', '/bots/:botId/flows/:flowId/draft'], (req, res) => {
+    const botId = String(req.params.botId || 'bot_whatsapp_principal');
+    const flowId = String(req.params.flowId);
+    const flows = ensureBotVisualFlowsLoaded(botId);
+    const flowIndex = flows.findIndex(f => f._id === flowId);
+    if (flowIndex < 0) {
+        return res.status(404).json({ success: false, error: 'Funil não encontrado' });
+    }
+    const flowData = req.body?.flowData || {};
+    if (Array.isArray(flowData.edges)) {
+        flowData.edges = flowData.edges.map((e, idx) => ({
+            ...e,
+            id: e.id || e.edgeId || `edge_${idx}`,
+            edgeId: e.edgeId || e.id || `edge_${idx}`,
+            source: e.source || e.sourceNodeId,
+            sourceNodeId: e.sourceNodeId || e.source,
+            target: e.target || e.targetNodeId,
+            targetNodeId: e.targetNodeId || e.target,
+        }));
+    }
+    const startNode = (flowData.nodes || []).find(n => (n.nodeType || '').toUpperCase() === 'START');
+    if (startNode) {
+        const labelTrigMatch = String(startNode.label || '').match(/gatilho:\s*([^\)\]]+)/i);
+        if (!startNode.config?.trigger && labelTrigMatch?.[1]) {
+            startNode.config = { ...(startNode.config || {}), trigger: labelTrigMatch[1].trim() };
+        }
+    }
+    flows[flowIndex].draftVersion = {
+        ...(flows[flowIndex].draftVersion || { version: 1 }),
+        flowData
+    };
+    flows[flowIndex].updatedAt = new Date().toISOString();
+    store.flows[botId] = flows;
+    saveStore(store);
+    console.log(`[QR Engine Draft] 💾 Rascunho do funil "${flows[flowIndex].name}" (${flowId}) salvo com sucesso!`);
+    res.json({ success: true, data: flows[flowIndex] });
+});
+
+app.post(['/api/bots/:botId/flows/:flowId/validate', '/bots/:botId/flows/:flowId/validate'], (_req, res) => {
+    res.json({
+        success: true,
+        data: { isValid: true, errors: [], warnings: [] }
+    });
+});
+
+app.delete(['/api/bots/:botId/flows/:flowId', '/bots/:botId/flows/:flowId'], (req, res) => {
+    const botId = String(req.params.botId || 'bot_whatsapp_principal');
+    const flowId = String(req.params.flowId);
+    const flows = ensureBotVisualFlowsLoaded(botId);
+    store.flows[botId] = flows.filter(f => f._id !== flowId);
+    saveStore(store);
+    res.json({ success: true, data: null });
 });
 
 app.post(['/api/bots/:botId/flows/:flowId/duplicate', '/bots/:botId/flows/:flowId/duplicate'], (req, res) => {

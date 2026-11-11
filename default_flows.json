@@ -671,7 +671,7 @@
     "isMainFlow": false,
     "isDeployed": true,
     "productionVersion": 1,
-    "createdAt": "2026-10-30T18:59:28.000Z",
+    "createdAt": "2026-10-31T02:28:50.000Z",
     "updatedAt": "2026-11-10T03:30:00.000Z",
     "draftVersion": {
       "version": 1,
@@ -1199,7 +1199,7 @@
     "isMainFlow": false,
     "isDeployed": true,
     "productionVersion": 1,
-    "createdAt": "2026-10-30T18:59:28.000Z",
+    "createdAt": "2026-10-31T02:28:50.000Z",
     "updatedAt": "2026-11-10T03:30:00.000Z",
     "draftVersion": {
       "version": 1,
@@ -1866,9 +1866,9 @@
     "description": "Pasta: funil 4/ | Criativos: funil 4/ads/ | Áudio MP3 (46s), 5 PDFs reais, Link Drive, PIX JOÃO GABRIEL e Reações ❤️",
     "isMainFlow": false,
     "isDeployed": true,
-    "productionVersion": 1,
-    "createdAt": "2026-10-30T18:59:28.000Z",
-    "updatedAt": "2026-11-10T03:30:00.000Z",
+    "productionVersion": 2,
+    "createdAt": "2026-10-31T02:28:50.000Z",
+    "updatedAt": "2026-11-11T01:57:12.955Z",
     "draftVersion": {
       "version": 1,
       "flowData": {
@@ -1883,8 +1883,7 @@
             "label": "Início (Gatilho: teste4)",
             "config": {
               "trigger": "teste4"
-            },
-            "id": "node_flow_funil_4_1"
+            }
           },
           {
             "nodeId": "node_flow_funil_4_2",
@@ -1896,8 +1895,7 @@
             "label": "Saudação Pastor Guilherme",
             "config": {
               "text": "A Paz do Senhor!"
-            },
-            "id": "node_flow_funil_4_2"
+            }
           },
           {
             "nodeId": "node_flow_funil_4_3",
@@ -1909,10 +1907,10 @@
             "label": "🎙️ Áudio Apresentação Pastor Guilherme (46s)",
             "config": {
               "audioUrl": "funil4/audio_apresentacao.mp3",
+              "isVoiceNote": true,
               "recordingDurationSeconds": 4,
               "fallbackText": "A Paz do Senhor! Já separei seu estudo completo da Jornada da Bíblia."
-            },
-            "id": "node_flow_funil_4_3"
+            }
           },
           {
             "nodeId": "node_flow_funil_4_4",
@@ -1924,8 +1922,7 @@
             "label": "Oferta Jornada da Bíblia",
             "config": {
               "text": "📘 Jornada da Bíblia - de Gênesis a Apocalipse\n(Uma explicação simples e didática de todos os 66 livros da Bíblia)\n\nDe 59,00 por: R$20,00\n\nPentateuco, Livros Históricos, Livros Poéticos, Profetas Maiores e Menores, Evangelhos, Livro Histórico, Cartas e Livro Profético\n\nBônus após o pagamento 👇\n• Bônus Especial: 7 Estudos do Apocalipse"
-            },
-            "id": "node_flow_funil_4_4"
+            }
           },
           {
             "nodeId": "node_flow_funil_4_5",
@@ -1937,8 +1934,7 @@
             "label": "Acesso Vitalício & Contribuição Voluntária",
             "config": {
               "text": "O acesso ao conteúdo é vitalício! Você pode imprimir ou ler pelo celular\n\nO valor sugerido é R$20,00\nVocê só paga depois de receber tudo!\n\nPorém a contribuição é voluntária e pode ser até menos, seja 10, 15 reais.\n\nPosso lhe enviar o estudo?"
-            },
-            "id": "node_flow_funil_4_5"
+            }
           },
           {
             "nodeId": "node_flow_funil_4_6",
@@ -1951,8 +1947,7 @@
             "config": {
               "placeholder": "Aguardando Sim/Pode do lead...",
               "variableName": "lead_confirm"
-            },
-            "id": "node_flow_funil_4_6"
+            }
           },
           {
             "nodeId": "node_flow_funil_4_7",
@@ -1964,8 +1959,7 @@
             "label": "Mensagem de Confiança",
             "config": {
               "text": "Estarei enviando e confiando em você, fique à vontade para abrir o material"
-            },
-            "id": "node_flow_funil_4_7"
+            }
           },
           {
             "nodeId": "node_flow_funil_4_8_part1",
@@ -1978,10 +1972,9 @@
             "config": {
               "mediaType": "DOCUMENT",
               "mediaUrl": "funil4/1 - Jornada da Bíblia Parte 01.pdf",
-              "filename": "1 - Jornada da Bíblia Parte 01.pdf",
-              "caption": "📖 Livro 1: A Criação e os Primeiros Passos da Fé (Gênesis a Deuteronômio)"
-            },
-            "id": "node_flow_funil_4_8_part1"
+              "caption": "📖 Livro 1: A Criação e os Primeiros Passos da Fé (Gênesis a Deuteronômio)",
+              "filename": "1 - Jornada da Bíblia Parte 01.pdf"
+            }
           },
           {
             "nodeId": "node_flow_funil_4_8_part2",
@@ -1994,10 +1987,9 @@
             "config": {
               "mediaType": "DOCUMENT",
               "mediaUrl": "funil4/2 - Jornada da Bíblia Parte 02.pdf",
-              "filename": "2 - Jornada da Bíblia Parte 02.pdf",
-              "caption": "📖 Livro 2: Conquistas, Reis e Quedas (Josué a Ester)"
-            },
-            "id": "node_flow_funil_4_8_part2"
+              "caption": "📖 Livro 2: Conquistas, Reis e Quedas (Josué a Ester)",
+              "filename": "2 - Jornada da Bíblia Parte 02.pdf"
+            }
           },
           {
             "nodeId": "node_flow_funil_4_8_part3",
@@ -2010,10 +2002,9 @@
             "config": {
               "mediaType": "DOCUMENT",
               "mediaUrl": "funil4/3 - Jornada da Bíblia Parte 03.pdf",
-              "filename": "3 - Jornada da Bíblia Parte 03.pdf",
-              "caption": "📖 Livro 3: Sabedoria, Louvor e Vida (Jó a Cantares)"
-            },
-            "id": "node_flow_funil_4_8_part3"
+              "caption": "📖 Livro 3: Sabedoria, Louvor e Vida (Jó a Cantares)",
+              "filename": "3 - Jornada da Bíblia Parte 03.pdf"
+            }
           },
           {
             "nodeId": "node_flow_funil_4_8_part4",
@@ -2026,10 +2017,9 @@
             "config": {
               "mediaType": "DOCUMENT",
               "mediaUrl": "funil4/4 - Jornada da Bíblia Parte 04.pdf",
-              "filename": "4 - Jornada da Bíblia Parte 04.pdf",
-              "caption": "📖 Livro 4: Vozes de Alerta, Julgamento e Esperança (Isaías a Malaquias)"
-            },
-            "id": "node_flow_funil_4_8_part4"
+              "caption": "📖 Livro 4: Vozes de Alerta, Julgamento e Esperança (Isaías a Malaquias)",
+              "filename": "4 - Jornada da Bíblia Parte 04.pdf"
+            }
           },
           {
             "nodeId": "node_flow_funil_4_8_part5",
@@ -2042,10 +2032,9 @@
             "config": {
               "mediaType": "DOCUMENT",
               "mediaUrl": "funil4/5 - Os 4 Evangelhos.pdf",
-              "filename": "5 - Os 4 Evangelhos.pdf",
-              "caption": "📖 Livro 5: A Vida, Ministério e Ensinos de Jesus Cristo (Mateus a João)"
-            },
-            "id": "node_flow_funil_4_8_part5"
+              "caption": "📖 Livro 5: A Vida, Ministério e Ensinos de Jesus Cristo (Mateus a João)",
+              "filename": "5 - Os 4 Evangelhos.pdf"
+            }
           },
           {
             "nodeId": "node_flow_funil_4_9",
@@ -2057,8 +2046,7 @@
             "label": "Tabela de Valores Sugeridos",
             "config": {
               "text": "Acabei de enviar todos os 5 livros em PDF aqui na conversa para você baixar e ler no seu celular ou imprimir!\n\nValor sugerido: R$20,00\n⭐️ Gostei muito: R$30,00\n⭐️⭐️ Quero abençoar ainda mais: R$50,00\n\nIsso ajuda a continuarmos esse propósito!\nCaso não possa contribuir com o valor integral, fique à vontade para enviar o valor que puder!"
-            },
-            "id": "node_flow_funil_4_9"
+            }
           },
           {
             "nodeId": "node_flow_funil_4_10",
@@ -2069,12 +2057,12 @@
             },
             "label": "💸 Chave PIX E-mail Pastor Guilherme",
             "config": {
+              "keyType": "CPF",
               "pixKey": "pastorguilhermeigreja@gmail.com",
               "beneficiaryName": "Pastor Guilherme",
               "amount": "20.00",
               "message": "Chave Pix E-MAIL\nNome: Pastor Guilherme\n👇 Só clicar no botão ou copiar a chave abaixo 👇"
-            },
-            "id": "node_flow_funil_4_10"
+            }
           },
           {
             "nodeId": "node_flow_funil_4_11",
@@ -2086,61 +2074,60 @@
             "label": "Bônus 7 Estudos do Apocalipse",
             "config": {
               "text": "Após o pagamento, me envie o comprovante aqui, que eu vou te enviar como BÔNUS:\n7 ESTUDOS DO APOCALIPSE EM PDF 🎁"
-            },
-            "id": "node_flow_funil_4_11"
+            }
           },
           {
             "nodeId": "flow_funil_4_delay_1",
             "nodeType": "DELAY",
+            "position": {
+              "x": 840,
+              "y": 2220
+            },
             "label": "⏰ Aguardar 15 minutos",
             "config": {
+              "delaySeconds": 900,
               "delayValue": 15,
-              "delayUnit": "minutes",
-              "delaySeconds": 900
-            },
-            "position": {
-              "x": 740,
-              "y": 2160
+              "delayUnit": "minutes"
             }
           },
           {
             "nodeId": "flow_funil_4_msg_rem1",
             "nodeType": "MESSAGE",
+            "position": {
+              "x": 1280,
+              "y": 2240
+            },
             "label": "💬 Remarketing: Faltou alguma coisa?",
             "config": {
               "text": "Faltou alguma coisa?",
               "messageText": "Faltou alguma coisa?"
-            },
-            "position": {
-              "x": 740,
-              "y": 2295
             }
           },
           {
             "nodeId": "flow_funil_4_delay_2",
             "nodeType": "DELAY",
+            "position": {
+              "x": 1640,
+              "y": 2240
+            },
             "label": "⏰ Aguardar 2 horas",
             "config": {
+              "delaySeconds": 7200,
               "delayValue": 2,
-              "delayUnit": "hours",
-              "delaySeconds": 7200
-            },
-            "position": {
-              "x": 740,
-              "y": 2430
+              "delayUnit": "hours"
             }
           },
           {
             "nodeId": "flow_funil_4_msg_rem2",
             "nodeType": "MESSAGE",
+            "position": {
+              "x": 2060,
+              "y": 2240
+            },
             "label": "💬 Remarketing 2: Apoio e Dúvidas",
             "config": {
               "text": "Paz de Deus! Conseguiu abrir os livros da Jornada da Bíblia? Se tiver qualquer dúvida ou se precisar de uma condição especial para sua contribuição, me avisa aqui! 🙏",
               "messageText": "Paz de Deus! Conseguiu abrir os livros da Jornada da Bíblia? Se tiver qualquer dúvida ou se precisar de uma condição especial para sua contribuição, me avisa aqui! 🙏"
-            },
-            "position": {
-              "x": 740,
-              "y": 2565
             }
           },
           {
@@ -2153,50 +2140,49 @@
             "label": "🧠 Auditoria Comprovante IA Gemini",
             "config": {
               "expectedAmount": "20.00",
+              "successMessage": "✅ Comprovante PIX validado com sucesso!",
+              "failureMessage": "⚠️ Não conseguimos confirmar o pagamento PIX.",
               "beneficiary": "Pastor Guilherme",
               "detectRefusalAi": true,
               "enableTimeoutLimit": true,
               "timeoutHours": 24
-            },
-            "id": "node_flow_funil_4_12"
+            }
           },
           {
             "nodeId": "node_flow_funil_4_bonus_media",
-            "id": "node_flow_funil_4_bonus_media",
             "nodeType": "MEDIA",
             "position": {
-              "x": 320,
-              "y": 2320
+              "x": 760,
+              "y": 2040
             },
             "label": "🎁 Entrega Bônus Especial: 7 Estudos do Apocalipse",
             "config": {
               "mediaType": "DOCUMENT",
               "mediaUrl": "funil4/Bônus Especial - Estudos do Apocalipse.pdf",
-              "filename": "Bônus Especial - Estudos do Apocalipse.pdf",
-              "caption": "🎁 Aqui está o seu Bônus Especial: *7 Estudos do Apocalipse em PDF*!\n\nQue este estudo ilumine sua fé e traga grandes revelações da Palavra de Deus!"
+              "caption": "🎁 Aqui está o seu Bônus Especial: *7 Estudos do Apocalipse em PDF*!\n\nQue este estudo ilumine sua fé e traga grandes revelações da Palavra de Deus!",
+              "filename": "Bônus Especial - Estudos do Apocalipse.pdf"
             }
           },
           {
             "nodeId": "node_flow_funil_4_meta_capi",
-            "id": "node_flow_funil_4_meta_capi",
             "nodeType": "META_CAPI",
             "position": {
-              "x": 320,
-              "y": 2470
+              "x": 1200,
+              "y": 1980
             },
             "label": "🎯 Conversão Meta Ads (CAPI - Purchase)",
             "config": {
               "eventName": "Purchase",
-              "currency": "BRL"
+              "currency": "BRL",
+              "eventValue": 19.9
             }
           },
           {
             "nodeId": "node_flow_funil_4_final_msg",
-            "id": "node_flow_funil_4_final_msg",
             "nodeType": "MESSAGE",
             "position": {
-              "x": 320,
-              "y": 2620
+              "x": 1580,
+              "y": 2060
             },
             "label": "Agradecimento Final & Acesso Vitalício",
             "config": {
@@ -2206,204 +2192,696 @@
         ],
         "edges": [
           {
-            "id": "e_node_flow_funil_4_1_node_flow_funil_4_2",
             "edgeId": "e_node_flow_funil_4_1_node_flow_funil_4_2",
-            "source": "node_flow_funil_4_1",
             "sourceNodeId": "node_flow_funil_4_1",
-            "target": "node_flow_funil_4_2",
             "targetNodeId": "node_flow_funil_4_2",
-            "animated": true
+            "id": "e_node_flow_funil_4_1_node_flow_funil_4_2",
+            "source": "node_flow_funil_4_1",
+            "target": "node_flow_funil_4_2"
           },
           {
-            "id": "e_node_flow_funil_4_2_node_flow_funil_4_3",
             "edgeId": "e_node_flow_funil_4_2_node_flow_funil_4_3",
-            "source": "node_flow_funil_4_2",
             "sourceNodeId": "node_flow_funil_4_2",
-            "target": "node_flow_funil_4_3",
             "targetNodeId": "node_flow_funil_4_3",
-            "animated": true
+            "id": "e_node_flow_funil_4_2_node_flow_funil_4_3",
+            "source": "node_flow_funil_4_2",
+            "target": "node_flow_funil_4_3"
           },
           {
-            "id": "e_node_flow_funil_4_3_node_flow_funil_4_4",
             "edgeId": "e_node_flow_funil_4_3_node_flow_funil_4_4",
-            "source": "node_flow_funil_4_3",
             "sourceNodeId": "node_flow_funil_4_3",
-            "target": "node_flow_funil_4_4",
             "targetNodeId": "node_flow_funil_4_4",
-            "animated": true
+            "id": "e_node_flow_funil_4_3_node_flow_funil_4_4",
+            "source": "node_flow_funil_4_3",
+            "target": "node_flow_funil_4_4"
           },
           {
-            "id": "e_node_flow_funil_4_4_node_flow_funil_4_5",
             "edgeId": "e_node_flow_funil_4_4_node_flow_funil_4_5",
-            "source": "node_flow_funil_4_4",
             "sourceNodeId": "node_flow_funil_4_4",
-            "target": "node_flow_funil_4_5",
             "targetNodeId": "node_flow_funil_4_5",
-            "animated": true
+            "id": "e_node_flow_funil_4_4_node_flow_funil_4_5",
+            "source": "node_flow_funil_4_4",
+            "target": "node_flow_funil_4_5"
           },
           {
-            "id": "e_node_flow_funil_4_5_node_flow_funil_4_6",
             "edgeId": "e_node_flow_funil_4_5_node_flow_funil_4_6",
-            "source": "node_flow_funil_4_5",
             "sourceNodeId": "node_flow_funil_4_5",
-            "target": "node_flow_funil_4_6",
             "targetNodeId": "node_flow_funil_4_6",
-            "animated": true
+            "id": "e_node_flow_funil_4_5_node_flow_funil_4_6",
+            "source": "node_flow_funil_4_5",
+            "target": "node_flow_funil_4_6"
           },
           {
-            "id": "e_node_flow_funil_4_6_node_flow_funil_4_7",
             "edgeId": "e_node_flow_funil_4_6_node_flow_funil_4_7",
-            "source": "node_flow_funil_4_6",
             "sourceNodeId": "node_flow_funil_4_6",
-            "target": "node_flow_funil_4_7",
             "targetNodeId": "node_flow_funil_4_7",
-            "animated": true
+            "id": "e_node_flow_funil_4_6_node_flow_funil_4_7",
+            "source": "node_flow_funil_4_6",
+            "target": "node_flow_funil_4_7"
           },
           {
-            "id": "e_node_flow_funil_4_7_node_flow_funil_4_8_part1",
             "edgeId": "e_node_flow_funil_4_7_node_flow_funil_4_8_part1",
-            "source": "node_flow_funil_4_7",
             "sourceNodeId": "node_flow_funil_4_7",
-            "target": "node_flow_funil_4_8_part1",
             "targetNodeId": "node_flow_funil_4_8_part1",
-            "animated": true
+            "id": "e_node_flow_funil_4_7_node_flow_funil_4_8_part1",
+            "source": "node_flow_funil_4_7",
+            "target": "node_flow_funil_4_8_part1"
           },
           {
-            "id": "e_node_flow_funil_4_8_part1_node_flow_funil_4_8_part2",
             "edgeId": "e_node_flow_funil_4_8_part1_node_flow_funil_4_8_part2",
-            "source": "node_flow_funil_4_8_part1",
             "sourceNodeId": "node_flow_funil_4_8_part1",
-            "target": "node_flow_funil_4_8_part2",
             "targetNodeId": "node_flow_funil_4_8_part2",
-            "animated": true
+            "id": "e_node_flow_funil_4_8_part1_node_flow_funil_4_8_part2",
+            "source": "node_flow_funil_4_8_part1",
+            "target": "node_flow_funil_4_8_part2"
           },
           {
-            "id": "e_node_flow_funil_4_8_part2_node_flow_funil_4_8_part3",
             "edgeId": "e_node_flow_funil_4_8_part2_node_flow_funil_4_8_part3",
-            "source": "node_flow_funil_4_8_part2",
             "sourceNodeId": "node_flow_funil_4_8_part2",
-            "target": "node_flow_funil_4_8_part3",
             "targetNodeId": "node_flow_funil_4_8_part3",
-            "animated": true
+            "id": "e_node_flow_funil_4_8_part2_node_flow_funil_4_8_part3",
+            "source": "node_flow_funil_4_8_part2",
+            "target": "node_flow_funil_4_8_part3"
           },
           {
-            "id": "e_node_flow_funil_4_8_part3_node_flow_funil_4_8_part4",
             "edgeId": "e_node_flow_funil_4_8_part3_node_flow_funil_4_8_part4",
-            "source": "node_flow_funil_4_8_part3",
             "sourceNodeId": "node_flow_funil_4_8_part3",
-            "target": "node_flow_funil_4_8_part4",
             "targetNodeId": "node_flow_funil_4_8_part4",
-            "animated": true
+            "id": "e_node_flow_funil_4_8_part3_node_flow_funil_4_8_part4",
+            "source": "node_flow_funil_4_8_part3",
+            "target": "node_flow_funil_4_8_part4"
           },
           {
-            "id": "e_node_flow_funil_4_8_part4_node_flow_funil_4_8_part5",
             "edgeId": "e_node_flow_funil_4_8_part4_node_flow_funil_4_8_part5",
-            "source": "node_flow_funil_4_8_part4",
             "sourceNodeId": "node_flow_funil_4_8_part4",
-            "target": "node_flow_funil_4_8_part5",
             "targetNodeId": "node_flow_funil_4_8_part5",
-            "animated": true
+            "id": "e_node_flow_funil_4_8_part4_node_flow_funil_4_8_part5",
+            "source": "node_flow_funil_4_8_part4",
+            "target": "node_flow_funil_4_8_part5"
           },
           {
-            "id": "e_node_flow_funil_4_8_part5_node_flow_funil_4_9",
             "edgeId": "e_node_flow_funil_4_8_part5_node_flow_funil_4_9",
-            "source": "node_flow_funil_4_8_part5",
             "sourceNodeId": "node_flow_funil_4_8_part5",
-            "target": "node_flow_funil_4_9",
             "targetNodeId": "node_flow_funil_4_9",
-            "animated": true
+            "id": "e_node_flow_funil_4_8_part5_node_flow_funil_4_9",
+            "source": "node_flow_funil_4_8_part5",
+            "target": "node_flow_funil_4_9"
           },
           {
-            "id": "e_node_flow_funil_4_9_node_flow_funil_4_10",
             "edgeId": "e_node_flow_funil_4_9_node_flow_funil_4_10",
-            "source": "node_flow_funil_4_9",
             "sourceNodeId": "node_flow_funil_4_9",
-            "target": "node_flow_funil_4_10",
             "targetNodeId": "node_flow_funil_4_10",
-            "animated": true
+            "id": "e_node_flow_funil_4_9_node_flow_funil_4_10",
+            "source": "node_flow_funil_4_9",
+            "target": "node_flow_funil_4_10"
           },
           {
-            "id": "e_node_flow_funil_4_10_node_flow_funil_4_11",
             "edgeId": "e_node_flow_funil_4_10_node_flow_funil_4_11",
-            "source": "node_flow_funil_4_10",
             "sourceNodeId": "node_flow_funil_4_10",
-            "target": "node_flow_funil_4_11",
             "targetNodeId": "node_flow_funil_4_11",
-            "animated": true
+            "id": "e_node_flow_funil_4_10_node_flow_funil_4_11",
+            "source": "node_flow_funil_4_10",
+            "target": "node_flow_funil_4_11"
           },
           {
-            "id": "e_flow_funil_4_delay_1_flow_funil_4_msg_rem1",
             "edgeId": "e_flow_funil_4_delay_1_flow_funil_4_msg_rem1",
-            "source": "flow_funil_4_delay_1",
             "sourceNodeId": "flow_funil_4_delay_1",
-            "target": "flow_funil_4_msg_rem1",
             "targetNodeId": "flow_funil_4_msg_rem1",
-            "animated": true
+            "id": "e_flow_funil_4_delay_1_flow_funil_4_msg_rem1",
+            "source": "flow_funil_4_delay_1",
+            "target": "flow_funil_4_msg_rem1"
           },
           {
-            "id": "e_flow_funil_4_msg_rem1_flow_funil_4_delay_2",
             "edgeId": "e_flow_funil_4_msg_rem1_flow_funil_4_delay_2",
-            "source": "flow_funil_4_msg_rem1",
             "sourceNodeId": "flow_funil_4_msg_rem1",
-            "target": "flow_funil_4_delay_2",
             "targetNodeId": "flow_funil_4_delay_2",
-            "animated": true
+            "id": "e_flow_funil_4_msg_rem1_flow_funil_4_delay_2",
+            "source": "flow_funil_4_msg_rem1",
+            "target": "flow_funil_4_delay_2"
           },
           {
-            "id": "e_flow_funil_4_delay_2_flow_funil_4_msg_rem2",
             "edgeId": "e_flow_funil_4_delay_2_flow_funil_4_msg_rem2",
-            "source": "flow_funil_4_delay_2",
             "sourceNodeId": "flow_funil_4_delay_2",
-            "target": "flow_funil_4_msg_rem2",
             "targetNodeId": "flow_funil_4_msg_rem2",
-            "animated": true
+            "id": "e_flow_funil_4_delay_2_flow_funil_4_msg_rem2",
+            "source": "flow_funil_4_delay_2",
+            "target": "flow_funil_4_msg_rem2"
           },
           {
-            "id": "e_node_flow_funil_4_bonus_media_node_flow_funil_4_meta_capi",
             "edgeId": "e_node_flow_funil_4_bonus_media_node_flow_funil_4_meta_capi",
-            "source": "node_flow_funil_4_bonus_media",
             "sourceNodeId": "node_flow_funil_4_bonus_media",
-            "target": "node_flow_funil_4_meta_capi",
             "targetNodeId": "node_flow_funil_4_meta_capi",
-            "animated": true
+            "id": "e_node_flow_funil_4_bonus_media_node_flow_funil_4_meta_capi",
+            "source": "node_flow_funil_4_bonus_media",
+            "target": "node_flow_funil_4_meta_capi"
           },
           {
-            "id": "e_node_flow_funil_4_meta_capi_node_flow_funil_4_final_msg",
             "edgeId": "e_node_flow_funil_4_meta_capi_node_flow_funil_4_final_msg",
-            "source": "node_flow_funil_4_meta_capi",
             "sourceNodeId": "node_flow_funil_4_meta_capi",
-            "target": "node_flow_funil_4_final_msg",
             "targetNodeId": "node_flow_funil_4_final_msg",
-            "animated": true
+            "id": "e_node_flow_funil_4_meta_capi_node_flow_funil_4_final_msg",
+            "source": "node_flow_funil_4_meta_capi",
+            "target": "node_flow_funil_4_final_msg"
           },
           {
-            "id": "e_node_flow_funil_4_11_node_flow_funil_4_12",
             "edgeId": "e_node_flow_funil_4_11_node_flow_funil_4_12",
-            "source": "node_flow_funil_4_11",
             "sourceNodeId": "node_flow_funil_4_11",
-            "target": "node_flow_funil_4_12",
             "targetNodeId": "node_flow_funil_4_12",
-            "animated": true
+            "id": "e_node_flow_funil_4_11_node_flow_funil_4_12",
+            "source": "node_flow_funil_4_11",
+            "target": "node_flow_funil_4_12"
           },
           {
-            "id": "e_node_flow_funil_4_12_node_flow_funil_4_bonus_media",
             "edgeId": "e_node_flow_funil_4_12_node_flow_funil_4_bonus_media",
-            "source": "node_flow_funil_4_12",
             "sourceNodeId": "node_flow_funil_4_12",
-            "target": "node_flow_funil_4_bonus_media",
             "targetNodeId": "node_flow_funil_4_bonus_media",
             "sourceHandle": "success",
-            "animated": true
+            "id": "e_node_flow_funil_4_12_node_flow_funil_4_bonus_media",
+            "source": "node_flow_funil_4_12",
+            "target": "node_flow_funil_4_bonus_media"
           },
           {
-            "id": "e_node_flow_funil_4_12_flow_funil_4_delay_1_timeout",
             "edgeId": "e_node_flow_funil_4_12_flow_funil_4_delay_1_timeout",
-            "source": "node_flow_funil_4_12",
             "sourceNodeId": "node_flow_funil_4_12",
-            "target": "flow_funil_4_delay_1",
             "targetNodeId": "flow_funil_4_delay_1",
             "sourceHandle": "timeout",
-            "animated": true
+            "id": "e_node_flow_funil_4_12_flow_funil_4_delay_1_timeout",
+            "source": "node_flow_funil_4_12",
+            "target": "flow_funil_4_delay_1"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "_id": "flow_1794362249148",
+    "botId": "bot_whatsapp_principal",
+    "name": "Funil 4: Jornada da Bíblia - João Antônio (Gatilho: teste4_copia) - 82 99689-8259 (Cópia)",
+    "description": "Pasta: funil 4/ | Criativos: funil 4/ads/ | Áudio MP3 (46s), 5 PDFs reais, Link Drive, PIX JOÃO GABRIEL e Reações ❤️",
+    "isMainFlow": false,
+    "isDeployed": true,
+    "productionVersion": 1,
+    "createdAt": "2026-11-11T01:57:29.148Z",
+    "updatedAt": "2026-11-11T01:57:29.148Z",
+    "draftVersion": {
+      "version": 1,
+      "flowData": {
+        "nodes": [
+          {
+            "nodeId": "node_flow_funil_4_1",
+            "nodeType": "START",
+            "position": {
+              "x": 320,
+              "y": 40
+            },
+            "label": "Início (Gatilho: teste4_copia)",
+            "config": {
+              "trigger": "teste4_copia"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_2",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 180
+            },
+            "label": "Saudação Pastor Guilherme",
+            "config": {
+              "text": "A Paz do Senhor!"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_3",
+            "nodeType": "AUDIO",
+            "position": {
+              "x": 320,
+              "y": 320
+            },
+            "label": "🎙️ Áudio Apresentação Pastor Guilherme (46s)",
+            "config": {
+              "audioUrl": "funil4/audio_apresentacao.mp3",
+              "isVoiceNote": true,
+              "recordingDurationSeconds": 4,
+              "fallbackText": "A Paz do Senhor! Já separei seu estudo completo da Jornada da Bíblia."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_4",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 460
+            },
+            "label": "Oferta Jornada da Bíblia",
+            "config": {
+              "text": "📘 Jornada da Bíblia - de Gênesis a Apocalipse\n(Uma explicação simples e didática de todos os 66 livros da Bíblia)\n\nDe 59,00 por: R$20,00\n\nPentateuco, Livros Históricos, Livros Poéticos, Profetas Maiores e Menores, Evangelhos, Livro Histórico, Cartas e Livro Profético\n\nBônus após o pagamento 👇\n• Bônus Especial: 7 Estudos do Apocalipse"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_5",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 600
+            },
+            "label": "Acesso Vitalício & Contribuição Voluntária",
+            "config": {
+              "text": "O acesso ao conteúdo é vitalício! Você pode imprimir ou ler pelo celular\n\nO valor sugerido é R$20,00\nVocê só paga depois de receber tudo!\n\nPorém a contribuição é voluntária e pode ser até menos, seja 10, 15 reais.\n\nPosso lhe enviar o estudo?"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_6",
+            "nodeType": "INPUT",
+            "position": {
+              "x": 320,
+              "y": 740
+            },
+            "label": "Aguardando Resposta (Posso enviar?)",
+            "config": {
+              "placeholder": "Aguardando Sim/Pode do lead...",
+              "variableName": "lead_confirm"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_7",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 880
+            },
+            "label": "Mensagem de Confiança",
+            "config": {
+              "text": "Estarei enviando e confiando em você, fique à vontade para abrir o material"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_8_part1",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 1020
+            },
+            "label": "📄 Livro 1 - Jornada da Bíblia (Parte 01: Pentateuco)",
+            "config": {
+              "mediaType": "DOCUMENT",
+              "mediaUrl": "funil4/1 - Jornada da Bíblia Parte 01.pdf",
+              "caption": "📖 Livro 1: A Criação e os Primeiros Passos da Fé (Gênesis a Deuteronômio)",
+              "filename": "1 - Jornada da Bíblia Parte 01.pdf"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_8_part2",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 1160
+            },
+            "label": "📄 Livro 2 - Jornada da Bíblia (Parte 02: Históricos)",
+            "config": {
+              "mediaType": "DOCUMENT",
+              "mediaUrl": "funil4/2 - Jornada da Bíblia Parte 02.pdf",
+              "caption": "📖 Livro 2: Conquistas, Reis e Quedas (Josué a Ester)",
+              "filename": "2 - Jornada da Bíblia Parte 02.pdf"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_8_part3",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 1300
+            },
+            "label": "📄 Livro 3 - Jornada da Bíblia (Parte 03: Poéticos)",
+            "config": {
+              "mediaType": "DOCUMENT",
+              "mediaUrl": "funil4/3 - Jornada da Bíblia Parte 03.pdf",
+              "caption": "📖 Livro 3: Sabedoria, Louvor e Vida (Jó a Cantares)",
+              "filename": "3 - Jornada da Bíblia Parte 03.pdf"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_8_part4",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 1440
+            },
+            "label": "📄 Livro 4 - Jornada da Bíblia (Parte 04: Profetas)",
+            "config": {
+              "mediaType": "DOCUMENT",
+              "mediaUrl": "funil4/4 - Jornada da Bíblia Parte 04.pdf",
+              "caption": "📖 Livro 4: Vozes de Alerta, Julgamento e Esperança (Isaías a Malaquias)",
+              "filename": "4 - Jornada da Bíblia Parte 04.pdf"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_8_part5",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 320,
+              "y": 1580
+            },
+            "label": "📄 Livro 5 - Os 4 Evangelhos Explicados",
+            "config": {
+              "mediaType": "DOCUMENT",
+              "mediaUrl": "funil4/5 - Os 4 Evangelhos.pdf",
+              "caption": "📖 Livro 5: A Vida, Ministério e Ensinos de Jesus Cristo (Mateus a João)",
+              "filename": "5 - Os 4 Evangelhos.pdf"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_9",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 1720
+            },
+            "label": "Tabela de Valores Sugeridos",
+            "config": {
+              "text": "Acabei de enviar todos os 5 livros em PDF aqui na conversa para você baixar e ler no seu celular ou imprimir!\n\nValor sugerido: R$20,00\n⭐️ Gostei muito: R$30,00\n⭐️⭐️ Quero abençoar ainda mais: R$50,00\n\nIsso ajuda a continuarmos esse propósito!\nCaso não possa contribuir com o valor integral, fique à vontade para enviar o valor que puder!"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_10",
+            "nodeType": "PIX",
+            "position": {
+              "x": 320,
+              "y": 1860
+            },
+            "label": "💸 Chave PIX E-mail Pastor Guilherme",
+            "config": {
+              "keyType": "CPF",
+              "pixKey": "pastorguilhermeigreja@gmail.com",
+              "beneficiaryName": "Pastor Guilherme",
+              "amount": "20.00",
+              "message": "Chave Pix E-MAIL\nNome: Pastor Guilherme\n👇 Só clicar no botão ou copiar a chave abaixo 👇"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_11",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 2000
+            },
+            "label": "Bônus 7 Estudos do Apocalipse",
+            "config": {
+              "text": "Após o pagamento, me envie o comprovante aqui, que eu vou te enviar como BÔNUS:\n7 ESTUDOS DO APOCALIPSE EM PDF 🎁"
+            }
+          },
+          {
+            "nodeId": "flow_funil_4_delay_1",
+            "nodeType": "DELAY",
+            "position": {
+              "x": 840,
+              "y": 2220
+            },
+            "label": "⏰ Aguardar 15 minutos",
+            "config": {
+              "delaySeconds": 900,
+              "delayValue": 15,
+              "delayUnit": "minutes"
+            }
+          },
+          {
+            "nodeId": "flow_funil_4_msg_rem1",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 1280,
+              "y": 2240
+            },
+            "label": "💬 Remarketing: Faltou alguma coisa?",
+            "config": {
+              "text": "Faltou alguma coisa?",
+              "messageText": "Faltou alguma coisa?"
+            }
+          },
+          {
+            "nodeId": "flow_funil_4_delay_2",
+            "nodeType": "DELAY",
+            "position": {
+              "x": 1640,
+              "y": 2240
+            },
+            "label": "⏰ Aguardar 2 horas",
+            "config": {
+              "delaySeconds": 7200,
+              "delayValue": 2,
+              "delayUnit": "hours"
+            }
+          },
+          {
+            "nodeId": "flow_funil_4_msg_rem2",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 2060,
+              "y": 2240
+            },
+            "label": "💬 Remarketing 2: Apoio e Dúvidas",
+            "config": {
+              "text": "Paz de Deus! Conseguiu abrir os livros da Jornada da Bíblia? Se tiver qualquer dúvida ou se precisar de uma condição especial para sua contribuição, me avisa aqui! 🙏",
+              "messageText": "Paz de Deus! Conseguiu abrir os livros da Jornada da Bíblia? Se tiver qualquer dúvida ou se precisar de uma condição especial para sua contribuição, me avisa aqui! 🙏"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_12",
+            "nodeType": "PIX_VERIFIER",
+            "position": {
+              "x": 320,
+              "y": 2160
+            },
+            "label": "🧠 Auditoria Comprovante IA Gemini",
+            "config": {
+              "expectedAmount": "20.00",
+              "successMessage": "✅ Comprovante PIX validado com sucesso!",
+              "failureMessage": "⚠️ Não conseguimos confirmar o pagamento PIX.",
+              "beneficiary": "Pastor Guilherme",
+              "detectRefusalAi": true,
+              "enableTimeoutLimit": true,
+              "timeoutHours": 24
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_bonus_media",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 760,
+              "y": 2040
+            },
+            "label": "🎁 Entrega Bônus Especial: 7 Estudos do Apocalipse",
+            "config": {
+              "mediaType": "DOCUMENT",
+              "mediaUrl": "funil4/Bônus Especial - Estudos do Apocalipse.pdf",
+              "caption": "🎁 Aqui está o seu Bônus Especial: *7 Estudos do Apocalipse em PDF*!\n\nQue este estudo ilumine sua fé e traga grandes revelações da Palavra de Deus!",
+              "filename": "Bônus Especial - Estudos do Apocalipse.pdf"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_meta_capi",
+            "nodeType": "META_CAPI",
+            "position": {
+              "x": 1200,
+              "y": 1980
+            },
+            "label": "🎯 Conversão Meta Ads (CAPI - Purchase)",
+            "config": {
+              "eventName": "Purchase",
+              "currency": "BRL",
+              "eventValue": 19.9
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_final_msg",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 1580,
+              "y": 2060
+            },
+            "label": "Agradecimento Final & Acesso Vitalício",
+            "config": {
+              "text": "Glória a Deus! Seu comprovante foi aprovado com sucesso! 🙏✨\n\nTodos os 5 livros da *Jornada da Bíblia* e o *Bônus do Apocalipse* estão liberados para você com acesso vitalício.\n\nQualquer dúvida estou à disposição por aqui. Que Deus abençoe grandemente a sua vida e seu ministério! 📖❤️"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "edgeId": "e_node_flow_funil_4_1_node_flow_funil_4_2",
+            "sourceNodeId": "node_flow_funil_4_1",
+            "targetNodeId": "node_flow_funil_4_2",
+            "id": "e_node_flow_funil_4_1_node_flow_funil_4_2",
+            "source": "node_flow_funil_4_1",
+            "target": "node_flow_funil_4_2"
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_2_node_flow_funil_4_3",
+            "sourceNodeId": "node_flow_funil_4_2",
+            "targetNodeId": "node_flow_funil_4_3",
+            "id": "e_node_flow_funil_4_2_node_flow_funil_4_3",
+            "source": "node_flow_funil_4_2",
+            "target": "node_flow_funil_4_3"
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_3_node_flow_funil_4_4",
+            "sourceNodeId": "node_flow_funil_4_3",
+            "targetNodeId": "node_flow_funil_4_4",
+            "id": "e_node_flow_funil_4_3_node_flow_funil_4_4",
+            "source": "node_flow_funil_4_3",
+            "target": "node_flow_funil_4_4"
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_4_node_flow_funil_4_5",
+            "sourceNodeId": "node_flow_funil_4_4",
+            "targetNodeId": "node_flow_funil_4_5",
+            "id": "e_node_flow_funil_4_4_node_flow_funil_4_5",
+            "source": "node_flow_funil_4_4",
+            "target": "node_flow_funil_4_5"
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_5_node_flow_funil_4_6",
+            "sourceNodeId": "node_flow_funil_4_5",
+            "targetNodeId": "node_flow_funil_4_6",
+            "id": "e_node_flow_funil_4_5_node_flow_funil_4_6",
+            "source": "node_flow_funil_4_5",
+            "target": "node_flow_funil_4_6"
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_6_node_flow_funil_4_7",
+            "sourceNodeId": "node_flow_funil_4_6",
+            "targetNodeId": "node_flow_funil_4_7",
+            "id": "e_node_flow_funil_4_6_node_flow_funil_4_7",
+            "source": "node_flow_funil_4_6",
+            "target": "node_flow_funil_4_7"
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_7_node_flow_funil_4_8_part1",
+            "sourceNodeId": "node_flow_funil_4_7",
+            "targetNodeId": "node_flow_funil_4_8_part1",
+            "id": "e_node_flow_funil_4_7_node_flow_funil_4_8_part1",
+            "source": "node_flow_funil_4_7",
+            "target": "node_flow_funil_4_8_part1"
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_8_part1_node_flow_funil_4_8_part2",
+            "sourceNodeId": "node_flow_funil_4_8_part1",
+            "targetNodeId": "node_flow_funil_4_8_part2",
+            "id": "e_node_flow_funil_4_8_part1_node_flow_funil_4_8_part2",
+            "source": "node_flow_funil_4_8_part1",
+            "target": "node_flow_funil_4_8_part2"
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_8_part2_node_flow_funil_4_8_part3",
+            "sourceNodeId": "node_flow_funil_4_8_part2",
+            "targetNodeId": "node_flow_funil_4_8_part3",
+            "id": "e_node_flow_funil_4_8_part2_node_flow_funil_4_8_part3",
+            "source": "node_flow_funil_4_8_part2",
+            "target": "node_flow_funil_4_8_part3"
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_8_part3_node_flow_funil_4_8_part4",
+            "sourceNodeId": "node_flow_funil_4_8_part3",
+            "targetNodeId": "node_flow_funil_4_8_part4",
+            "id": "e_node_flow_funil_4_8_part3_node_flow_funil_4_8_part4",
+            "source": "node_flow_funil_4_8_part3",
+            "target": "node_flow_funil_4_8_part4"
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_8_part4_node_flow_funil_4_8_part5",
+            "sourceNodeId": "node_flow_funil_4_8_part4",
+            "targetNodeId": "node_flow_funil_4_8_part5",
+            "id": "e_node_flow_funil_4_8_part4_node_flow_funil_4_8_part5",
+            "source": "node_flow_funil_4_8_part4",
+            "target": "node_flow_funil_4_8_part5"
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_8_part5_node_flow_funil_4_9",
+            "sourceNodeId": "node_flow_funil_4_8_part5",
+            "targetNodeId": "node_flow_funil_4_9",
+            "id": "e_node_flow_funil_4_8_part5_node_flow_funil_4_9",
+            "source": "node_flow_funil_4_8_part5",
+            "target": "node_flow_funil_4_9"
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_9_node_flow_funil_4_10",
+            "sourceNodeId": "node_flow_funil_4_9",
+            "targetNodeId": "node_flow_funil_4_10",
+            "id": "e_node_flow_funil_4_9_node_flow_funil_4_10",
+            "source": "node_flow_funil_4_9",
+            "target": "node_flow_funil_4_10"
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_10_node_flow_funil_4_11",
+            "sourceNodeId": "node_flow_funil_4_10",
+            "targetNodeId": "node_flow_funil_4_11",
+            "id": "e_node_flow_funil_4_10_node_flow_funil_4_11",
+            "source": "node_flow_funil_4_10",
+            "target": "node_flow_funil_4_11"
+          },
+          {
+            "edgeId": "e_flow_funil_4_delay_1_flow_funil_4_msg_rem1",
+            "sourceNodeId": "flow_funil_4_delay_1",
+            "targetNodeId": "flow_funil_4_msg_rem1",
+            "id": "e_flow_funil_4_delay_1_flow_funil_4_msg_rem1",
+            "source": "flow_funil_4_delay_1",
+            "target": "flow_funil_4_msg_rem1"
+          },
+          {
+            "edgeId": "e_flow_funil_4_msg_rem1_flow_funil_4_delay_2",
+            "sourceNodeId": "flow_funil_4_msg_rem1",
+            "targetNodeId": "flow_funil_4_delay_2",
+            "id": "e_flow_funil_4_msg_rem1_flow_funil_4_delay_2",
+            "source": "flow_funil_4_msg_rem1",
+            "target": "flow_funil_4_delay_2"
+          },
+          {
+            "edgeId": "e_flow_funil_4_delay_2_flow_funil_4_msg_rem2",
+            "sourceNodeId": "flow_funil_4_delay_2",
+            "targetNodeId": "flow_funil_4_msg_rem2",
+            "id": "e_flow_funil_4_delay_2_flow_funil_4_msg_rem2",
+            "source": "flow_funil_4_delay_2",
+            "target": "flow_funil_4_msg_rem2"
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_bonus_media_node_flow_funil_4_meta_capi",
+            "sourceNodeId": "node_flow_funil_4_bonus_media",
+            "targetNodeId": "node_flow_funil_4_meta_capi",
+            "id": "e_node_flow_funil_4_bonus_media_node_flow_funil_4_meta_capi",
+            "source": "node_flow_funil_4_bonus_media",
+            "target": "node_flow_funil_4_meta_capi"
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_meta_capi_node_flow_funil_4_final_msg",
+            "sourceNodeId": "node_flow_funil_4_meta_capi",
+            "targetNodeId": "node_flow_funil_4_final_msg",
+            "id": "e_node_flow_funil_4_meta_capi_node_flow_funil_4_final_msg",
+            "source": "node_flow_funil_4_meta_capi",
+            "target": "node_flow_funil_4_final_msg"
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_11_node_flow_funil_4_12",
+            "sourceNodeId": "node_flow_funil_4_11",
+            "targetNodeId": "node_flow_funil_4_12",
+            "id": "e_node_flow_funil_4_11_node_flow_funil_4_12",
+            "source": "node_flow_funil_4_11",
+            "target": "node_flow_funil_4_12"
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_12_node_flow_funil_4_bonus_media",
+            "sourceNodeId": "node_flow_funil_4_12",
+            "targetNodeId": "node_flow_funil_4_bonus_media",
+            "sourceHandle": "success",
+            "id": "e_node_flow_funil_4_12_node_flow_funil_4_bonus_media",
+            "source": "node_flow_funil_4_12",
+            "target": "node_flow_funil_4_bonus_media"
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_12_flow_funil_4_delay_1_timeout",
+            "sourceNodeId": "node_flow_funil_4_12",
+            "targetNodeId": "flow_funil_4_delay_1",
+            "sourceHandle": "timeout",
+            "id": "e_node_flow_funil_4_12_flow_funil_4_delay_1_timeout",
+            "source": "node_flow_funil_4_12",
+            "target": "flow_funil_4_delay_1"
           }
         ]
       }
@@ -2417,7 +2895,7 @@
     "isMainFlow": false,
     "isDeployed": true,
     "productionVersion": 1,
-    "createdAt": "2026-10-30T18:59:28.000Z",
+    "createdAt": "2026-10-31T02:28:50.000Z",
     "updatedAt": "2026-11-10T03:30:00.000Z",
     "draftVersion": {
       "version": 1,
@@ -3297,7 +3775,7 @@
     "isMainFlow": false,
     "isDeployed": true,
     "productionVersion": 1,
-    "createdAt": "2026-10-30T18:59:28.000Z",
+    "createdAt": "2026-10-31T03:01:16.000Z",
     "updatedAt": "2026-11-10T03:30:00.000Z",
     "draftVersion": {
       "version": 1,
@@ -3892,7 +4370,7 @@
     "isMainFlow": false,
     "isDeployed": true,
     "productionVersion": 1,
-    "createdAt": "2026-10-30T18:59:28.000Z",
+    "createdAt": "2026-10-31T03:01:16.000Z",
     "updatedAt": "2026-11-10T03:30:00.000Z",
     "draftVersion": {
       "version": 1,
@@ -4542,7 +5020,7 @@
     "isMainFlow": false,
     "isDeployed": true,
     "productionVersion": 1,
-    "createdAt": "2026-10-30T18:59:28.000Z",
+    "createdAt": "2026-10-31T03:01:16.000Z",
     "updatedAt": "2026-11-10T03:30:00.000Z",
     "draftVersion": {
       "version": 1,
@@ -5024,7 +5502,7 @@
     "isMainFlow": false,
     "isDeployed": true,
     "productionVersion": 1,
-    "createdAt": "2026-10-30T18:59:28.000Z",
+    "createdAt": "2026-10-31T03:01:16.000Z",
     "updatedAt": "2026-11-10T03:30:00.000Z",
     "draftVersion": {
       "version": 1,
@@ -5364,7 +5842,7 @@
     "isMainFlow": false,
     "isDeployed": true,
     "productionVersion": 1,
-    "createdAt": "2026-10-30T18:59:28.000Z",
+    "createdAt": "2026-10-31T03:01:16.000Z",
     "updatedAt": "2026-11-10T03:30:00.000Z",
     "draftVersion": {
       "version": 1,
@@ -5936,7 +6414,7 @@
     "isMainFlow": false,
     "isDeployed": true,
     "productionVersion": 1,
-    "createdAt": "2026-10-30T18:59:28.000Z",
+    "createdAt": "2026-11-01T21:26:00.000Z",
     "updatedAt": "2026-11-10T03:30:00.000Z",
     "draftVersion": {
       "version": 1,
@@ -6440,7 +6918,7 @@
     "isMainFlow": false,
     "isDeployed": true,
     "productionVersion": 1,
-    "createdAt": "2026-10-30T18:59:28.000Z",
+    "createdAt": "2026-11-01T21:25:00.000Z",
     "updatedAt": "2026-11-10T03:30:00.000Z",
     "draftVersion": {
       "version": 1,
@@ -6968,7 +7446,7 @@
     "isMainFlow": false,
     "isDeployed": true,
     "productionVersion": 1,
-    "createdAt": "2026-10-30T18:59:28.000Z",
+    "createdAt": "2026-11-01T21:30:00.000Z",
     "updatedAt": "2026-11-10T03:30:00.000Z",
     "draftVersion": {
       "version": 1,
