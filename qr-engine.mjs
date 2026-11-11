@@ -693,43 +693,63 @@ const DEFAULT_FLOW_NODES = [
         },
     },
     {
+        nodeId: 'node_pix_intro_msg',
+        nodeType: 'MESSAGE',
+        position: { x: 320, y: 460 },
+        label: '💬 Instruções da Chave PIX',
+        config: {
+            text: 'Chave Pix E-MAIL\nNome: Pastor Guilherme\n👇 Só clicar no botão ou copiar a chave abaixo 👇',
+            messageText: 'Chave Pix E-MAIL\nNome: Pastor Guilherme\n👇 Só clicar no botão ou copiar a chave abaixo 👇',
+        },
+    },
+    {
         nodeId: 'node_pix_charge',
         nodeType: 'PIX',
-        position: { x: 320, y: 460 },
-        label: '💸 Chave PIX (Pagamento)',
+        position: { x: 320, y: 600 },
+        label: '💳 Cartão PIX Copia e Cola',
         config: {
-            pixKey: 'pagamentos@seunegocio.com',
-            beneficiaryName: 'Carol',
-            amount: '19.90',
-            message: 'O valor simbólico é de apenas R$ 19,90! Segue a chave PIX para cópia rápida:',
+            keyType: 'EMAIL',
+            pixKey: 'pastorguilhermeigreja@gmail.com',
+            beneficiaryName: 'Pastor Guilherme',
+            amount: '20.00',
+        },
+    },
+    {
+        nodeId: 'node_pix_raw_key',
+        nodeType: 'MESSAGE',
+        position: { x: 320, y: 740 },
+        label: '🔑 Chave PIX (Só a Chave)',
+        config: {
+            text: 'pastorguilhermeigreja@gmail.com',
+            messageText: 'pastorguilhermeigreja@gmail.com',
         },
     },
     {
         nodeId: 'node_pix_verifier',
         nodeType: 'PIX_VERIFIER',
-        position: { x: 320, y: 600 },
+        position: { x: 320, y: 880 },
         label: '🧠 Auditor PIX (IA Gemini Vision)',
         config: {
-            expectedAmount: '19.90',
-            beneficiaryName: 'Carol',
+            expectedAmount: '20.00',
+            beneficiaryName: 'Pastor Guilherme',
             model: 'gemini-2.0-flash',
         },
     },
     {
         nodeId: 'node_capi_purchase',
         nodeType: 'META_CAPI',
-        position: { x: 100, y: 760 },
+        position: { x: 100, y: 1040 },
         label: '🎯 Conversão Meta Ads (Purchase)',
         config: {
             eventName: 'Purchase',
-            value: 19.90,
+            value: 20.00,
             currency: 'BRL',
         },
     },
     {
         nodeId: 'node_msg_refused',
         nodeType: 'MESSAGE',
-        position: { x: 540, y: 760 },
+        position: { x: 540, y: 1040 },
         label: '⚠️ Cobrança Educada (PIX Inválido/Pendente)',
         config: {
             text: 'Oi! Parece que esse comprovante é um agendamento ou ainda não foi identificado como concluído. Consegue me mandar o comprovante definitivo?',
@@ -740,10 +760,12 @@ const DEFAULT_FLOW_NODES = [
 const DEFAULT_FLOW_EDGES = [
     { id: 'edge_1', source: 'node_start', target: 'node_audio_welcome' },
     { id: 'edge_2', source: 'node_audio_welcome', target: 'node_media_product' },
-    { id: 'edge_3', source: 'node_media_product', target: 'node_pix_charge' },
-    { id: 'edge_4', source: 'node_pix_charge', target: 'node_pix_verifier' },
-    { id: 'edge_5', source: 'node_pix_verifier', sourceHandle: 'approved', target: 'node_capi_purchase' },
-    { id: 'edge_6', source: 'node_pix_verifier', sourceHandle: 'denied', target: 'node_msg_refused' },
+    { id: 'edge_3', source: 'node_media_product', target: 'node_pix_intro_msg' },
+    { id: 'edge_4', source: 'node_pix_intro_msg', target: 'node_pix_charge' },
+    { id: 'edge_5', source: 'node_pix_charge', target: 'node_pix_raw_key' },
+    { id: 'edge_6', source: 'node_pix_raw_key', target: 'node_pix_verifier' },
+    { id: 'edge_7', source: 'node_pix_verifier', sourceHandle: 'success', target: 'node_capi_purchase' },
+    { id: 'edge_8', source: 'node_pix_verifier', sourceHandle: 'fail', target: 'node_msg_refused' },
 ];
 
 function loadStore() {
@@ -803,14 +825,13 @@ try {
         const defFlows = JSON.parse(fs.readFileSync(defFlowsPath, 'utf-8'));
         const currentFlows = store.flows['bot_whatsapp_principal'] || [];
         const isOutdated = currentFlows.length < 13 || 
-            currentFlows.some(f => f._id === 'flow_funil_4' && (f.draftVersion?.flowData?.nodes?.length || 0) < 22) ||
-            store.flows_schema_version !== 'v8_visual_flow_strict_20261110';
+            store.flows_schema_version !== 'v9_pix_3_blocks_split_20261111';
         if (currentFlows.length === 0 || isOutdated) {
             const customFlows = currentFlows.filter(f => !defFlows.some(df => df._id === f._id));
             store.flows['bot_whatsapp_principal'] = [...defFlows, ...customFlows];
-            store.flows_schema_version = 'v8_visual_flow_strict_20261110';
+            store.flows_schema_version = 'v9_pix_3_blocks_split_20261111';
             saveStore(store);
-            console.log(`[Store Init] 🚀 Funis Visuais V8 Carregados (Total: ${store.flows['bot_whatsapp_principal'].length} funis)!`);
+            console.log(`[Store Init] 🚀 Funis Visuais V9 (PIX em 3 Blocos Independentes) Carregados (Total: ${store.flows['bot_whatsapp_principal'].length} funis)!`);
         }
     }
 } catch (err) {
@@ -874,7 +895,9 @@ async function pushCloudHeartbeat(botId = 'bot_whatsapp_principal') {
         );
 
         const data = res.data;
-        if (data?.flows && Array.isArray(data.flows) && data.flows.length > 0) {
+        // NUNCA sobrescrever store.flows[botId] pelo heartbeat do KV, pois o frontend
+        // sincroniza diretamente com o Render via /whatsapp/qr/sync e /flows/:flowId/draft.
+        if (data?.flows && Array.isArray(data.flows) && data.flows.length > 0 && (!store.flows[botId] || store.flows[botId].length === 0)) {
             store.flows[botId] = data.flows;
             saveStore(store);
         }
@@ -6372,8 +6395,8 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
             const resumeAt = Date.now() + (totalSeconds * 1000);
 
             store.scheduledJobs = store.scheduledJobs || [];
-            // Remove jobs anteriores deste usuário e fluxo para evitar duplicações
-            store.scheduledJobs = store.scheduledJobs.filter(j => !(j.userPhone === session.userPhone && j.flowId === session.flowId));
+            // Remove jobs anteriores de delay deste usuário e fluxo para evitar duplicações (preservando o timer de expiração isPixTimeout)
+            store.scheduledJobs = store.scheduledJobs.filter(j => !(j.userPhone === session.userPhone && j.flowId === session.flowId && !j.isPixTimeout));
 
             const newJob = {
                 jobId: `job_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
@@ -6501,24 +6524,16 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
             const copyCode = String(config.copyPasteCode || pixKey).trim();
             const beneficiaryName = String(config.beneficiaryName || 'Favorecido').trim();
             const amount = config.amount || '19.90';
-            const msg = String(config.instructionText ?? config.message ?? '').trim();
+            const buttonLabel = String(config.buttonLabel || 'Copiar chave Pix').trim();
+            const footerText = String(config.footerText || 'Toque no botão abaixo para copiar').trim();
 
-            if (msg) {
-                await sendRealisticText(
-                    botId,
-                    sock,
-                    remoteJid,
-                    session.userPhone,
-                    msg
-                );
-                await new Promise((r) => setTimeout(r, 600));
-            }
-
-            // Envia o cartão interativo com botão nativo "Copiar chave Pix" (cta_copy)
+            // Este bloco envia EXCLUSIVAMENTE o Cartão Interativo Nativo com botão "Copiar chave Pix" (cta_copy).
+            // O texto de instrução acima e a chave PIX avulsa abaixo ficam em seus próprios blocos MESSAGE no fluxograma!
+            let sentInteractiveCard = false;
             try {
                 if (generateWAMessageFromContent && proto) {
                     const buttonParams = {
-                        display_text: 'Copiar chave Pix',
+                        display_text: buttonLabel,
                         id: 'copy_pix_key',
                         copy_code: copyCode
                     };
@@ -6536,8 +6551,8 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
                                   ? proto.Message.InteractiveMessage.Body.create({ text: `💰 *Valor:* R$ ${amount}` })
                                   : { text: `💰 *Valor:* R$ ${amount}` },
                               footer: proto.Message.InteractiveMessage.Footer?.create
-                                  ? proto.Message.InteractiveMessage.Footer.create({ text: 'Toque no botão abaixo para copiar' })
-                                  : { text: 'Toque no botão abaixo para copiar' },
+                                  ? proto.Message.InteractiveMessage.Footer.create({ text: footerText })
+                                  : { text: footerText },
                               header: proto.Message.InteractiveMessage.Header?.create
                                   ? proto.Message.InteractiveMessage.Header.create({
                                         title: beneficiaryName,
@@ -6559,7 +6574,7 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
                           })
                         : {
                               body: { text: `💰 *Valor:* R$ ${amount}` },
-                              footer: { text: 'Toque no botão abaixo para copiar' },
+                              footer: { text: footerText },
                               header: {
                                   title: beneficiaryName,
                                   subtitle: `Chave: ${pixKey}`,
@@ -6608,34 +6623,30 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
                             }
                         ]
                     });
-                    logConversation(botId, session.userPhone, 'BOT', 'PIX', `[Botão Nativo PIX cta_copy]: ${pixKey}`);
+                    sentInteractiveCard = true;
+                    logConversation(botId, session.userPhone, 'BOT', 'PIX', `[Cartão Botão Copiar Chave PIX]: ${beneficiaryName} | ${pixKey} | R$ ${amount}`);
                 }
             } catch (interactiveErr) {
                 console.error('[PIX Native Button Error]:', interactiveErr?.message);
             }
 
-            // Envia a chave PIX avulsa em texto logo em seguida para facilitar copiar e colar em qualquer aparelho
-            await new Promise((r) => setTimeout(r, 600));
-            await safeDispatchBlock({
-                sock,
-                remoteJid,
-                blockType: 'PIX',
-                description: `Chave PIX Texto: ${copyCode}`,
-                botId,
-                userPhone: session.userPhone,
-                sendAction: async () => {
-                    const sent = await sock.sendMessage(remoteJid, { text: copyCode });
-                    logConversation(botId, session.userPhone, 'BOT', 'PIX', `Chave PIX: ${copyCode}`);
-                    return sent;
-                }
-            });
+            // Fallback de segurança apenas se o protocolo nativo falhar
+            if (!sentInteractiveCard) {
+                await sendRealisticText(
+                    botId,
+                    sock,
+                    remoteJid,
+                    session.userPhone,
+                    `*${beneficiaryName}*\nChave: ${pixKey}\n💰 *Valor:* R$ ${amount}`
+                );
+            }
 
             session.expectedAmount = Number(amount) || 19.90;
             session.beneficiary = beneficiaryName;
             store.funnelStats.pixSentCount += 1;
             saveStore(store);
 
-            // Segue estritamente para o próximo nó conectado no fluxograma visual (ex: Bônus 7 ➔ PIX_VERIFIER)
+            // Segue estritamente para o próximo nó conectado no fluxograma visual (ex: Bloco 3 'Só a Chave PIX' ➔ Bônus 7 ➔ PIX_VERIFIER)
             break;
         }
 
@@ -6737,13 +6748,12 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
         }
 
         default: {
-            const isReminder = config.isReminder || (node.label && node.label.toLowerCase().includes('lembrete'));
-            if (isReminder) {
+            if (config.isReminder === true) {
                 const delayMin = Number(config.delayMinutes) || 15;
                 const reminderText = config.text || config.messageText || 'Faltou alguma coisa?';
                 console.log(`[Visual Flow] ⏰ Agendando lembrete de follow-up (${delayMin} min) para ${session.userPhone}: "${reminderText}"`);
                 scheduleVisualReminder(botId, sock, remoteJid, session.userPhone, delayMin, reminderText);
-                break; // Segue imediatamente para o próximo nó (PIX_VERIFIER) sem travar a esteira!
+                break;
             }
             if (config.text || config.messageText) {
                 await sendRealisticText(botId, sock, remoteJid, session.userPhone, config.text || config.messageText);

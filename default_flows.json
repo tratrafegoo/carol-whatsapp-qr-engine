@@ -216,27 +216,55 @@
             "id": "node_flow_funil_1_10"
           },
           {
-            "nodeId": "node_flow_funil_1_11",
-            "nodeType": "PIX",
+            "nodeId": "node_flow_funil_1_11_intro_msg",
+            "id": "node_flow_funil_1_11_intro_msg",
+            "nodeType": "MESSAGE",
             "position": {
               "x": 320,
               "y": 2000
             },
-            "label": "💸 Chave PIX CNPJ GPS Ebooks",
+            "label": "💬 Instruções da Chave PIX",
             "config": {
+              "text": "Chave Pix CNPJ\nNome da Chave :GPS EBOOKS DIGITAIS LTDA\n👇 Só copiar e colar CNPJ 👇",
+              "messageText": "Chave Pix CNPJ\nNome da Chave :GPS EBOOKS DIGITAIS LTDA\n👇 Só copiar e colar CNPJ 👇"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_1_11",
+            "nodeType": "PIX",
+            "position": {
+              "x": 320,
+              "y": 2140
+            },
+            "label": "💳 Cartão PIX Copia e Cola (GPS EBOOKS DIGITAIS LTDA)",
+            "config": {
+              "keyType": "CNPJ",
               "pixKey": "67.039.217/0001-86",
               "beneficiaryName": "GPS EBOOKS DIGITAIS LTDA",
-              "amount": "25.00",
-              "message": "Chave Pix CNPJ\nNome da Chave :GPS EBOOKS DIGITAIS LTDA\n👇 Só copiar e colar CNPJ 👇"
+              "amount": "25.00"
             },
             "id": "node_flow_funil_1_11"
+          },
+          {
+            "nodeId": "node_flow_funil_1_11_raw_key",
+            "id": "node_flow_funil_1_11_raw_key",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 2280
+            },
+            "label": "🔑 Chave PIX (Só a Chave)",
+            "config": {
+              "text": "67.039.217/0001-86",
+              "messageText": "67.039.217/0001-86"
+            }
           },
           {
             "nodeId": "node_flow_funil_1_12",
             "nodeType": "MESSAGE",
             "position": {
               "x": 320,
-              "y": 2140
+              "y": 2420
             },
             "label": "Instruções & Promessa de Bônus",
             "config": {
@@ -255,7 +283,7 @@
             },
             "position": {
               "x": 740,
-              "y": 2300
+              "y": 2580
             }
           },
           {
@@ -268,7 +296,7 @@
             },
             "position": {
               "x": 740,
-              "y": 2435
+              "y": 2715
             }
           },
           {
@@ -282,7 +310,7 @@
             },
             "position": {
               "x": 740,
-              "y": 2570
+              "y": 2850
             }
           },
           {
@@ -295,7 +323,7 @@
             },
             "position": {
               "x": 740,
-              "y": 2705
+              "y": 2985
             }
           },
           {
@@ -309,7 +337,7 @@
             },
             "position": {
               "x": 740,
-              "y": 2840
+              "y": 3120
             }
           },
           {
@@ -322,7 +350,7 @@
             },
             "position": {
               "x": 740,
-              "y": 2975
+              "y": 3255
             }
           },
           {
@@ -336,7 +364,7 @@
             },
             "position": {
               "x": 740,
-              "y": 3110
+              "y": 3390
             }
           },
           {
@@ -349,7 +377,7 @@
             },
             "position": {
               "x": 740,
-              "y": 3245
+              "y": 3525
             }
           },
           {
@@ -357,7 +385,7 @@
             "nodeType": "PIX_VERIFIER",
             "position": {
               "x": 320,
-              "y": 2300
+              "y": 2580
             },
             "label": "🧠 Auditoria Comprovante IA Gemini",
             "config": {
@@ -375,7 +403,7 @@
             "nodeType": "MEDIA",
             "position": {
               "x": 320,
-              "y": 2460
+              "y": 2740
             },
             "label": "🎁 Entrega Bônus: Curiosidades & Versão Simplificada",
             "config": {
@@ -391,7 +419,7 @@
             "nodeType": "META_CAPI",
             "position": {
               "x": 320,
-              "y": 2610
+              "y": 2890
             },
             "label": "🎯 Conversão Meta Ads (CAPI - Purchase)",
             "config": {
@@ -405,7 +433,7 @@
             "nodeType": "MESSAGE",
             "position": {
               "x": 320,
-              "y": 2760
+              "y": 3040
             },
             "label": "Agradecimento Final & Acesso Vitalício",
             "config": {
@@ -532,19 +560,35 @@
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_1_10_node_flow_funil_1_11",
-            "edgeId": "e_node_flow_funil_1_10_node_flow_funil_1_11",
+            "id": "e_node_flow_funil_1_10_node_flow_funil_1_11_intro_msg",
+            "edgeId": "e_node_flow_funil_1_10_node_flow_funil_1_11_intro_msg",
             "source": "node_flow_funil_1_10",
             "sourceNodeId": "node_flow_funil_1_10",
-            "target": "node_flow_funil_1_11",
-            "targetNodeId": "node_flow_funil_1_11",
+            "target": "node_flow_funil_1_11_intro_msg",
+            "targetNodeId": "node_flow_funil_1_11_intro_msg",
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_1_11_node_flow_funil_1_12",
-            "edgeId": "e_node_flow_funil_1_11_node_flow_funil_1_12",
+            "id": "e_node_flow_funil_1_11_intro_msg_node_flow_funil_1_11",
+            "edgeId": "e_node_flow_funil_1_11_intro_msg_node_flow_funil_1_11",
+            "source": "node_flow_funil_1_11_intro_msg",
+            "sourceNodeId": "node_flow_funil_1_11_intro_msg",
+            "target": "node_flow_funil_1_11",
+            "targetNodeId": "node_flow_funil_1_11"
+          },
+          {
+            "id": "e_node_flow_funil_1_11_node_flow_funil_1_11_raw_key",
+            "edgeId": "e_node_flow_funil_1_11_node_flow_funil_1_11_raw_key",
             "source": "node_flow_funil_1_11",
             "sourceNodeId": "node_flow_funil_1_11",
+            "target": "node_flow_funil_1_11_raw_key",
+            "targetNodeId": "node_flow_funil_1_11_raw_key"
+          },
+          {
+            "id": "e_node_flow_funil_1_11_raw_key_node_flow_funil_1_12",
+            "edgeId": "e_node_flow_funil_1_11_raw_key_node_flow_funil_1_12",
+            "source": "node_flow_funil_1_11_raw_key",
+            "sourceNodeId": "node_flow_funil_1_11_raw_key",
             "target": "node_flow_funil_1_12",
             "targetNodeId": "node_flow_funil_1_12",
             "animated": true
@@ -879,27 +923,55 @@
             "id": "node_flow_funil_2_11"
           },
           {
-            "nodeId": "node_flow_funil_2_12",
-            "nodeType": "PIX",
+            "nodeId": "node_flow_funil_2_12_intro_msg",
+            "id": "node_flow_funil_2_12_intro_msg",
+            "nodeType": "MESSAGE",
             "position": {
               "x": 320,
               "y": 2000
             },
-            "label": "💸 Chave PIX Celular SANTOS LIVROS",
+            "label": "💬 Instruções da Chave PIX",
             "config": {
+              "text": "Chave Pix CELULAR\nNome da Chave :SANTOS LIVROS\n👇 Só copiar e colar NÚMERO CELULAR",
+              "messageText": "Chave Pix CELULAR\nNome da Chave :SANTOS LIVROS\n👇 Só copiar e colar NÚMERO CELULAR"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_2_12",
+            "nodeType": "PIX",
+            "position": {
+              "x": 320,
+              "y": 2140
+            },
+            "label": "💳 Cartão PIX Copia e Cola (SANTOS LIVROS)",
+            "config": {
+              "keyType": "PHONE",
               "pixKey": "82996382293",
               "beneficiaryName": "SANTOS LIVROS",
-              "amount": "10.00",
-              "message": "Chave Pix CELULAR\nNome da Chave :SANTOS LIVROS\n👇 Só copiar e colar NÚMERO CELULAR"
+              "amount": "10.00"
             },
             "id": "node_flow_funil_2_12"
+          },
+          {
+            "nodeId": "node_flow_funil_2_12_raw_key",
+            "id": "node_flow_funil_2_12_raw_key",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 2280
+            },
+            "label": "🔑 Chave PIX (Só a Chave)",
+            "config": {
+              "text": "82996382293",
+              "messageText": "82996382293"
+            }
           },
           {
             "nodeId": "node_flow_funil_2_13",
             "nodeType": "MESSAGE",
             "position": {
               "x": 320,
-              "y": 2140
+              "y": 2420
             },
             "label": "Instruções de Comprovante",
             "config": {
@@ -918,7 +990,7 @@
             },
             "position": {
               "x": 740,
-              "y": 2300
+              "y": 2580
             }
           },
           {
@@ -931,7 +1003,7 @@
             },
             "position": {
               "x": 740,
-              "y": 2435
+              "y": 2715
             }
           },
           {
@@ -939,7 +1011,7 @@
             "nodeType": "PIX_VERIFIER",
             "position": {
               "x": 320,
-              "y": 2300
+              "y": 2580
             },
             "label": "🧠 Auditoria Comprovante IA Gemini",
             "config": {
@@ -957,7 +1029,7 @@
             "nodeType": "MEDIA",
             "position": {
               "x": 320,
-              "y": 2460
+              "y": 2740
             },
             "label": "🎁 Entrega Bônus: Técnicas de Massagem e Conforto",
             "config": {
@@ -973,7 +1045,7 @@
             "nodeType": "META_CAPI",
             "position": {
               "x": 320,
-              "y": 2610
+              "y": 2890
             },
             "label": "🎯 Conversão Meta Ads (CAPI - Purchase)",
             "config": {
@@ -987,7 +1059,7 @@
             "nodeType": "MESSAGE",
             "position": {
               "x": 320,
-              "y": 2760
+              "y": 3040
             },
             "label": "Agradecimento Final & Acesso Vitalício",
             "config": {
@@ -1114,19 +1186,35 @@
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_2_11_node_flow_funil_2_12",
-            "edgeId": "e_node_flow_funil_2_11_node_flow_funil_2_12",
+            "id": "e_node_flow_funil_2_11_node_flow_funil_2_12_intro_msg",
+            "edgeId": "e_node_flow_funil_2_11_node_flow_funil_2_12_intro_msg",
             "source": "node_flow_funil_2_11",
             "sourceNodeId": "node_flow_funil_2_11",
-            "target": "node_flow_funil_2_12",
-            "targetNodeId": "node_flow_funil_2_12",
+            "target": "node_flow_funil_2_12_intro_msg",
+            "targetNodeId": "node_flow_funil_2_12_intro_msg",
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_2_12_node_flow_funil_2_13",
-            "edgeId": "e_node_flow_funil_2_12_node_flow_funil_2_13",
+            "id": "e_node_flow_funil_2_12_intro_msg_node_flow_funil_2_12",
+            "edgeId": "e_node_flow_funil_2_12_intro_msg_node_flow_funil_2_12",
+            "source": "node_flow_funil_2_12_intro_msg",
+            "sourceNodeId": "node_flow_funil_2_12_intro_msg",
+            "target": "node_flow_funil_2_12",
+            "targetNodeId": "node_flow_funil_2_12"
+          },
+          {
+            "id": "e_node_flow_funil_2_12_node_flow_funil_2_12_raw_key",
+            "edgeId": "e_node_flow_funil_2_12_node_flow_funil_2_12_raw_key",
             "source": "node_flow_funil_2_12",
             "sourceNodeId": "node_flow_funil_2_12",
+            "target": "node_flow_funil_2_12_raw_key",
+            "targetNodeId": "node_flow_funil_2_12_raw_key"
+          },
+          {
+            "id": "e_node_flow_funil_2_12_raw_key_node_flow_funil_2_13",
+            "edgeId": "e_node_flow_funil_2_12_raw_key_node_flow_funil_2_13",
+            "source": "node_flow_funil_2_12_raw_key",
+            "sourceNodeId": "node_flow_funil_2_12_raw_key",
             "target": "node_flow_funil_2_13",
             "targetNodeId": "node_flow_funil_2_13",
             "animated": true
@@ -1451,27 +1539,55 @@
             "id": "node_flow_funil_3_13"
           },
           {
-            "nodeId": "node_flow_funil_3_14",
-            "nodeType": "PIX",
+            "nodeId": "node_flow_funil_3_14_intro_msg",
+            "id": "node_flow_funil_3_14_intro_msg",
+            "nodeType": "MESSAGE",
             "position": {
               "x": 320,
               "y": 2420
             },
-            "label": "💸 Chave PIX Celular Marco Antonio",
+            "label": "💬 Instruções da Chave PIX",
             "config": {
+              "text": "O pix estará em nome do meu filho:\n• Marco Antonio\n\nEle que me ajuda a organizar as finanças 🥰\n\nChave Pix Celular: 11 967837631",
+              "messageText": "O pix estará em nome do meu filho:\n• Marco Antonio\n\nEle que me ajuda a organizar as finanças 🥰\n\nChave Pix Celular: 11 967837631"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_3_14",
+            "nodeType": "PIX",
+            "position": {
+              "x": 320,
+              "y": 2560
+            },
+            "label": "💳 Cartão PIX Copia e Cola (Marco Antonio)",
+            "config": {
+              "keyType": "PHONE",
               "pixKey": "11967837631",
               "beneficiaryName": "Marco Antonio",
-              "amount": "10.00",
-              "message": "O pix estará em nome do meu filho:\n• Marco Antonio\n\nEle que me ajuda a organizar as finanças 🥰\n\nChave Pix Celular: 11 967837631"
+              "amount": "10.00"
             },
             "id": "node_flow_funil_3_14"
+          },
+          {
+            "nodeId": "node_flow_funil_3_14_raw_key",
+            "id": "node_flow_funil_3_14_raw_key",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 2700
+            },
+            "label": "🔑 Chave PIX (Só a Chave)",
+            "config": {
+              "text": "11967837631",
+              "messageText": "11967837631"
+            }
           },
           {
             "nodeId": "node_flow_funil_3_15",
             "nodeType": "MEDIA",
             "position": {
               "x": 320,
-              "y": 2560
+              "y": 2840
             },
             "label": "🎁 Imagem dos 4 Bônus Exclusivos",
             "config": {
@@ -1486,7 +1602,7 @@
             "nodeType": "MESSAGE",
             "position": {
               "x": 320,
-              "y": 2700
+              "y": 2980
             },
             "label": "Instruções de Comprovante",
             "config": {
@@ -1505,7 +1621,7 @@
             },
             "position": {
               "x": 740,
-              "y": 2860
+              "y": 3140
             }
           },
           {
@@ -1518,7 +1634,7 @@
             },
             "position": {
               "x": 740,
-              "y": 2995
+              "y": 3275
             }
           },
           {
@@ -1532,7 +1648,7 @@
             },
             "position": {
               "x": 740,
-              "y": 3130
+              "y": 3410
             }
           },
           {
@@ -1545,7 +1661,7 @@
             },
             "position": {
               "x": 740,
-              "y": 3265
+              "y": 3545
             }
           },
           {
@@ -1553,7 +1669,7 @@
             "nodeType": "PIX_VERIFIER",
             "position": {
               "x": 320,
-              "y": 2860
+              "y": 3140
             },
             "label": "🧠 Auditoria Comprovante IA Gemini",
             "config": {
@@ -1571,7 +1687,7 @@
             "nodeType": "MEDIA",
             "position": {
               "x": 320,
-              "y": 3020
+              "y": 3300
             },
             "label": "🎁 Entrega Bônus: Checklist da Pregadora & Planner",
             "config": {
@@ -1587,7 +1703,7 @@
             "nodeType": "META_CAPI",
             "position": {
               "x": 320,
-              "y": 3170
+              "y": 3450
             },
             "label": "🎯 Conversão Meta Ads (CAPI - Purchase)",
             "config": {
@@ -1601,7 +1717,7 @@
             "nodeType": "MESSAGE",
             "position": {
               "x": 320,
-              "y": 3320
+              "y": 3600
             },
             "label": "Agradecimento Final & Acesso Vitalício",
             "config": {
@@ -1755,19 +1871,35 @@
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_3_13_node_flow_funil_3_14",
-            "edgeId": "e_node_flow_funil_3_13_node_flow_funil_3_14",
+            "id": "e_node_flow_funil_3_13_node_flow_funil_3_14_intro_msg",
+            "edgeId": "e_node_flow_funil_3_13_node_flow_funil_3_14_intro_msg",
             "source": "node_flow_funil_3_13",
             "sourceNodeId": "node_flow_funil_3_13",
-            "target": "node_flow_funil_3_14",
-            "targetNodeId": "node_flow_funil_3_14",
+            "target": "node_flow_funil_3_14_intro_msg",
+            "targetNodeId": "node_flow_funil_3_14_intro_msg",
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_3_14_node_flow_funil_3_15",
-            "edgeId": "e_node_flow_funil_3_14_node_flow_funil_3_15",
+            "id": "e_node_flow_funil_3_14_intro_msg_node_flow_funil_3_14",
+            "edgeId": "e_node_flow_funil_3_14_intro_msg_node_flow_funil_3_14",
+            "source": "node_flow_funil_3_14_intro_msg",
+            "sourceNodeId": "node_flow_funil_3_14_intro_msg",
+            "target": "node_flow_funil_3_14",
+            "targetNodeId": "node_flow_funil_3_14"
+          },
+          {
+            "id": "e_node_flow_funil_3_14_node_flow_funil_3_14_raw_key",
+            "edgeId": "e_node_flow_funil_3_14_node_flow_funil_3_14_raw_key",
             "source": "node_flow_funil_3_14",
             "sourceNodeId": "node_flow_funil_3_14",
+            "target": "node_flow_funil_3_14_raw_key",
+            "targetNodeId": "node_flow_funil_3_14_raw_key"
+          },
+          {
+            "id": "e_node_flow_funil_3_14_raw_key_node_flow_funil_3_15",
+            "edgeId": "e_node_flow_funil_3_14_raw_key_node_flow_funil_3_15",
+            "source": "node_flow_funil_3_14_raw_key",
+            "sourceNodeId": "node_flow_funil_3_14_raw_key",
             "target": "node_flow_funil_3_15",
             "targetNodeId": "node_flow_funil_3_15",
             "animated": true
@@ -2049,19 +2181,46 @@
             }
           },
           {
-            "nodeId": "node_flow_funil_4_10",
-            "nodeType": "PIX",
+            "nodeId": "node_flow_funil_4_10_intro_msg",
+            "id": "node_flow_funil_4_10_intro_msg",
+            "nodeType": "MESSAGE",
             "position": {
               "x": 320,
               "y": 1860
             },
-            "label": "💸 Chave PIX E-mail Pastor Guilherme",
+            "label": "💬 Instruções da Chave PIX",
+            "config": {
+              "text": "Chave Pix E-MAIL\nNome: Pastor Guilherme\n👇 Só clicar no botão ou copiar a chave abaixo 👇",
+              "messageText": "Chave Pix E-MAIL\nNome: Pastor Guilherme\n👇 Só clicar no botão ou copiar a chave abaixo 👇"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_10",
+            "nodeType": "PIX",
+            "position": {
+              "x": 320,
+              "y": 2000
+            },
+            "label": "💳 Cartão PIX Copia e Cola (Pastor Guilherme)",
             "config": {
               "keyType": "CPF",
               "pixKey": "pastorguilhermeigreja@gmail.com",
               "beneficiaryName": "Pastor Guilherme",
-              "amount": "20.00",
-              "message": "Chave Pix E-MAIL\nNome: Pastor Guilherme\n👇 Só clicar no botão ou copiar a chave abaixo 👇"
+              "amount": "20.00"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_10_raw_key",
+            "id": "node_flow_funil_4_10_raw_key",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 2140
+            },
+            "label": "🔑 Chave PIX (Só a Chave)",
+            "config": {
+              "text": "pastorguilhermeigreja@gmail.com",
+              "messageText": "pastorguilhermeigreja@gmail.com"
             }
           },
           {
@@ -2069,7 +2228,7 @@
             "nodeType": "MESSAGE",
             "position": {
               "x": 320,
-              "y": 2000
+              "y": 2280
             },
             "label": "Bônus 7 Estudos do Apocalipse",
             "config": {
@@ -2081,7 +2240,7 @@
             "nodeType": "DELAY",
             "position": {
               "x": 840,
-              "y": 2220
+              "y": 2500
             },
             "label": "⏰ Aguardar 15 minutos",
             "config": {
@@ -2095,7 +2254,7 @@
             "nodeType": "MESSAGE",
             "position": {
               "x": 1280,
-              "y": 2240
+              "y": 2520
             },
             "label": "💬 Remarketing: Faltou alguma coisa?",
             "config": {
@@ -2108,7 +2267,7 @@
             "nodeType": "DELAY",
             "position": {
               "x": 1640,
-              "y": 2240
+              "y": 2520
             },
             "label": "⏰ Aguardar 2 horas",
             "config": {
@@ -2122,7 +2281,7 @@
             "nodeType": "MESSAGE",
             "position": {
               "x": 2060,
-              "y": 2240
+              "y": 2520
             },
             "label": "💬 Remarketing 2: Apoio e Dúvidas",
             "config": {
@@ -2135,7 +2294,7 @@
             "nodeType": "PIX_VERIFIER",
             "position": {
               "x": 320,
-              "y": 2160
+              "y": 2440
             },
             "label": "🧠 Auditoria Comprovante IA Gemini",
             "config": {
@@ -2153,7 +2312,7 @@
             "nodeType": "MEDIA",
             "position": {
               "x": 760,
-              "y": 2040
+              "y": 2320
             },
             "label": "🎁 Entrega Bônus Especial: 7 Estudos do Apocalipse",
             "config": {
@@ -2168,7 +2327,7 @@
             "nodeType": "META_CAPI",
             "position": {
               "x": 1200,
-              "y": 1980
+              "y": 2260
             },
             "label": "🎯 Conversão Meta Ads (CAPI - Purchase)",
             "config": {
@@ -2182,7 +2341,7 @@
             "nodeType": "MESSAGE",
             "position": {
               "x": 1580,
-              "y": 2060
+              "y": 2340
             },
             "label": "Agradecimento Final & Acesso Vitalício",
             "config": {
@@ -2288,19 +2447,35 @@
             "target": "node_flow_funil_4_9"
           },
           {
-            "edgeId": "e_node_flow_funil_4_9_node_flow_funil_4_10",
+            "edgeId": "e_node_flow_funil_4_9_node_flow_funil_4_10_intro_msg",
             "sourceNodeId": "node_flow_funil_4_9",
-            "targetNodeId": "node_flow_funil_4_10",
-            "id": "e_node_flow_funil_4_9_node_flow_funil_4_10",
+            "targetNodeId": "node_flow_funil_4_10_intro_msg",
+            "id": "e_node_flow_funil_4_9_node_flow_funil_4_10_intro_msg",
             "source": "node_flow_funil_4_9",
-            "target": "node_flow_funil_4_10"
+            "target": "node_flow_funil_4_10_intro_msg"
           },
           {
-            "edgeId": "e_node_flow_funil_4_10_node_flow_funil_4_11",
-            "sourceNodeId": "node_flow_funil_4_10",
-            "targetNodeId": "node_flow_funil_4_11",
-            "id": "e_node_flow_funil_4_10_node_flow_funil_4_11",
+            "id": "e_node_flow_funil_4_10_intro_msg_node_flow_funil_4_10",
+            "edgeId": "e_node_flow_funil_4_10_intro_msg_node_flow_funil_4_10",
+            "source": "node_flow_funil_4_10_intro_msg",
+            "sourceNodeId": "node_flow_funil_4_10_intro_msg",
+            "target": "node_flow_funil_4_10",
+            "targetNodeId": "node_flow_funil_4_10"
+          },
+          {
+            "id": "e_node_flow_funil_4_10_node_flow_funil_4_10_raw_key",
+            "edgeId": "e_node_flow_funil_4_10_node_flow_funil_4_10_raw_key",
             "source": "node_flow_funil_4_10",
+            "sourceNodeId": "node_flow_funil_4_10",
+            "target": "node_flow_funil_4_10_raw_key",
+            "targetNodeId": "node_flow_funil_4_10_raw_key"
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_10_raw_key_node_flow_funil_4_11",
+            "sourceNodeId": "node_flow_funil_4_10_raw_key",
+            "targetNodeId": "node_flow_funil_4_11",
+            "id": "e_node_flow_funil_4_10_raw_key_node_flow_funil_4_11",
+            "source": "node_flow_funil_4_10_raw_key",
             "target": "node_flow_funil_4_11"
           },
           {
@@ -2563,19 +2738,46 @@
             }
           },
           {
-            "nodeId": "node_flow_funil_4_10",
-            "nodeType": "PIX",
+            "nodeId": "node_flow_funil_4_10_intro_msg",
+            "id": "node_flow_funil_4_10_intro_msg",
+            "nodeType": "MESSAGE",
             "position": {
               "x": 320,
               "y": 1860
             },
-            "label": "💸 Chave PIX E-mail Pastor Guilherme",
+            "label": "💬 Instruções da Chave PIX",
+            "config": {
+              "text": "Chave Pix E-MAIL\nNome: Pastor Guilherme\n👇 Só clicar no botão ou copiar a chave abaixo 👇",
+              "messageText": "Chave Pix E-MAIL\nNome: Pastor Guilherme\n👇 Só clicar no botão ou copiar a chave abaixo 👇"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_10",
+            "nodeType": "PIX",
+            "position": {
+              "x": 320,
+              "y": 2000
+            },
+            "label": "💳 Cartão PIX Copia e Cola (Pastor Guilherme)",
             "config": {
               "keyType": "CPF",
               "pixKey": "pastorguilhermeigreja@gmail.com",
               "beneficiaryName": "Pastor Guilherme",
-              "amount": "20.00",
-              "message": "Chave Pix E-MAIL\nNome: Pastor Guilherme\n👇 Só clicar no botão ou copiar a chave abaixo 👇"
+              "amount": "20.00"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_10_raw_key",
+            "id": "node_flow_funil_4_10_raw_key",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 2140
+            },
+            "label": "🔑 Chave PIX (Só a Chave)",
+            "config": {
+              "text": "pastorguilhermeigreja@gmail.com",
+              "messageText": "pastorguilhermeigreja@gmail.com"
             }
           },
           {
@@ -2583,7 +2785,7 @@
             "nodeType": "MESSAGE",
             "position": {
               "x": 320,
-              "y": 2000
+              "y": 2280
             },
             "label": "Bônus 7 Estudos do Apocalipse",
             "config": {
@@ -2595,7 +2797,7 @@
             "nodeType": "DELAY",
             "position": {
               "x": 840,
-              "y": 2220
+              "y": 2500
             },
             "label": "⏰ Aguardar 15 minutos",
             "config": {
@@ -2609,7 +2811,7 @@
             "nodeType": "MESSAGE",
             "position": {
               "x": 1280,
-              "y": 2240
+              "y": 2520
             },
             "label": "💬 Remarketing: Faltou alguma coisa?",
             "config": {
@@ -2622,7 +2824,7 @@
             "nodeType": "DELAY",
             "position": {
               "x": 1640,
-              "y": 2240
+              "y": 2520
             },
             "label": "⏰ Aguardar 2 horas",
             "config": {
@@ -2636,7 +2838,7 @@
             "nodeType": "MESSAGE",
             "position": {
               "x": 2060,
-              "y": 2240
+              "y": 2520
             },
             "label": "💬 Remarketing 2: Apoio e Dúvidas",
             "config": {
@@ -2649,7 +2851,7 @@
             "nodeType": "PIX_VERIFIER",
             "position": {
               "x": 320,
-              "y": 2160
+              "y": 2440
             },
             "label": "🧠 Auditoria Comprovante IA Gemini",
             "config": {
@@ -2667,7 +2869,7 @@
             "nodeType": "MEDIA",
             "position": {
               "x": 760,
-              "y": 2040
+              "y": 2320
             },
             "label": "🎁 Entrega Bônus Especial: 7 Estudos do Apocalipse",
             "config": {
@@ -2682,7 +2884,7 @@
             "nodeType": "META_CAPI",
             "position": {
               "x": 1200,
-              "y": 1980
+              "y": 2260
             },
             "label": "🎯 Conversão Meta Ads (CAPI - Purchase)",
             "config": {
@@ -2696,7 +2898,7 @@
             "nodeType": "MESSAGE",
             "position": {
               "x": 1580,
-              "y": 2060
+              "y": 2340
             },
             "label": "Agradecimento Final & Acesso Vitalício",
             "config": {
@@ -2802,19 +3004,35 @@
             "target": "node_flow_funil_4_9"
           },
           {
-            "edgeId": "e_node_flow_funil_4_9_node_flow_funil_4_10",
+            "edgeId": "e_node_flow_funil_4_9_node_flow_funil_4_10_intro_msg",
             "sourceNodeId": "node_flow_funil_4_9",
-            "targetNodeId": "node_flow_funil_4_10",
-            "id": "e_node_flow_funil_4_9_node_flow_funil_4_10",
+            "targetNodeId": "node_flow_funil_4_10_intro_msg",
+            "id": "e_node_flow_funil_4_9_node_flow_funil_4_10_intro_msg",
             "source": "node_flow_funil_4_9",
-            "target": "node_flow_funil_4_10"
+            "target": "node_flow_funil_4_10_intro_msg"
           },
           {
-            "edgeId": "e_node_flow_funil_4_10_node_flow_funil_4_11",
-            "sourceNodeId": "node_flow_funil_4_10",
-            "targetNodeId": "node_flow_funil_4_11",
-            "id": "e_node_flow_funil_4_10_node_flow_funil_4_11",
+            "id": "e_node_flow_funil_4_10_intro_msg_node_flow_funil_4_10",
+            "edgeId": "e_node_flow_funil_4_10_intro_msg_node_flow_funil_4_10",
+            "source": "node_flow_funil_4_10_intro_msg",
+            "sourceNodeId": "node_flow_funil_4_10_intro_msg",
+            "target": "node_flow_funil_4_10",
+            "targetNodeId": "node_flow_funil_4_10"
+          },
+          {
+            "id": "e_node_flow_funil_4_10_node_flow_funil_4_10_raw_key",
+            "edgeId": "e_node_flow_funil_4_10_node_flow_funil_4_10_raw_key",
             "source": "node_flow_funil_4_10",
+            "sourceNodeId": "node_flow_funil_4_10",
+            "target": "node_flow_funil_4_10_raw_key",
+            "targetNodeId": "node_flow_funil_4_10_raw_key"
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_10_raw_key_node_flow_funil_4_11",
+            "sourceNodeId": "node_flow_funil_4_10_raw_key",
+            "targetNodeId": "node_flow_funil_4_11",
+            "id": "e_node_flow_funil_4_10_raw_key_node_flow_funil_4_11",
+            "source": "node_flow_funil_4_10_raw_key",
             "target": "node_flow_funil_4_11"
           },
           {
@@ -3223,27 +3441,55 @@
             "id": "node_flow_funil_5_15"
           },
           {
-            "nodeId": "node_flow_funil_5_16",
-            "nodeType": "PIX",
+            "nodeId": "node_flow_funil_5_16_intro_msg",
+            "id": "node_flow_funil_5_16_intro_msg",
+            "nodeType": "MESSAGE",
             "position": {
               "x": 320,
               "y": 3120
             },
-            "label": "💸 Chave PIX CNPJ Vitor Bueno",
+            "label": "💬 Instruções da Chave PIX",
             "config": {
+              "text": "🔑 - Chave PIX CNPJ: 64158407000124\n💵 - Valor: R$ 19,90\n👤 - Nome: Vitor Bueno de Carvalho\n🏦 - Banco: CloudWalk I.P",
+              "messageText": "🔑 - Chave PIX CNPJ: 64158407000124\n💵 - Valor: R$ 19,90\n👤 - Nome: Vitor Bueno de Carvalho\n🏦 - Banco: CloudWalk I.P"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_5_16",
+            "nodeType": "PIX",
+            "position": {
+              "x": 320,
+              "y": 3260
+            },
+            "label": "💳 Cartão PIX Copia e Cola (Vitor Bueno de Carvalho)",
+            "config": {
+              "keyType": "CNPJ",
               "pixKey": "64158407000124",
               "beneficiaryName": "Vitor Bueno de Carvalho",
-              "amount": "19.90",
-              "message": "🔑 - Chave PIX CNPJ: 64158407000124\n💵 - Valor: R$ 19,90\n👤 - Nome: Vitor Bueno de Carvalho\n🏦 - Banco: CloudWalk I.P"
+              "amount": "19.90"
             },
             "id": "node_flow_funil_5_16"
+          },
+          {
+            "nodeId": "node_flow_funil_5_16_raw_key",
+            "id": "node_flow_funil_5_16_raw_key",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 3400
+            },
+            "label": "🔑 Chave PIX (Só a Chave)",
+            "config": {
+              "text": "64158407000124",
+              "messageText": "64158407000124"
+            }
           },
           {
             "nodeId": "node_flow_funil_5_17",
             "nodeType": "AUDIO",
             "position": {
               "x": 320,
-              "y": 3260
+              "y": 3540
             },
             "label": "🎙️ Áudio PIX Vitor (18s)",
             "config": {
@@ -3258,7 +3504,7 @@
             "nodeType": "MESSAGE",
             "position": {
               "x": 320,
-              "y": 3400
+              "y": 3680
             },
             "label": "Instruções Comprovante",
             "config": {
@@ -3277,7 +3523,7 @@
             },
             "position": {
               "x": 740,
-              "y": 3560
+              "y": 3840
             }
           },
           {
@@ -3290,7 +3536,7 @@
             },
             "position": {
               "x": 740,
-              "y": 3695
+              "y": 3975
             }
           },
           {
@@ -3304,7 +3550,7 @@
             },
             "position": {
               "x": 740,
-              "y": 3830
+              "y": 4110
             }
           },
           {
@@ -3317,7 +3563,7 @@
             },
             "position": {
               "x": 740,
-              "y": 3965
+              "y": 4245
             }
           },
           {
@@ -3331,7 +3577,7 @@
             },
             "position": {
               "x": 740,
-              "y": 4100
+              "y": 4380
             }
           },
           {
@@ -3344,7 +3590,7 @@
             },
             "position": {
               "x": 740,
-              "y": 4235
+              "y": 4515
             }
           },
           {
@@ -3358,7 +3604,7 @@
             },
             "position": {
               "x": 740,
-              "y": 4370
+              "y": 4650
             }
           },
           {
@@ -3372,7 +3618,7 @@
             },
             "position": {
               "x": 740,
-              "y": 4505
+              "y": 4785
             }
           },
           {
@@ -3380,7 +3626,7 @@
             "nodeType": "PIX_VERIFIER",
             "position": {
               "x": 320,
-              "y": 3560
+              "y": 3840
             },
             "label": "🧠 Auditoria Comprovante IA Gemini",
             "config": {
@@ -3398,7 +3644,7 @@
             "nodeType": "MEDIA",
             "position": {
               "x": 320,
-              "y": 3720
+              "y": 4000
             },
             "label": "🎁 Entrega Bônus: 20 Mil Esboços Adicionais",
             "config": {
@@ -3414,7 +3660,7 @@
             "nodeType": "META_CAPI",
             "position": {
               "x": 320,
-              "y": 3870
+              "y": 4150
             },
             "label": "🎯 Conversão Meta Ads (CAPI - Purchase)",
             "config": {
@@ -3428,7 +3674,7 @@
             "nodeType": "MESSAGE",
             "position": {
               "x": 320,
-              "y": 4020
+              "y": 4300
             },
             "label": "Agradecimento Final & Acesso Vitalício",
             "config": {
@@ -3627,19 +3873,35 @@
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_5_15_node_flow_funil_5_16",
-            "edgeId": "e_node_flow_funil_5_15_node_flow_funil_5_16",
+            "id": "e_node_flow_funil_5_15_node_flow_funil_5_16_intro_msg",
+            "edgeId": "e_node_flow_funil_5_15_node_flow_funil_5_16_intro_msg",
             "source": "node_flow_funil_5_15",
             "sourceNodeId": "node_flow_funil_5_15",
-            "target": "node_flow_funil_5_16",
-            "targetNodeId": "node_flow_funil_5_16",
+            "target": "node_flow_funil_5_16_intro_msg",
+            "targetNodeId": "node_flow_funil_5_16_intro_msg",
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_5_16_node_flow_funil_5_17",
-            "edgeId": "e_node_flow_funil_5_16_node_flow_funil_5_17",
+            "id": "e_node_flow_funil_5_16_intro_msg_node_flow_funil_5_16",
+            "edgeId": "e_node_flow_funil_5_16_intro_msg_node_flow_funil_5_16",
+            "source": "node_flow_funil_5_16_intro_msg",
+            "sourceNodeId": "node_flow_funil_5_16_intro_msg",
+            "target": "node_flow_funil_5_16",
+            "targetNodeId": "node_flow_funil_5_16"
+          },
+          {
+            "id": "e_node_flow_funil_5_16_node_flow_funil_5_16_raw_key",
+            "edgeId": "e_node_flow_funil_5_16_node_flow_funil_5_16_raw_key",
             "source": "node_flow_funil_5_16",
             "sourceNodeId": "node_flow_funil_5_16",
+            "target": "node_flow_funil_5_16_raw_key",
+            "targetNodeId": "node_flow_funil_5_16_raw_key"
+          },
+          {
+            "id": "e_node_flow_funil_5_16_raw_key_node_flow_funil_5_17",
+            "edgeId": "e_node_flow_funil_5_16_raw_key_node_flow_funil_5_17",
+            "source": "node_flow_funil_5_16_raw_key",
+            "sourceNodeId": "node_flow_funil_5_16_raw_key",
             "target": "node_flow_funil_5_17",
             "targetNodeId": "node_flow_funil_5_17",
             "animated": true
@@ -4008,27 +4270,55 @@
             "id": "node_flow_funil_6_15"
           },
           {
-            "nodeId": "node_flow_funil_6_16",
-            "nodeType": "PIX",
+            "nodeId": "node_flow_funil_6_16_intro_msg",
+            "id": "node_flow_funil_6_16_intro_msg",
+            "nodeType": "MESSAGE",
             "position": {
               "x": 320,
               "y": 2280
             },
-            "label": "💸 Chave PIX Celular Flávia",
+            "label": "💬 Instruções da Chave PIX",
             "config": {
+              "text": "📌 Chave Pix (Celular): 12983085720\n📌 Nome que aparece: DIGITAL DSX LTDA\n📌 Banco: DOCK IP S.A.\n📌 Valor: O que Deus tocar no seu coração",
+              "messageText": "📌 Chave Pix (Celular): 12983085720\n📌 Nome que aparece: DIGITAL DSX LTDA\n📌 Banco: DOCK IP S.A.\n📌 Valor: O que Deus tocar no seu coração"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_6_16",
+            "nodeType": "PIX",
+            "position": {
+              "x": 320,
+              "y": 2420
+            },
+            "label": "💳 Cartão PIX Copia e Cola (DIGITAL DSX LTDA)",
+            "config": {
+              "keyType": "PHONE",
               "pixKey": "12983085720",
               "beneficiaryName": "DIGITAL DSX LTDA",
-              "amount": "5.00",
-              "message": "📌 Chave Pix (Celular): 12983085720\n📌 Nome que aparece: DIGITAL DSX LTDA\n📌 Banco: DOCK IP S.A.\n📌 Valor: O que Deus tocar no seu coração"
+              "amount": "5.00"
             },
             "id": "node_flow_funil_6_16"
+          },
+          {
+            "nodeId": "node_flow_funil_6_16_raw_key",
+            "id": "node_flow_funil_6_16_raw_key",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 2560
+            },
+            "label": "🔑 Chave PIX (Só a Chave)",
+            "config": {
+              "text": "12983085720",
+              "messageText": "12983085720"
+            }
           },
           {
             "nodeId": "node_flow_funil_6_17",
             "nodeType": "AUDIO",
             "position": {
               "x": 320,
-              "y": 2420
+              "y": 2700
             },
             "label": "🎙️ Áudio 4 Sorteio (59s)",
             "config": {
@@ -4043,7 +4333,7 @@
             "nodeType": "MESSAGE",
             "position": {
               "x": 320,
-              "y": 2560
+              "y": 2840
             },
             "label": "Instruções Comprovante & Grupo de Oração",
             "config": {
@@ -4062,7 +4352,7 @@
             },
             "position": {
               "x": 740,
-              "y": 2720
+              "y": 3000
             }
           },
           {
@@ -4075,7 +4365,7 @@
             },
             "position": {
               "x": 740,
-              "y": 2855
+              "y": 3135
             }
           },
           {
@@ -4083,7 +4373,7 @@
             "nodeType": "PIX_VERIFIER",
             "position": {
               "x": 320,
-              "y": 2720
+              "y": 3000
             },
             "label": "🧠 Auditoria Comprovante IA Gemini",
             "config": {
@@ -4101,7 +4391,7 @@
             "nodeType": "MEDIA",
             "position": {
               "x": 320,
-              "y": 2880
+              "y": 3160
             },
             "label": "🎁 Entrega Bônus: Devocional 21 Dias Pelos Filhos",
             "config": {
@@ -4117,7 +4407,7 @@
             "nodeType": "META_CAPI",
             "position": {
               "x": 320,
-              "y": 3030
+              "y": 3310
             },
             "label": "🎯 Conversão Meta Ads (CAPI - Purchase)",
             "config": {
@@ -4131,7 +4421,7 @@
             "nodeType": "MESSAGE",
             "position": {
               "x": 320,
-              "y": 3180
+              "y": 3460
             },
             "label": "Agradecimento Final & Acesso Vitalício",
             "config": {
@@ -4276,19 +4566,35 @@
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_6_15_node_flow_funil_6_16",
-            "edgeId": "e_node_flow_funil_6_15_node_flow_funil_6_16",
+            "id": "e_node_flow_funil_6_15_node_flow_funil_6_16_intro_msg",
+            "edgeId": "e_node_flow_funil_6_15_node_flow_funil_6_16_intro_msg",
             "source": "node_flow_funil_6_15",
             "sourceNodeId": "node_flow_funil_6_15",
-            "target": "node_flow_funil_6_16",
-            "targetNodeId": "node_flow_funil_6_16",
+            "target": "node_flow_funil_6_16_intro_msg",
+            "targetNodeId": "node_flow_funil_6_16_intro_msg",
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_6_16_node_flow_funil_6_17",
-            "edgeId": "e_node_flow_funil_6_16_node_flow_funil_6_17",
+            "id": "e_node_flow_funil_6_16_intro_msg_node_flow_funil_6_16",
+            "edgeId": "e_node_flow_funil_6_16_intro_msg_node_flow_funil_6_16",
+            "source": "node_flow_funil_6_16_intro_msg",
+            "sourceNodeId": "node_flow_funil_6_16_intro_msg",
+            "target": "node_flow_funil_6_16",
+            "targetNodeId": "node_flow_funil_6_16"
+          },
+          {
+            "id": "e_node_flow_funil_6_16_node_flow_funil_6_16_raw_key",
+            "edgeId": "e_node_flow_funil_6_16_node_flow_funil_6_16_raw_key",
             "source": "node_flow_funil_6_16",
             "sourceNodeId": "node_flow_funil_6_16",
+            "target": "node_flow_funil_6_16_raw_key",
+            "targetNodeId": "node_flow_funil_6_16_raw_key"
+          },
+          {
+            "id": "e_node_flow_funil_6_16_raw_key_node_flow_funil_6_17",
+            "edgeId": "e_node_flow_funil_6_16_raw_key_node_flow_funil_6_17",
+            "source": "node_flow_funil_6_16_raw_key",
+            "sourceNodeId": "node_flow_funil_6_16_raw_key",
             "target": "node_flow_funil_6_17",
             "targetNodeId": "node_flow_funil_6_17",
             "animated": true
@@ -4655,27 +4961,55 @@
             "id": "node_flow_funil_7_13"
           },
           {
-            "nodeId": "node_flow_funil_7_14",
-            "nodeType": "PIX",
+            "nodeId": "node_flow_funil_7_14_intro_msg",
+            "id": "node_flow_funil_7_14_intro_msg",
+            "nodeType": "MESSAGE",
             "position": {
               "x": 320,
               "y": 2700
             },
-            "label": "💸 Chave PIX Telefone Editora Branth",
+            "label": "💬 Instruções da Chave PIX",
             "config": {
+              "text": "🔑 Chave PIX:\n📲 TELEFONE: 37999387172\n👤 Editora Branth\n\nO valor é R$ 11,90 se você quiser copiar e colar a chave 👇",
+              "messageText": "🔑 Chave PIX:\n📲 TELEFONE: 37999387172\n👤 Editora Branth\n\nO valor é R$ 11,90 se você quiser copiar e colar a chave 👇"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_7_14",
+            "nodeType": "PIX",
+            "position": {
+              "x": 320,
+              "y": 2840
+            },
+            "label": "💳 Cartão PIX Copia e Cola (Editora Branth)",
+            "config": {
+              "keyType": "PHONE",
               "pixKey": "37999387172",
               "beneficiaryName": "Editora Branth",
-              "amount": "11.90",
-              "message": "🔑 Chave PIX:\n📲 TELEFONE: 37999387172\n👤 Editora Branth\n\nO valor é R$ 11,90 se você quiser copiar e colar a chave 👇"
+              "amount": "11.90"
             },
             "id": "node_flow_funil_7_14"
+          },
+          {
+            "nodeId": "node_flow_funil_7_14_raw_key",
+            "id": "node_flow_funil_7_14_raw_key",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 2980
+            },
+            "label": "🔑 Chave PIX (Só a Chave)",
+            "config": {
+              "text": "37999387172",
+              "messageText": "37999387172"
+            }
           },
           {
             "nodeId": "node_flow_funil_7_15",
             "nodeType": "MESSAGE",
             "position": {
               "x": 320,
-              "y": 2840
+              "y": 3120
             },
             "label": "Aguardando Comprovante",
             "config": {
@@ -4694,7 +5028,7 @@
             },
             "position": {
               "x": 740,
-              "y": 3000
+              "y": 3280
             }
           },
           {
@@ -4707,7 +5041,7 @@
             },
             "position": {
               "x": 740,
-              "y": 3135
+              "y": 3415
             }
           },
           {
@@ -4715,7 +5049,7 @@
             "nodeType": "PIX_VERIFIER",
             "position": {
               "x": 320,
-              "y": 3000
+              "y": 3280
             },
             "label": "🧠 Auditoria Comprovante IA Gemini",
             "config": {
@@ -4733,7 +5067,7 @@
             "nodeType": "MEDIA",
             "position": {
               "x": 320,
-              "y": 3160
+              "y": 3440
             },
             "label": "🎁 Entrega Bônus: Ditado Silábico Gênios & Jogos",
             "config": {
@@ -4749,7 +5083,7 @@
             "nodeType": "META_CAPI",
             "position": {
               "x": 320,
-              "y": 3310
+              "y": 3590
             },
             "label": "🎯 Conversão Meta Ads (CAPI - Purchase)",
             "config": {
@@ -4763,7 +5097,7 @@
             "nodeType": "MESSAGE",
             "position": {
               "x": 320,
-              "y": 3460
+              "y": 3740
             },
             "label": "Agradecimento Final & Acesso Vitalício",
             "config": {
@@ -4935,19 +5269,35 @@
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_7_13_node_flow_funil_7_14",
-            "edgeId": "e_node_flow_funil_7_13_node_flow_funil_7_14",
+            "id": "e_node_flow_funil_7_13_node_flow_funil_7_14_intro_msg",
+            "edgeId": "e_node_flow_funil_7_13_node_flow_funil_7_14_intro_msg",
             "source": "node_flow_funil_7_13",
             "sourceNodeId": "node_flow_funil_7_13",
-            "target": "node_flow_funil_7_14",
-            "targetNodeId": "node_flow_funil_7_14",
+            "target": "node_flow_funil_7_14_intro_msg",
+            "targetNodeId": "node_flow_funil_7_14_intro_msg",
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_7_14_node_flow_funil_7_15",
-            "edgeId": "e_node_flow_funil_7_14_node_flow_funil_7_15",
+            "id": "e_node_flow_funil_7_14_intro_msg_node_flow_funil_7_14",
+            "edgeId": "e_node_flow_funil_7_14_intro_msg_node_flow_funil_7_14",
+            "source": "node_flow_funil_7_14_intro_msg",
+            "sourceNodeId": "node_flow_funil_7_14_intro_msg",
+            "target": "node_flow_funil_7_14",
+            "targetNodeId": "node_flow_funil_7_14"
+          },
+          {
+            "id": "e_node_flow_funil_7_14_node_flow_funil_7_14_raw_key",
+            "edgeId": "e_node_flow_funil_7_14_node_flow_funil_7_14_raw_key",
             "source": "node_flow_funil_7_14",
             "sourceNodeId": "node_flow_funil_7_14",
+            "target": "node_flow_funil_7_14_raw_key",
+            "targetNodeId": "node_flow_funil_7_14_raw_key"
+          },
+          {
+            "id": "e_node_flow_funil_7_14_raw_key_node_flow_funil_7_15",
+            "edgeId": "e_node_flow_funil_7_14_raw_key_node_flow_funil_7_15",
+            "source": "node_flow_funil_7_14_raw_key",
+            "sourceNodeId": "node_flow_funil_7_14_raw_key",
             "target": "node_flow_funil_7_15",
             "targetNodeId": "node_flow_funil_7_15",
             "animated": true
@@ -5200,27 +5550,55 @@
             "id": "node_flow_funil_8_9"
           },
           {
-            "nodeId": "node_flow_funil_8_10",
-            "nodeType": "PIX",
+            "nodeId": "node_flow_funil_8_10_intro_msg",
+            "id": "node_flow_funil_8_10_intro_msg",
+            "nodeType": "MESSAGE",
             "position": {
               "x": 320,
               "y": 1720
             },
-            "label": "💸 Chave PIX Telefone KV DIGITAL",
+            "label": "💬 Instruções da Chave PIX",
             "config": {
+              "text": "PIX TELEFONE: 11965034611\nNome: Projeto Feliz (KV DIGITAL)\n\nEscolha o valor que toca o seu coração! 💚\n\nAlgumas tutoras mandam até R$50 porque viram a vida dos pets transformar...",
+              "messageText": "PIX TELEFONE: 11965034611\nNome: Projeto Feliz (KV DIGITAL)\n\nEscolha o valor que toca o seu coração! 💚\n\nAlgumas tutoras mandam até R$50 porque viram a vida dos pets transformar..."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_8_10",
+            "nodeType": "PIX",
+            "position": {
+              "x": 320,
+              "y": 1860
+            },
+            "label": "💳 Cartão PIX Copia e Cola (KV DIGITAL (Projeto Feliz))",
+            "config": {
+              "keyType": "PHONE",
               "pixKey": "11965034611",
               "beneficiaryName": "KV DIGITAL (Projeto Feliz)",
-              "amount": "15.00",
-              "message": "PIX TELEFONE: 11965034611\nNome: Projeto Feliz (KV DIGITAL)\n\nEscolha o valor que toca o seu coração! 💚\n\nAlgumas tutoras mandam até R$50 porque viram a vida dos pets transformar..."
+              "amount": "15.00"
             },
             "id": "node_flow_funil_8_10"
+          },
+          {
+            "nodeId": "node_flow_funil_8_10_raw_key",
+            "id": "node_flow_funil_8_10_raw_key",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 2000
+            },
+            "label": "🔑 Chave PIX (Só a Chave)",
+            "config": {
+              "text": "11965034611",
+              "messageText": "11965034611"
+            }
           },
           {
             "nodeId": "node_flow_funil_8_11",
             "nodeType": "MESSAGE",
             "position": {
               "x": 320,
-              "y": 1860
+              "y": 2140
             },
             "label": "Bônus Calculadora de Porção",
             "config": {
@@ -5239,7 +5617,7 @@
             },
             "position": {
               "x": 740,
-              "y": 2020
+              "y": 2300
             }
           },
           {
@@ -5252,7 +5630,7 @@
             },
             "position": {
               "x": 740,
-              "y": 2155
+              "y": 2435
             }
           },
           {
@@ -5260,7 +5638,7 @@
             "nodeType": "PIX_VERIFIER",
             "position": {
               "x": 320,
-              "y": 2020
+              "y": 2300
             },
             "label": "🧠 Auditoria Comprovante IA Gemini",
             "config": {
@@ -5278,7 +5656,7 @@
             "nodeType": "MEDIA",
             "position": {
               "x": 320,
-              "y": 2180
+              "y": 2460
             },
             "label": "🎁 Entrega Bônus: 50 Receitas Cruas & Calculadora",
             "config": {
@@ -5294,7 +5672,7 @@
             "nodeType": "META_CAPI",
             "position": {
               "x": 320,
-              "y": 2330
+              "y": 2610
             },
             "label": "🎯 Conversão Meta Ads (CAPI - Purchase)",
             "config": {
@@ -5308,7 +5686,7 @@
             "nodeType": "MESSAGE",
             "position": {
               "x": 320,
-              "y": 2480
+              "y": 2760
             },
             "label": "Agradecimento Final & Acesso Vitalício",
             "config": {
@@ -5417,19 +5795,35 @@
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_8_9_node_flow_funil_8_10",
-            "edgeId": "e_node_flow_funil_8_9_node_flow_funil_8_10",
+            "id": "e_node_flow_funil_8_9_node_flow_funil_8_10_intro_msg",
+            "edgeId": "e_node_flow_funil_8_9_node_flow_funil_8_10_intro_msg",
             "source": "node_flow_funil_8_9",
             "sourceNodeId": "node_flow_funil_8_9",
-            "target": "node_flow_funil_8_10",
-            "targetNodeId": "node_flow_funil_8_10",
+            "target": "node_flow_funil_8_10_intro_msg",
+            "targetNodeId": "node_flow_funil_8_10_intro_msg",
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_8_10_node_flow_funil_8_11",
-            "edgeId": "e_node_flow_funil_8_10_node_flow_funil_8_11",
+            "id": "e_node_flow_funil_8_10_intro_msg_node_flow_funil_8_10",
+            "edgeId": "e_node_flow_funil_8_10_intro_msg_node_flow_funil_8_10",
+            "source": "node_flow_funil_8_10_intro_msg",
+            "sourceNodeId": "node_flow_funil_8_10_intro_msg",
+            "target": "node_flow_funil_8_10",
+            "targetNodeId": "node_flow_funil_8_10"
+          },
+          {
+            "id": "e_node_flow_funil_8_10_node_flow_funil_8_10_raw_key",
+            "edgeId": "e_node_flow_funil_8_10_node_flow_funil_8_10_raw_key",
             "source": "node_flow_funil_8_10",
             "sourceNodeId": "node_flow_funil_8_10",
+            "target": "node_flow_funil_8_10_raw_key",
+            "targetNodeId": "node_flow_funil_8_10_raw_key"
+          },
+          {
+            "id": "e_node_flow_funil_8_10_raw_key_node_flow_funil_8_11",
+            "edgeId": "e_node_flow_funil_8_10_raw_key_node_flow_funil_8_11",
+            "source": "node_flow_funil_8_10_raw_key",
+            "sourceNodeId": "node_flow_funil_8_10_raw_key",
             "target": "node_flow_funil_8_11",
             "targetNodeId": "node_flow_funil_8_11",
             "animated": true
@@ -5578,27 +5972,55 @@
             "id": "node_flow_funil_9_5"
           },
           {
-            "nodeId": "node_flow_funil_9_6",
-            "nodeType": "PIX",
+            "nodeId": "node_flow_funil_9_6_intro_msg",
+            "id": "node_flow_funil_9_6_intro_msg",
+            "nodeType": "MESSAGE",
             "position": {
               "x": 320,
               "y": 740
             },
-            "label": "💸 Chave PIX Celular Junior",
+            "label": "💬 Instruções da Chave PIX",
             "config": {
+              "text": "chave pix Celular\n*42999944139*\nconfira meu nome\n(Junior Campos dos Santos)",
+              "messageText": "chave pix Celular\n*42999944139*\nconfira meu nome\n(Junior Campos dos Santos)"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_9_6",
+            "nodeType": "PIX",
+            "position": {
+              "x": 320,
+              "y": 880
+            },
+            "label": "💳 Cartão PIX Copia e Cola (Junior Campos dos Santos)",
+            "config": {
+              "keyType": "PHONE",
               "pixKey": "42999944139",
               "beneficiaryName": "Junior Campos dos Santos",
-              "amount": "25.00",
-              "message": "chave pix Celular\n*42999944139*\nconfira meu nome\n(Junior Campos dos Santos)"
+              "amount": "25.00"
             },
             "id": "node_flow_funil_9_6"
+          },
+          {
+            "nodeId": "node_flow_funil_9_6_raw_key",
+            "id": "node_flow_funil_9_6_raw_key",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 1020
+            },
+            "label": "🔑 Chave PIX (Só a Chave)",
+            "config": {
+              "text": "42999944139",
+              "messageText": "42999944139"
+            }
           },
           {
             "nodeId": "node_flow_funil_9_7",
             "nodeType": "MESSAGE",
             "position": {
               "x": 320,
-              "y": 880
+              "y": 1160
             },
             "label": "Envio Antecipado por Honestidade",
             "config": {
@@ -5611,7 +6033,7 @@
             "nodeType": "MEDIA",
             "position": {
               "x": 320,
-              "y": 1020
+              "y": 1300
             },
             "label": "📄 Livro 1 - Apostila de Receitas de Produtos de Limpeza",
             "config": {
@@ -5633,7 +6055,7 @@
             },
             "position": {
               "x": 740,
-              "y": 1180
+              "y": 1460
             }
           },
           {
@@ -5646,7 +6068,7 @@
             },
             "position": {
               "x": 740,
-              "y": 1315
+              "y": 1595
             }
           },
           {
@@ -5654,7 +6076,7 @@
             "nodeType": "PIX_VERIFIER",
             "position": {
               "x": 320,
-              "y": 1180
+              "y": 1460
             },
             "label": "🧠 Auditoria Comprovante IA Gemini",
             "config": {
@@ -5672,7 +6094,7 @@
             "nodeType": "MEDIA",
             "position": {
               "x": 320,
-              "y": 1340
+              "y": 1620
             },
             "label": "🎁 Entrega Bônus: Livro 2 de Receitas de Produtos de Limpeza",
             "config": {
@@ -5688,7 +6110,7 @@
             "nodeType": "META_CAPI",
             "position": {
               "x": 320,
-              "y": 1490
+              "y": 1770
             },
             "label": "🎯 Conversão Meta Ads (CAPI - Purchase)",
             "config": {
@@ -5702,7 +6124,7 @@
             "nodeType": "MESSAGE",
             "position": {
               "x": 320,
-              "y": 1640
+              "y": 1920
             },
             "label": "Agradecimento Final & Acesso Vitalício",
             "config": {
@@ -5748,19 +6170,35 @@
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_9_5_node_flow_funil_9_6",
-            "edgeId": "e_node_flow_funil_9_5_node_flow_funil_9_6",
+            "id": "e_node_flow_funil_9_5_node_flow_funil_9_6_intro_msg",
+            "edgeId": "e_node_flow_funil_9_5_node_flow_funil_9_6_intro_msg",
             "source": "node_flow_funil_9_5",
             "sourceNodeId": "node_flow_funil_9_5",
-            "target": "node_flow_funil_9_6",
-            "targetNodeId": "node_flow_funil_9_6",
+            "target": "node_flow_funil_9_6_intro_msg",
+            "targetNodeId": "node_flow_funil_9_6_intro_msg",
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_9_6_node_flow_funil_9_7",
-            "edgeId": "e_node_flow_funil_9_6_node_flow_funil_9_7",
+            "id": "e_node_flow_funil_9_6_intro_msg_node_flow_funil_9_6",
+            "edgeId": "e_node_flow_funil_9_6_intro_msg_node_flow_funil_9_6",
+            "source": "node_flow_funil_9_6_intro_msg",
+            "sourceNodeId": "node_flow_funil_9_6_intro_msg",
+            "target": "node_flow_funil_9_6",
+            "targetNodeId": "node_flow_funil_9_6"
+          },
+          {
+            "id": "e_node_flow_funil_9_6_node_flow_funil_9_6_raw_key",
+            "edgeId": "e_node_flow_funil_9_6_node_flow_funil_9_6_raw_key",
             "source": "node_flow_funil_9_6",
             "sourceNodeId": "node_flow_funil_9_6",
+            "target": "node_flow_funil_9_6_raw_key",
+            "targetNodeId": "node_flow_funil_9_6_raw_key"
+          },
+          {
+            "id": "e_node_flow_funil_9_6_raw_key_node_flow_funil_9_7",
+            "edgeId": "e_node_flow_funil_9_6_raw_key_node_flow_funil_9_7",
+            "source": "node_flow_funil_9_6_raw_key",
+            "sourceNodeId": "node_flow_funil_9_6_raw_key",
             "target": "node_flow_funil_9_7",
             "targetNodeId": "node_flow_funil_9_7",
             "animated": true
@@ -6073,27 +6511,55 @@
             "id": "node_flow_funil_10_16"
           },
           {
-            "nodeId": "node_flow_funil_10_17",
-            "nodeType": "PIX",
+            "nodeId": "node_flow_funil_10_17_intro_msg",
+            "id": "node_flow_funil_10_17_intro_msg",
+            "nodeType": "MESSAGE",
             "position": {
               "x": 320,
               "y": 2280
             },
-            "label": "💸 Chave PIX Celular Thaíse",
+            "label": "💬 Instruções da Chave PIX",
             "config": {
+              "text": "✅ Acesso vitalício\n🔑 Chave Pix TELEFONE\n*PIX (celular):* 71992287791\n*BANCO:* NUBANK\n*NOME:* THAISE OLIVEIRA LIMA\n\n*👇 Só copiar e colar o TELEFONE👇*",
+              "messageText": "✅ Acesso vitalício\n🔑 Chave Pix TELEFONE\n*PIX (celular):* 71992287791\n*BANCO:* NUBANK\n*NOME:* THAISE OLIVEIRA LIMA\n\n*👇 Só copiar e colar o TELEFONE👇*"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_10_17",
+            "nodeType": "PIX",
+            "position": {
+              "x": 320,
+              "y": 2420
+            },
+            "label": "💳 Cartão PIX Copia e Cola (THAISE OLIVEIRA LIMA)",
+            "config": {
+              "keyType": "PHONE",
               "pixKey": "71992287791",
               "beneficiaryName": "THAISE OLIVEIRA LIMA",
-              "amount": "14.90",
-              "message": "✅ Acesso vitalício\n🔑 Chave Pix TELEFONE\n*PIX (celular):* 71992287791\n*BANCO:* NUBANK\n*NOME:* THAISE OLIVEIRA LIMA\n\n*👇 Só copiar e colar o TELEFONE👇*"
+              "amount": "14.90"
             },
             "id": "node_flow_funil_10_17"
+          },
+          {
+            "nodeId": "node_flow_funil_10_17_raw_key",
+            "id": "node_flow_funil_10_17_raw_key",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 2560
+            },
+            "label": "🔑 Chave PIX (Só a Chave)",
+            "config": {
+              "text": "71992287791",
+              "messageText": "71992287791"
+            }
           },
           {
             "nodeId": "node_flow_funil_10_18_part1",
             "nodeType": "MEDIA",
             "position": {
               "x": 320,
-              "y": 2420
+              "y": 2700
             },
             "label": "📄 Molde 1 - Super Pacote 200 Moldes Bolsa Jeans",
             "config": {
@@ -6115,7 +6581,7 @@
             },
             "position": {
               "x": 740,
-              "y": 2580
+              "y": 2860
             }
           },
           {
@@ -6128,7 +6594,7 @@
             },
             "position": {
               "x": 740,
-              "y": 2715
+              "y": 2995
             }
           },
           {
@@ -6136,7 +6602,7 @@
             "nodeType": "PIX_VERIFIER",
             "position": {
               "x": 320,
-              "y": 2580
+              "y": 2860
             },
             "label": "🧠 Auditoria Comprovante IA Gemini",
             "config": {
@@ -6154,7 +6620,7 @@
             "nodeType": "MEDIA",
             "position": {
               "x": 320,
-              "y": 2740
+              "y": 3020
             },
             "label": "🎁 Entrega Bônus: Moldes Extras Bolsa Jeans",
             "config": {
@@ -6170,7 +6636,7 @@
             "nodeType": "META_CAPI",
             "position": {
               "x": 320,
-              "y": 2890
+              "y": 3170
             },
             "label": "🎯 Conversão Meta Ads (CAPI - Purchase)",
             "config": {
@@ -6184,7 +6650,7 @@
             "nodeType": "MESSAGE",
             "position": {
               "x": 320,
-              "y": 3040
+              "y": 3320
             },
             "label": "Agradecimento Final & Acesso Vitalício",
             "config": {
@@ -6329,19 +6795,35 @@
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_10_16_node_flow_funil_10_17",
-            "edgeId": "e_node_flow_funil_10_16_node_flow_funil_10_17",
+            "id": "e_node_flow_funil_10_16_node_flow_funil_10_17_intro_msg",
+            "edgeId": "e_node_flow_funil_10_16_node_flow_funil_10_17_intro_msg",
             "source": "node_flow_funil_10_16",
             "sourceNodeId": "node_flow_funil_10_16",
-            "target": "node_flow_funil_10_17",
-            "targetNodeId": "node_flow_funil_10_17",
+            "target": "node_flow_funil_10_17_intro_msg",
+            "targetNodeId": "node_flow_funil_10_17_intro_msg",
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_10_17_node_flow_funil_10_18_part1",
-            "edgeId": "e_node_flow_funil_10_17_node_flow_funil_10_18_part1",
+            "id": "e_node_flow_funil_10_17_intro_msg_node_flow_funil_10_17",
+            "edgeId": "e_node_flow_funil_10_17_intro_msg_node_flow_funil_10_17",
+            "source": "node_flow_funil_10_17_intro_msg",
+            "sourceNodeId": "node_flow_funil_10_17_intro_msg",
+            "target": "node_flow_funil_10_17",
+            "targetNodeId": "node_flow_funil_10_17"
+          },
+          {
+            "id": "e_node_flow_funil_10_17_node_flow_funil_10_17_raw_key",
+            "edgeId": "e_node_flow_funil_10_17_node_flow_funil_10_17_raw_key",
             "source": "node_flow_funil_10_17",
             "sourceNodeId": "node_flow_funil_10_17",
+            "target": "node_flow_funil_10_17_raw_key",
+            "targetNodeId": "node_flow_funil_10_17_raw_key"
+          },
+          {
+            "id": "e_node_flow_funil_10_17_raw_key_node_flow_funil_10_18_part1",
+            "edgeId": "e_node_flow_funil_10_17_raw_key_node_flow_funil_10_18_part1",
+            "source": "node_flow_funil_10_17_raw_key",
+            "sourceNodeId": "node_flow_funil_10_17_raw_key",
             "target": "node_flow_funil_10_18_part1",
             "targetNodeId": "node_flow_funil_10_18_part1",
             "animated": true
@@ -6592,27 +7074,55 @@
             "id": "node_flow_funil_11_11"
           },
           {
-            "nodeId": "node_flow_funil_11_12",
-            "nodeType": "PIX",
+            "nodeId": "node_flow_funil_11_12_intro_msg",
+            "id": "node_flow_funil_11_12_intro_msg",
+            "nodeType": "MESSAGE",
             "position": {
               "x": 320,
               "y": 1720
             },
-            "label": "💸 Chave PIX Telefone Viva Luz",
+            "label": "💬 Instruções da Chave PIX",
             "config": {
+              "text": "💌 PIX: 31975362565\nNome: Projeto Viva Luz\nVou deixar a chave aqui para facilitar👇",
+              "messageText": "💌 PIX: 31975362565\nNome: Projeto Viva Luz\nVou deixar a chave aqui para facilitar👇"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_11_12",
+            "nodeType": "PIX",
+            "position": {
+              "x": 320,
+              "y": 1860
+            },
+            "label": "💳 Cartão PIX Copia e Cola (Projeto Viva Luz)",
+            "config": {
+              "keyType": "PHONE",
               "pixKey": "31975362565",
               "beneficiaryName": "Projeto Viva Luz",
-              "amount": "20.00",
-              "message": "💌 PIX: 31975362565\nNome: Projeto Viva Luz\nVou deixar a chave aqui para facilitar👇"
+              "amount": "20.00"
             },
             "id": "node_flow_funil_11_12"
+          },
+          {
+            "nodeId": "node_flow_funil_11_12_raw_key",
+            "id": "node_flow_funil_11_12_raw_key",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 2000
+            },
+            "label": "🔑 Chave PIX (Só a Chave)",
+            "config": {
+              "text": "31975362565",
+              "messageText": "31975362565"
+            }
           },
           {
             "nodeId": "node_flow_funil_11_13",
             "nodeType": "AUDIO",
             "position": {
               "x": 320,
-              "y": 1860
+              "y": 2140
             },
             "label": "🎙️ Áudio Confiança Selma",
             "config": {
@@ -6627,7 +7137,7 @@
             "nodeType": "MESSAGE",
             "position": {
               "x": 320,
-              "y": 2000
+              "y": 2280
             },
             "label": "Bônus Extras e Liberação do App",
             "config": {
@@ -6646,7 +7156,7 @@
             },
             "position": {
               "x": 740,
-              "y": 2160
+              "y": 2440
             }
           },
           {
@@ -6659,7 +7169,7 @@
             },
             "position": {
               "x": 740,
-              "y": 2295
+              "y": 2575
             }
           },
           {
@@ -6667,7 +7177,7 @@
             "nodeType": "PIX_VERIFIER",
             "position": {
               "x": 320,
-              "y": 2160
+              "y": 2440
             },
             "label": "🧠 Auditoria Comprovante IA Gemini",
             "config": {
@@ -6685,7 +7195,7 @@
             "nodeType": "MEDIA",
             "position": {
               "x": 320,
-              "y": 2320
+              "y": 2600
             },
             "label": "🎁 Entrega Bônus: Atividades Cognitivas Extras 2.0",
             "config": {
@@ -6701,7 +7211,7 @@
             "nodeType": "META_CAPI",
             "position": {
               "x": 320,
-              "y": 2470
+              "y": 2750
             },
             "label": "🎯 Conversão Meta Ads (CAPI - Purchase)",
             "config": {
@@ -6715,7 +7225,7 @@
             "nodeType": "MESSAGE",
             "position": {
               "x": 320,
-              "y": 2620
+              "y": 2900
             },
             "label": "Agradecimento Final & Acesso Vitalício",
             "config": {
@@ -6824,19 +7334,35 @@
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_11_11_node_flow_funil_11_12",
-            "edgeId": "e_node_flow_funil_11_11_node_flow_funil_11_12",
+            "id": "e_node_flow_funil_11_11_node_flow_funil_11_12_intro_msg",
+            "edgeId": "e_node_flow_funil_11_11_node_flow_funil_11_12_intro_msg",
             "source": "node_flow_funil_11_11",
             "sourceNodeId": "node_flow_funil_11_11",
-            "target": "node_flow_funil_11_12",
-            "targetNodeId": "node_flow_funil_11_12",
+            "target": "node_flow_funil_11_12_intro_msg",
+            "targetNodeId": "node_flow_funil_11_12_intro_msg",
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_11_12_node_flow_funil_11_13",
-            "edgeId": "e_node_flow_funil_11_12_node_flow_funil_11_13",
+            "id": "e_node_flow_funil_11_12_intro_msg_node_flow_funil_11_12",
+            "edgeId": "e_node_flow_funil_11_12_intro_msg_node_flow_funil_11_12",
+            "source": "node_flow_funil_11_12_intro_msg",
+            "sourceNodeId": "node_flow_funil_11_12_intro_msg",
+            "target": "node_flow_funil_11_12",
+            "targetNodeId": "node_flow_funil_11_12"
+          },
+          {
+            "id": "e_node_flow_funil_11_12_node_flow_funil_11_12_raw_key",
+            "edgeId": "e_node_flow_funil_11_12_node_flow_funil_11_12_raw_key",
             "source": "node_flow_funil_11_12",
             "sourceNodeId": "node_flow_funil_11_12",
+            "target": "node_flow_funil_11_12_raw_key",
+            "targetNodeId": "node_flow_funil_11_12_raw_key"
+          },
+          {
+            "id": "e_node_flow_funil_11_12_raw_key_node_flow_funil_11_13",
+            "edgeId": "e_node_flow_funil_11_12_raw_key_node_flow_funil_11_13",
+            "source": "node_flow_funil_11_12_raw_key",
+            "sourceNodeId": "node_flow_funil_11_12_raw_key",
             "target": "node_flow_funil_11_13",
             "targetNodeId": "node_flow_funil_11_13",
             "animated": true
@@ -7126,27 +7652,55 @@
             "id": "node_flow_funil_12_12"
           },
           {
-            "nodeId": "node_flow_funil_12_13",
-            "nodeType": "PIX",
+            "nodeId": "node_flow_funil_12_13_intro_msg",
+            "id": "node_flow_funil_12_13_intro_msg",
+            "nodeType": "MESSAGE",
             "position": {
               "x": 320,
               "y": 2000
             },
-            "label": "💸 Chave PIX Celular RP Empreendimentos",
+            "label": "💬 Instruções da Chave PIX",
             "config": {
+              "text": "Chave PIX Celular: 71993667052\nNome: RP Empreendimentos Digitais LTDA.",
+              "messageText": "Chave PIX Celular: 71993667052\nNome: RP Empreendimentos Digitais LTDA."
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_12_13",
+            "nodeType": "PIX",
+            "position": {
+              "x": 320,
+              "y": 2140
+            },
+            "label": "💳 Cartão PIX Copia e Cola (RP Empreendimentos Digitais LTDA)",
+            "config": {
+              "keyType": "PHONE",
               "pixKey": "71993667052",
               "beneficiaryName": "RP Empreendimentos Digitais LTDA",
-              "amount": "19.90",
-              "message": "Chave PIX Celular: 71993667052\nNome: RP Empreendimentos Digitais LTDA."
+              "amount": "19.90"
             },
             "id": "node_flow_funil_12_13"
+          },
+          {
+            "nodeId": "node_flow_funil_12_13_raw_key",
+            "id": "node_flow_funil_12_13_raw_key",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 2280
+            },
+            "label": "🔑 Chave PIX (Só a Chave)",
+            "config": {
+              "text": "71993667052",
+              "messageText": "71993667052"
+            }
           },
           {
             "nodeId": "node_flow_funil_12_14",
             "nodeType": "MESSAGE",
             "position": {
               "x": 320,
-              "y": 2140
+              "y": 2420
             },
             "label": "Bônus Ellen White & Lista Econômica",
             "config": {
@@ -7165,7 +7719,7 @@
             },
             "position": {
               "x": 740,
-              "y": 2300
+              "y": 2580
             }
           },
           {
@@ -7178,7 +7732,7 @@
             },
             "position": {
               "x": 740,
-              "y": 2435
+              "y": 2715
             }
           },
           {
@@ -7186,7 +7740,7 @@
             "nodeType": "PIX_VERIFIER",
             "position": {
               "x": 320,
-              "y": 2300
+              "y": 2580
             },
             "label": "🧠 Auditoria Comprovante IA Gemini",
             "config": {
@@ -7204,7 +7758,7 @@
             "nodeType": "MEDIA",
             "position": {
               "x": 320,
-              "y": 2460
+              "y": 2740
             },
             "label": "🎁 Entrega Bônus: 25 Sobremesas Saudáveis Ellen White",
             "config": {
@@ -7220,7 +7774,7 @@
             "nodeType": "META_CAPI",
             "position": {
               "x": 320,
-              "y": 2610
+              "y": 2890
             },
             "label": "🎯 Conversão Meta Ads (CAPI - Purchase)",
             "config": {
@@ -7234,7 +7788,7 @@
             "nodeType": "MESSAGE",
             "position": {
               "x": 320,
-              "y": 2760
+              "y": 3040
             },
             "label": "Agradecimento Final & Acesso Vitalício",
             "config": {
@@ -7361,19 +7915,35 @@
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_12_12_node_flow_funil_12_13",
-            "edgeId": "e_node_flow_funil_12_12_node_flow_funil_12_13",
+            "id": "e_node_flow_funil_12_12_node_flow_funil_12_13_intro_msg",
+            "edgeId": "e_node_flow_funil_12_12_node_flow_funil_12_13_intro_msg",
             "source": "node_flow_funil_12_12",
             "sourceNodeId": "node_flow_funil_12_12",
-            "target": "node_flow_funil_12_13",
-            "targetNodeId": "node_flow_funil_12_13",
+            "target": "node_flow_funil_12_13_intro_msg",
+            "targetNodeId": "node_flow_funil_12_13_intro_msg",
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_12_13_node_flow_funil_12_14",
-            "edgeId": "e_node_flow_funil_12_13_node_flow_funil_12_14",
+            "id": "e_node_flow_funil_12_13_intro_msg_node_flow_funil_12_13",
+            "edgeId": "e_node_flow_funil_12_13_intro_msg_node_flow_funil_12_13",
+            "source": "node_flow_funil_12_13_intro_msg",
+            "sourceNodeId": "node_flow_funil_12_13_intro_msg",
+            "target": "node_flow_funil_12_13",
+            "targetNodeId": "node_flow_funil_12_13"
+          },
+          {
+            "id": "e_node_flow_funil_12_13_node_flow_funil_12_13_raw_key",
+            "edgeId": "e_node_flow_funil_12_13_node_flow_funil_12_13_raw_key",
             "source": "node_flow_funil_12_13",
             "sourceNodeId": "node_flow_funil_12_13",
+            "target": "node_flow_funil_12_13_raw_key",
+            "targetNodeId": "node_flow_funil_12_13_raw_key"
+          },
+          {
+            "id": "e_node_flow_funil_12_13_raw_key_node_flow_funil_12_14",
+            "edgeId": "e_node_flow_funil_12_13_raw_key_node_flow_funil_12_14",
+            "source": "node_flow_funil_12_13_raw_key",
+            "sourceNodeId": "node_flow_funil_12_13_raw_key",
             "target": "node_flow_funil_12_14",
             "targetNodeId": "node_flow_funil_12_14",
             "animated": true
@@ -7692,27 +8262,55 @@
             "id": "node_flow_funil_13_16"
           },
           {
-            "nodeId": "node_flow_funil_13_17",
-            "nodeType": "PIX",
+            "nodeId": "node_flow_funil_13_17_intro_msg",
+            "id": "node_flow_funil_13_17_intro_msg",
+            "nodeType": "MESSAGE",
             "position": {
               "x": 320,
               "y": 2420
             },
-            "label": "💸 Chave PIX Telefone DAYZA LTDA",
+            "label": "💬 Instruções da Chave PIX",
             "config": {
+              "text": "Agora eu conto com sua honestidade para manter esse projeto vivo 🙏🏻\n\nInformações para contribuição:\n📌 Chave Pix (telefone): 33999826417\n📌 Nome que aparece: *DAYZA LTDA*\n📌 Valor: *O que Deus tocar no seu coração*\n\nAqui é a chave PIX no número de celular separada para você só copiar e colar Irmã👇👇👇",
+              "messageText": "Agora eu conto com sua honestidade para manter esse projeto vivo 🙏🏻\n\nInformações para contribuição:\n📌 Chave Pix (telefone): 33999826417\n📌 Nome que aparece: *DAYZA LTDA*\n📌 Valor: *O que Deus tocar no seu coração*\n\nAqui é a chave PIX no número de celular separada para você só copiar e colar Irmã👇👇👇"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_13_17",
+            "nodeType": "PIX",
+            "position": {
+              "x": 320,
+              "y": 2560
+            },
+            "label": "💳 Cartão PIX Copia e Cola (DAYZA LTDA)",
+            "config": {
+              "keyType": "PHONE",
               "pixKey": "33999826417",
               "beneficiaryName": "DAYZA LTDA",
-              "amount": "5.00",
-              "message": "Agora eu conto com sua honestidade para manter esse projeto vivo 🙏🏻\n\nInformações para contribuição:\n📌 Chave Pix (telefone): 33999826417\n📌 Nome que aparece: *DAYZA LTDA*\n📌 Valor: *O que Deus tocar no seu coração*\n\nAqui é a chave PIX no número de celular separada para você só copiar e colar Irmã👇👇👇"
+              "amount": "5.00"
             },
             "id": "node_flow_funil_13_17"
+          },
+          {
+            "nodeId": "node_flow_funil_13_17_raw_key",
+            "id": "node_flow_funil_13_17_raw_key",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 320,
+              "y": 2700
+            },
+            "label": "🔑 Chave PIX (Só a Chave)",
+            "config": {
+              "text": "33999826417",
+              "messageText": "33999826417"
+            }
           },
           {
             "nodeId": "node_flow_funil_13_18",
             "nodeType": "AUDIO",
             "position": {
               "x": 320,
-              "y": 2560
+              "y": 2840
             },
             "label": "🎙️ Áudio 4 Oração Final",
             "config": {
@@ -7727,7 +8325,7 @@
             "nodeType": "MESSAGE",
             "position": {
               "x": 320,
-              "y": 2700
+              "y": 2980
             },
             "label": "Grupo de Oração no WhatsApp",
             "config": {
@@ -7746,7 +8344,7 @@
             },
             "position": {
               "x": 740,
-              "y": 2860
+              "y": 3140
             }
           },
           {
@@ -7759,7 +8357,7 @@
             },
             "position": {
               "x": 740,
-              "y": 2995
+              "y": 3275
             }
           },
           {
@@ -7767,7 +8365,7 @@
             "nodeType": "PIX_VERIFIER",
             "position": {
               "x": 320,
-              "y": 2860
+              "y": 3140
             },
             "label": "🧠 Auditoria Comprovante IA Gemini",
             "config": {
@@ -7785,7 +8383,7 @@
             "nodeType": "MEDIA",
             "position": {
               "x": 320,
-              "y": 3020
+              "y": 3300
             },
             "label": "🎁 Entrega Bônus: Devocional 21 Dias de Oração Pelos Filhos",
             "config": {
@@ -7801,7 +8399,7 @@
             "nodeType": "META_CAPI",
             "position": {
               "x": 320,
-              "y": 3170
+              "y": 3450
             },
             "label": "🎯 Conversão Meta Ads (CAPI - Purchase)",
             "config": {
@@ -7815,7 +8413,7 @@
             "nodeType": "MESSAGE",
             "position": {
               "x": 320,
-              "y": 3320
+              "y": 3600
             },
             "label": "Agradecimento Final & Acesso Vitalício",
             "config": {
@@ -7969,19 +8567,35 @@
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_13_16_node_flow_funil_13_17",
-            "edgeId": "e_node_flow_funil_13_16_node_flow_funil_13_17",
+            "id": "e_node_flow_funil_13_16_node_flow_funil_13_17_intro_msg",
+            "edgeId": "e_node_flow_funil_13_16_node_flow_funil_13_17_intro_msg",
             "source": "node_flow_funil_13_16",
             "sourceNodeId": "node_flow_funil_13_16",
-            "target": "node_flow_funil_13_17",
-            "targetNodeId": "node_flow_funil_13_17",
+            "target": "node_flow_funil_13_17_intro_msg",
+            "targetNodeId": "node_flow_funil_13_17_intro_msg",
             "animated": true
           },
           {
-            "id": "e_node_flow_funil_13_17_node_flow_funil_13_18",
-            "edgeId": "e_node_flow_funil_13_17_node_flow_funil_13_18",
+            "id": "e_node_flow_funil_13_17_intro_msg_node_flow_funil_13_17",
+            "edgeId": "e_node_flow_funil_13_17_intro_msg_node_flow_funil_13_17",
+            "source": "node_flow_funil_13_17_intro_msg",
+            "sourceNodeId": "node_flow_funil_13_17_intro_msg",
+            "target": "node_flow_funil_13_17",
+            "targetNodeId": "node_flow_funil_13_17"
+          },
+          {
+            "id": "e_node_flow_funil_13_17_node_flow_funil_13_17_raw_key",
+            "edgeId": "e_node_flow_funil_13_17_node_flow_funil_13_17_raw_key",
             "source": "node_flow_funil_13_17",
             "sourceNodeId": "node_flow_funil_13_17",
+            "target": "node_flow_funil_13_17_raw_key",
+            "targetNodeId": "node_flow_funil_13_17_raw_key"
+          },
+          {
+            "id": "e_node_flow_funil_13_17_raw_key_node_flow_funil_13_18",
+            "edgeId": "e_node_flow_funil_13_17_raw_key_node_flow_funil_13_18",
+            "source": "node_flow_funil_13_17_raw_key",
+            "sourceNodeId": "node_flow_funil_13_17_raw_key",
             "target": "node_flow_funil_13_18",
             "targetNodeId": "node_flow_funil_13_18",
             "animated": true
