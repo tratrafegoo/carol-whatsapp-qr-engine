@@ -33,9 +33,10 @@
               "x": 320,
               "y": 180
             },
-            "label": "Saudação Inicial",
+            "label": "💬 Mensagem #1",
             "config": {
-              "text": "A Paz do Senhor!"
+              "text": "A Paz do Senhor!",
+              "messageText": "A Paz do Senhor!"
             },
             "id": "node_flow_funil_1_2"
           },
@@ -61,9 +62,10 @@
               "x": 320,
               "y": 460
             },
-            "label": "Oferta Coleção Parábolas",
+            "label": "💬 Mensagem #2",
             "config": {
-              "text": "📘 As 40 Parábolas de Jesus (Explicadas e Ilustradas)\n\nDe 59,00 por: *R$25,00*\nContexto histórico, explicação clara, embasamento bíblico e ilustrações exclusivas.\n\n🎁 *Bônus após o pagamento* 🎁\n🎁 Curiosidades da Bíblia, Escatologia Estudo e muito mais!"
+              "text": "📘 As 40 Parábolas de Jesus (Explicadas e Ilustradas)\n\nDe 59,00 por: *R$25,00*\nContexto histórico, explicação clara, embasamento bíblico e ilustrações exclusivas.\n\n🎁 *Bônus após o pagamento* 🎁\n🎁 Curiosidades da Bíblia, Escatologia Estudo e muito mais!",
+              "messageText": "📘 As 40 Parábolas de Jesus (Explicadas e Ilustradas)\n\nDe 59,00 por: *R$25,00*\nContexto histórico, explicação clara, embasamento bíblico e ilustrações exclusivas.\n\n🎁 *Bônus após o pagamento* 🎁\n🎁 Curiosidades da Bíblia, Escatologia Estudo e muito mais!"
             },
             "id": "node_flow_funil_1_4"
           },
@@ -89,9 +91,10 @@
               "x": 320,
               "y": 740
             },
-            "label": "Garantia & Contribuição Voluntária",
+            "label": "💬 Mensagem #3",
             "config": {
-              "text": "O acesso ao conteúdo é vitalício! Você pode imprimir ou ler pelo celular\n\nO valor sugerido é R$25,00\nVocê só paga depois de receber tudo!\n\nPorém a contribuição é voluntária e pode ser até menos, seja 10, 15 ou 20 reais.\n\nPosso enviar agora?"
+              "text": "O acesso ao conteúdo é vitalício! Você pode imprimir ou ler pelo celular\n\nO valor sugerido é R$25,00\nVocê só paga depois de receber tudo!\n\nPorém a contribuição é voluntária e pode ser até menos, seja 10, 15 ou 20 reais.\n\nPosso enviar agora?",
+              "messageText": "O acesso ao conteúdo é vitalício! Você pode imprimir ou ler pelo celular\n\nO valor sugerido é R$25,00\nVocê só paga depois de receber tudo!\n\nPorém a contribuição é voluntária e pode ser até menos, seja 10, 15 ou 20 reais.\n\nPosso enviar agora?"
             },
             "id": "node_flow_funil_1_6"
           },
@@ -116,9 +119,10 @@
               "x": 320,
               "y": 1020
             },
-            "label": "Mensagem de Confiança",
+            "label": "💬 Mensagem #4",
             "config": {
-              "text": "Estarei enviando e confiando em você...\nFique à vontade para abrir o material"
+              "text": "Estarei enviando e confiando em você...\nFique à vontade para abrir o material",
+              "messageText": "Estarei enviando e confiando em você...\nFique à vontade para abrir o material"
             },
             "id": "node_flow_funil_1_8"
           },
@@ -209,9 +213,10 @@
               "x": 320,
               "y": 1860
             },
-            "label": "Link Google Drive & Valores",
+            "label": "💬 Mensagem #5",
             "config": {
-              "text": "Caso não consiga abrir PDF ou quer abrir no computador\nLink Google Drive: https://drive.google.com/drive/folders/1VQ2kDbxKha7_CxeKaGlg0rptQp-ZEY1UO?usp=sharing\n\nValor sugerido: R$25,00\n\n⭐ Gostei muito: R$30,00\n⭐⭐ Quero compartilhar e abençoar ainda mais: R$50,00\n\nIsso ajuda a continuarmos esse propósito!\n\nCaso não possa contribuir com o valor integral, fique à vontade para enviar o valor que puder!"
+              "text": "Caso não consiga abrir PDF ou quer abrir no computador\nLink Google Drive: https://drive.google.com/drive/folders/1VQ2kDbxKha7_CxeKaGlg0rptQp-ZEY1UO?usp=sharing\n\nValor sugerido: R$25,00\n\n⭐ Gostei muito: R$30,00\n⭐⭐ Quero compartilhar e abençoar ainda mais: R$50,00\n\nIsso ajuda a continuarmos esse propósito!\n\nCaso não possa contribuir com o valor integral, fique à vontade para enviar o valor que puder!",
+              "messageText": "Caso não consiga abrir PDF ou quer abrir no computador\nLink Google Drive: https://drive.google.com/drive/folders/1VQ2kDbxKha7_CxeKaGlg0rptQp-ZEY1UO?usp=sharing\n\nValor sugerido: R$25,00\n\n⭐ Gostei muito: R$30,00\n⭐⭐ Quero compartilhar e abençoar ainda mais: R$50,00\n\nIsso ajuda a continuarmos esse propósito!\n\nCaso não possa contribuir com o valor integral, fique à vontade para enviar o valor que puder!"
             },
             "id": "node_flow_funil_1_10"
           },
@@ -223,7 +228,7 @@
               "x": 320,
               "y": 2000
             },
-            "label": "💬 Instruções da Chave PIX",
+            "label": "💬 Mensagem #6",
             "config": {
               "text": "Chave Pix CNPJ\nNome da Chave :GPS EBOOKS DIGITAIS LTDA\n👇 Só copiar e colar CNPJ 👇",
               "messageText": "Chave Pix CNPJ\nNome da Chave :GPS EBOOKS DIGITAIS LTDA\n👇 Só copiar e colar CNPJ 👇"
@@ -253,7 +258,7 @@
               "x": 320,
               "y": 2280
             },
-            "label": "🔑 Chave PIX (Só a Chave)",
+            "label": "💬 Mensagem #7",
             "config": {
               "text": "67.039.217/0001-86",
               "messageText": "67.039.217/0001-86"
@@ -266,9 +271,10 @@
               "x": 320,
               "y": 2420
             },
-            "label": "Instruções & Promessa de Bônus",
+            "label": "💬 Mensagem #8",
             "config": {
-              "text": "Conto com sua honestidade!\n\nQuando fizer o pagamento, me envia o comprovante aqui que eu libero seu bônus:\n\n🎁 Curiosidades da Biblia\n🎁 Material extra: Escatologia — Estudo sobre os Tempos Finais"
+              "text": "Conto com sua honestidade!\n\nQuando fizer o pagamento, me envia o comprovante aqui que eu libero seu bônus:\n\n🎁 Curiosidades da Biblia\n🎁 Material extra: Escatologia — Estudo sobre os Tempos Finais",
+              "messageText": "Conto com sua honestidade!\n\nQuando fizer o pagamento, me envia o comprovante aqui que eu libero seu bônus:\n\n🎁 Curiosidades da Biblia\n🎁 Material extra: Escatologia — Estudo sobre os Tempos Finais"
             },
             "id": "node_flow_funil_1_12"
           },
@@ -289,7 +295,7 @@
           {
             "nodeId": "flow_funil_1_msg_rem1",
             "nodeType": "MESSAGE",
-            "label": "💬 Remarketing 1: Material Enviado",
+            "label": "💬 Mensagem #9",
             "config": {
               "text": "Todo seu material foi enviado!\nFico no seu aguardo!",
               "messageText": "Todo seu material foi enviado!\nFico no seu aguardo!"
@@ -316,7 +322,7 @@
           {
             "nodeId": "flow_funil_1_msg_rem2",
             "nodeType": "MESSAGE",
-            "label": "💬 Remarketing 2: Pergunta Pagamento",
+            "label": "💬 Mensagem #10",
             "config": {
               "text": "Você irá realizar o pagamento hoje?",
               "messageText": "Você irá realizar o pagamento hoje?"
@@ -343,7 +349,7 @@
           {
             "nodeId": "flow_funil_1_msg_rem3",
             "nodeType": "MESSAGE",
-            "label": "💬 Remarketing 3: Oi?",
+            "label": "💬 Mensagem #12",
             "config": {
               "text": "Oi?",
               "messageText": "Oi?"
@@ -370,7 +376,7 @@
           {
             "nodeId": "flow_funil_1_msg_rem4",
             "nodeType": "MESSAGE",
-            "label": "💬 Remarketing 4: Downsell / Qualquer Valor",
+            "label": "💬 Mensagem #13",
             "config": {
               "text": "Confiei em você e enviei todo o material, fico no aguardo do comprovante\n\nQualquer valor ajuda!\nPode ser 20, 10 ou 5 reais!",
               "messageText": "Confiei em você e enviei todo o material, fico no aguardo do comprovante\n\nQualquer valor ajuda!\nPode ser 20, 10 ou 5 reais!"
@@ -435,9 +441,10 @@
               "x": 320,
               "y": 3040
             },
-            "label": "Agradecimento Final & Acesso Vitalício",
+            "label": "💬 Mensagem #11",
             "config": {
-              "text": "Amém! Pagamento confirmado com sucesso! 🙏\n\nSeu acesso vitalício a todos os materiais das *40 Parábolas de Jesus* e ao seu bônus está garantido. Deus abençoe seus estudos!"
+              "text": "Amém! Pagamento confirmado com sucesso! 🙏\n\nSeu acesso vitalício a todos os materiais das *40 Parábolas de Jesus* e ao seu bônus está garantido. Deus abençoe seus estudos!",
+              "messageText": "Amém! Pagamento confirmado com sucesso! 🙏\n\nSeu acesso vitalício a todos os materiais das *40 Parábolas de Jesus* e ao seu bônus está garantido. Deus abençoe seus estudos!"
             }
           }
         ],
@@ -741,9 +748,10 @@
               "x": 320,
               "y": 180
             },
-            "label": "Acolhimento Inicial",
+            "label": "💬 Mensagem #1",
             "config": {
-              "text": "Oláaa, tudo bem? ❤️ Fico muito feliz que tenha se interessado!!\n\nVou te ajudar a cuidar de quem você ama com mais segurança, mais leveza e muito menos esforço, sem machucar a pessoa nem a sua coluna! 🤲✨\n\nTenho certeza que esse guia vai deixar a sua rotina de cuidado muito mais tranquila!! 💙🙏"
+              "text": "Oláaa, tudo bem? ❤️ Fico muito feliz que tenha se interessado!!\n\nVou te ajudar a cuidar de quem você ama com mais segurança, mais leveza e muito menos esforço, sem machucar a pessoa nem a sua coluna! 🤲✨\n\nTenho certeza que esse guia vai deixar a sua rotina de cuidado muito mais tranquila!! 💙🙏",
+              "messageText": "Oláaa, tudo bem? ❤️ Fico muito feliz que tenha se interessado!!\n\nVou te ajudar a cuidar de quem você ama com mais segurança, mais leveza e muito menos esforço, sem machucar a pessoa nem a sua coluna! 🤲✨\n\nTenho certeza que esse guia vai deixar a sua rotina de cuidado muito mais tranquila!! 💙🙏"
             },
             "id": "node_flow_funil_2_2"
           },
@@ -784,9 +792,10 @@
               "x": 320,
               "y": 600
             },
-            "label": "Oferta Completa & Honestidade",
+            "label": "💬 Mensagem #2",
             "config": {
-              "text": "Hoje separei um material especial pra você:\n\n✅ Guia Completo de Cuidados com Pessoa Acamada\n✅ Higiene, posições seguras, mudança de posição e prevenção de escaras\n✅ Passo a passo ilustrado, pra cuidar com segurança mesmo sem experiência\n🎁 Bônus: 185 atividades entre exercícios, alongamentos, massagens e estímulos cognitivos, Primeiros Socorros em Casa e Calendário de Cuidados\n📲 Tudo no seu WhatsApp\n\n🔴 Tudo por R$10,00 no Pix 💎\n🔴 Válido só hoje\n\nPosso confiar na sua honestidade pra te enviar o guia primeiro?\n\nPosso te enviar?"
+              "text": "Hoje separei um material especial pra você:\n\n✅ Guia Completo de Cuidados com Pessoa Acamada\n✅ Higiene, posições seguras, mudança de posição e prevenção de escaras\n✅ Passo a passo ilustrado, pra cuidar com segurança mesmo sem experiência\n🎁 Bônus: 185 atividades entre exercícios, alongamentos, massagens e estímulos cognitivos, Primeiros Socorros em Casa e Calendário de Cuidados\n📲 Tudo no seu WhatsApp\n\n🔴 Tudo por R$10,00 no Pix 💎\n🔴 Válido só hoje\n\nPosso confiar na sua honestidade pra te enviar o guia primeiro?\n\nPosso te enviar?",
+              "messageText": "Hoje separei um material especial pra você:\n\n✅ Guia Completo de Cuidados com Pessoa Acamada\n✅ Higiene, posições seguras, mudança de posição e prevenção de escaras\n✅ Passo a passo ilustrado, pra cuidar com segurança mesmo sem experiência\n🎁 Bônus: 185 atividades entre exercícios, alongamentos, massagens e estímulos cognitivos, Primeiros Socorros em Casa e Calendário de Cuidados\n📲 Tudo no seu WhatsApp\n\n🔴 Tudo por R$10,00 no Pix 💎\n🔴 Válido só hoje\n\nPosso confiar na sua honestidade pra te enviar o guia primeiro?\n\nPosso te enviar?"
             },
             "id": "node_flow_funil_2_5"
           },
@@ -811,9 +820,10 @@
               "x": 320,
               "y": 880
             },
-            "label": "Agradecimento & Confiança",
+            "label": "💬 Mensagem #3",
             "config": {
-              "text": "❤️ Vou contar com sua honestidade, tá bom?"
+              "text": "❤️ Vou contar com sua honestidade, tá bom?",
+              "messageText": "❤️ Vou contar com sua honestidade, tá bom?"
             },
             "id": "node_flow_funil_2_7"
           },
@@ -888,9 +898,10 @@
               "x": 320,
               "y": 1580
             },
-            "label": "Lista de Bônus Exclusivos",
+            "label": "💬 Mensagem #4",
             "config": {
-              "text": "Assim que me enviar o comprovante, te envio o restante dos materiais:\n\nBônus:\n🎁 Exercícios de Mobilidade\n🎁 Alongamentos\n🎁 Técnicas de Massagem\n🎁 100 Atividades Sensoriais e Cognitivas\n🎁 Primeiros Socorros em Casa\n🎁 Calendário de Cuidados\n🎁 Grupo VIP com a Fisioterapeuta e Enfermeira\n\nAcesso Exclusivo:\n✅ 50 Receitas Fáceis de Engolir 🍲\n✅ Kit SOS do Cuidador: alívio rápido pra sua coluna e seu cansaço 💙\n✅ 50 Exercícios de Fala e Linguagem 🗣️"
+              "text": "Assim que me enviar o comprovante, te envio o restante dos materiais:\n\nBônus:\n🎁 Exercícios de Mobilidade\n🎁 Alongamentos\n🎁 Técnicas de Massagem\n🎁 100 Atividades Sensoriais e Cognitivas\n🎁 Primeiros Socorros em Casa\n🎁 Calendário de Cuidados\n🎁 Grupo VIP com a Fisioterapeuta e Enfermeira\n\nAcesso Exclusivo:\n✅ 50 Receitas Fáceis de Engolir 🍲\n✅ Kit SOS do Cuidador: alívio rápido pra sua coluna e seu cansaço 💙\n✅ 50 Exercícios de Fala e Linguagem 🗣️",
+              "messageText": "Assim que me enviar o comprovante, te envio o restante dos materiais:\n\nBônus:\n🎁 Exercícios de Mobilidade\n🎁 Alongamentos\n🎁 Técnicas de Massagem\n🎁 100 Atividades Sensoriais e Cognitivas\n🎁 Primeiros Socorros em Casa\n🎁 Calendário de Cuidados\n🎁 Grupo VIP com a Fisioterapeuta e Enfermeira\n\nAcesso Exclusivo:\n✅ 50 Receitas Fáceis de Engolir 🍲\n✅ Kit SOS do Cuidador: alívio rápido pra sua coluna e seu cansaço 💙\n✅ 50 Exercícios de Fala e Linguagem 🗣️"
             },
             "id": "node_flow_funil_2_9"
           },
@@ -901,9 +912,10 @@
               "x": 320,
               "y": 1720
             },
-            "label": "Tabela de Preços (4 Opções)",
+            "label": "💬 Mensagem #5",
             "config": {
-              "text": "Forma de pagamento: Valor Único\nEu irei disponibilizar aqui 4 valores e você escolhe qual acha mais justo:\n\n• R$10,00\n• R$19,90 (Acesso a todos os bônus)\n• R$39,90 (Acesso Total + Receitas Fáceis + Kit SOS do Cuidador + Exercícios de Fala e Linguagem)\n• R$49,90 (Acesso Total Completo)\n\nDeixe seu coração ser guiado por Deus e contribua com o valor que vier no seu coração! 🙏"
+              "text": "Forma de pagamento: Valor Único\nEu irei disponibilizar aqui 4 valores e você escolhe qual acha mais justo:\n\n• R$10,00\n• R$19,90 (Acesso a todos os bônus)\n• R$39,90 (Acesso Total + Receitas Fáceis + Kit SOS do Cuidador + Exercícios de Fala e Linguagem)\n• R$49,90 (Acesso Total Completo)\n\nDeixe seu coração ser guiado por Deus e contribua com o valor que vier no seu coração! 🙏",
+              "messageText": "Forma de pagamento: Valor Único\nEu irei disponibilizar aqui 4 valores e você escolhe qual acha mais justo:\n\n• R$10,00\n• R$19,90 (Acesso a todos os bônus)\n• R$39,90 (Acesso Total + Receitas Fáceis + Kit SOS do Cuidador + Exercícios de Fala e Linguagem)\n• R$49,90 (Acesso Total Completo)\n\nDeixe seu coração ser guiado por Deus e contribua com o valor que vier no seu coração! 🙏"
             },
             "id": "node_flow_funil_2_10"
           },
@@ -930,7 +942,7 @@
               "x": 320,
               "y": 2000
             },
-            "label": "💬 Instruções da Chave PIX",
+            "label": "💬 Mensagem #6",
             "config": {
               "text": "Chave Pix CELULAR\nNome da Chave :SANTOS LIVROS\n👇 Só copiar e colar NÚMERO CELULAR",
               "messageText": "Chave Pix CELULAR\nNome da Chave :SANTOS LIVROS\n👇 Só copiar e colar NÚMERO CELULAR"
@@ -960,7 +972,7 @@
               "x": 320,
               "y": 2280
             },
-            "label": "🔑 Chave PIX (Só a Chave)",
+            "label": "💬 Mensagem #7",
             "config": {
               "text": "82996382293",
               "messageText": "82996382293"
@@ -973,9 +985,10 @@
               "x": 320,
               "y": 2420
             },
-            "label": "Instruções de Comprovante",
+            "label": "💬 Mensagem #8",
             "config": {
-              "text": "Assim que você finalizar o pagamento, me envia o comprovante por aqui, que já envio todo material restante prometido!\n\nBasta apenas me enviar o comprovante que já te envio tudo."
+              "text": "Assim que você finalizar o pagamento, me envia o comprovante por aqui, que já envio todo material restante prometido!\n\nBasta apenas me enviar o comprovante que já te envio tudo.",
+              "messageText": "Assim que você finalizar o pagamento, me envia o comprovante por aqui, que já envio todo material restante prometido!\n\nBasta apenas me enviar o comprovante que já te envio tudo."
             },
             "id": "node_flow_funil_2_13"
           },
@@ -996,7 +1009,7 @@
           {
             "nodeId": "flow_funil_2_msg_rem1",
             "nodeType": "MESSAGE",
-            "label": "💬 Remarketing: ⏰ Lembrete: Conseguiu ver o MATERIAL? (20 min)",
+            "label": "💬 Mensagem #9",
             "config": {
               "text": "Olá! 🙏\n\nConseguiu ver o MATERIAL?\n\nSe o material agregou você, conto com sua contribuição para manter esse projeto e continuar criando novos materiais. 🔧\n\nApós o comprovante, libero também seus bônus exclusivos.\n\nDeus abençoe! ✝️",
               "messageText": "Olá! 🙏\n\nConseguiu ver o MATERIAL?\n\nSe o material agregou você, conto com sua contribuição para manter esse projeto e continuar criando novos materiais. 🔧\n\nApós o comprovante, libero também seus bônus exclusivos.\n\nDeus abençoe! ✝️"
@@ -1061,9 +1074,10 @@
               "x": 320,
               "y": 3040
             },
-            "label": "Agradecimento Final & Acesso Vitalício",
+            "label": "💬 Mensagem #10",
             "config": {
-              "text": "Comprovante recebido com sucesso! Muito obrigado pelo apoio. Todos os guias e materiais de cuidado já estão no seu celular com acesso vitalício. Que Deus te dê muita sabedoria e força no cuidado! ❤️"
+              "text": "Comprovante recebido com sucesso! Muito obrigado pelo apoio. Todos os guias e materiais de cuidado já estão no seu celular com acesso vitalício. Que Deus te dê muita sabedoria e força no cuidado! ❤️",
+              "messageText": "Comprovante recebido com sucesso! Muito obrigado pelo apoio. Todos os guias e materiais de cuidado já estão no seu celular com acesso vitalício. Que Deus te dê muita sabedoria e força no cuidado! ❤️"
             }
           }
         ],
@@ -1313,9 +1327,10 @@
               "x": 320,
               "y": 180
             },
-            "label": "Apresentação Missionária Raquel",
+            "label": "💬 Mensagem #1",
             "config": {
-              "text": "Oii! Prazer, sou a Missionária Raquel, responsável pelos 500 Esboços de Pregações para Mulheres! 🙏💛\n\nEstou terminando de enviar o material para outra cliente e já volto para te atender, tá bom? 😊"
+              "text": "Oii! Prazer, sou a Missionária Raquel, responsável pelos 500 Esboços de Pregações para Mulheres! 🙏💛\n\nEstou terminando de enviar o material para outra cliente e já volto para te atender, tá bom? 😊",
+              "messageText": "Oii! Prazer, sou a Missionária Raquel, responsável pelos 500 Esboços de Pregações para Mulheres! 🙏💛\n\nEstou terminando de enviar o material para outra cliente e já volto para te atender, tá bom? 😊"
             },
             "id": "node_flow_funil_3_2"
           },
@@ -1326,9 +1341,10 @@
               "x": 320,
               "y": 320
             },
-            "label": "Pergunta de Conexão",
+            "label": "💬 Mensagem #2",
             "config": {
-              "text": "Me conta, irmã: você é pastora, missionária, líder ou quer aprender mais sobre a Palavra de Deus? 😊🙏"
+              "text": "Me conta, irmã: você é pastora, missionária, líder ou quer aprender mais sobre a Palavra de Deus? 😊🙏",
+              "messageText": "Me conta, irmã: você é pastora, missionária, líder ou quer aprender mais sobre a Palavra de Deus? 😊🙏"
             },
             "id": "node_flow_funil_3_3"
           },
@@ -1339,9 +1355,10 @@
               "x": 320,
               "y": 460
             },
-            "label": "Salvar Contato & Conteúdo Gratuito",
+            "label": "💬 Mensagem #3",
             "config": {
-              "text": "Perfeito! Esse material vai te ajudar a preparar suas ministrações com mais clareza e segurança. 🥰📖\n\nAgora vou te mostrar tudo o que você recebe!\n\nAproveita e salva meu contato como Missionária Raquel! 💛\n\nToda semana compartilho conteúdos gratuitos para seus estudos e ministrações, além de novidades e sorteios nos Status. Assim você não perde nada! 😊🙏"
+              "text": "Perfeito! Esse material vai te ajudar a preparar suas ministrações com mais clareza e segurança. 🥰📖\n\nAgora vou te mostrar tudo o que você recebe!\n\nAproveita e salva meu contato como Missionária Raquel! 💛\n\nToda semana compartilho conteúdos gratuitos para seus estudos e ministrações, além de novidades e sorteios nos Status. Assim você não perde nada! 😊🙏",
+              "messageText": "Perfeito! Esse material vai te ajudar a preparar suas ministrações com mais clareza e segurança. 🥰📖\n\nAgora vou te mostrar tudo o que você recebe!\n\nAproveita e salva meu contato como Missionária Raquel! 💛\n\nToda semana compartilho conteúdos gratuitos para seus estudos e ministrações, além de novidades e sorteios nos Status. Assim você não perde nada! 😊🙏"
             },
             "id": "node_flow_funil_3_4"
           },
@@ -1382,9 +1399,10 @@
               "x": 320,
               "y": 880
             },
-            "label": "Oferta R$ 10 & Envio Antecipado",
+            "label": "💬 Mensagem #4",
             "config": {
-              "text": "Não precisa mais começar cada preparação do zero. Com os 500 Esboços de Pregações para Mulheres, você ganha tempo e uma direção clara para desenvolver suas mensagens. 🙏📖\n\n📚 500 esboços em dois volumes\n✍️ Versículo, contexto, desenvolvimento, conclusão e frase final\n⛪️ Temas para cultos, congressos, vigílias, células, Santa Ceia e encontros femininos\n🎁 Planner de Cultos, Checklist da Pregadora e 30 Dinâmicas para Encontros e Cultos\n\nTodo o pacote, de R$39,90, por apenas R$10,00. 💛\n\nTodos os materiais são digitais, em PDF, e eu envio tudo diretamente aqui na nossa conversa pelo WhatsApp, para você consultar sempre que precisar. 🥰📖\n\nAntes de pagar, eu vou te enviar tudo para que possa conferir! ❤️\n\nPosso contar com sua Honestidade, e te mandar os materiais agora? 🙏"
+              "text": "Não precisa mais começar cada preparação do zero. Com os 500 Esboços de Pregações para Mulheres, você ganha tempo e uma direção clara para desenvolver suas mensagens. 🙏📖\n\n📚 500 esboços em dois volumes\n✍️ Versículo, contexto, desenvolvimento, conclusão e frase final\n⛪️ Temas para cultos, congressos, vigílias, células, Santa Ceia e encontros femininos\n🎁 Planner de Cultos, Checklist da Pregadora e 30 Dinâmicas para Encontros e Cultos\n\nTodo o pacote, de R$39,90, por apenas R$10,00. 💛\n\nTodos os materiais são digitais, em PDF, e eu envio tudo diretamente aqui na nossa conversa pelo WhatsApp, para você consultar sempre que precisar. 🥰📖\n\nAntes de pagar, eu vou te enviar tudo para que possa conferir! ❤️\n\nPosso contar com sua Honestidade, e te mandar os materiais agora? 🙏",
+              "messageText": "Não precisa mais começar cada preparação do zero. Com os 500 Esboços de Pregações para Mulheres, você ganha tempo e uma direção clara para desenvolver suas mensagens. 🙏📖\n\n📚 500 esboços em dois volumes\n✍️ Versículo, contexto, desenvolvimento, conclusão e frase final\n⛪️ Temas para cultos, congressos, vigílias, células, Santa Ceia e encontros femininos\n🎁 Planner de Cultos, Checklist da Pregadora e 30 Dinâmicas para Encontros e Cultos\n\nTodo o pacote, de R$39,90, por apenas R$10,00. 💛\n\nTodos os materiais são digitais, em PDF, e eu envio tudo diretamente aqui na nossa conversa pelo WhatsApp, para você consultar sempre que precisar. 🥰📖\n\nAntes de pagar, eu vou te enviar tudo para que possa conferir! ❤️\n\nPosso contar com sua Honestidade, e te mandar os materiais agora? 🙏"
             },
             "id": "node_flow_funil_3_7"
           },
@@ -1409,9 +1427,10 @@
               "x": 320,
               "y": 1160
             },
-            "label": "Solidariedade Cestas Básicas",
+            "label": "💬 Mensagem #5",
             "config": {
-              "text": "Combinado!! Vou te enviar agora, e já te mando os dados pra pagar. 💕\n\nEu não ganho nada com esses materiais, todo o dinheiro arrecadado será doado, em forma de cestas básicas, para aqueles que estão passando por um momento difícil.\n\nQue Deus te abençoe grandemente 😊"
+              "text": "Combinado!! Vou te enviar agora, e já te mando os dados pra pagar. 💕\n\nEu não ganho nada com esses materiais, todo o dinheiro arrecadado será doado, em forma de cestas básicas, para aqueles que estão passando por um momento difícil.\n\nQue Deus te abençoe grandemente 😊",
+              "messageText": "Combinado!! Vou te enviar agora, e já te mando os dados pra pagar. 💕\n\nEu não ganho nada com esses materiais, todo o dinheiro arrecadado será doado, em forma de cestas básicas, para aqueles que estão passando por um momento difícil.\n\nQue Deus te abençoe grandemente 😊"
             },
             "id": "node_flow_funil_3_9"
           },
@@ -1502,9 +1521,10 @@
               "x": 320,
               "y": 2000
             },
-            "label": "Link Drive & Transição Pagamento",
+            "label": "💬 Mensagem #6",
             "config": {
-              "text": "Se não conseguir abrir no WhatsApp, vou deixar o link dos materiais abaixo 👇\n\nhttps://drive.google.com/drive/folders/1FPYg1bkaf5YYRvQI_YjjNk3CSdwKVEvT?usp=sharing\n\nProntinho, já te enviei tudo, conforme o combinado, espero que goste, tá bom? 🥰\n\nAgora é com você 💛\nVou te mandar um último áudio, e já passo os dados do pagamento 🙏"
+              "text": "Se não conseguir abrir no WhatsApp, vou deixar o link dos materiais abaixo 👇\n\nhttps://drive.google.com/drive/folders/1FPYg1bkaf5YYRvQI_YjjNk3CSdwKVEvT?usp=sharing\n\nProntinho, já te enviei tudo, conforme o combinado, espero que goste, tá bom? 🥰\n\nAgora é com você 💛\nVou te mandar um último áudio, e já passo os dados do pagamento 🙏",
+              "messageText": "Se não conseguir abrir no WhatsApp, vou deixar o link dos materiais abaixo 👇\n\nhttps://drive.google.com/drive/folders/1FPYg1bkaf5YYRvQI_YjjNk3CSdwKVEvT?usp=sharing\n\nProntinho, já te enviei tudo, conforme o combinado, espero que goste, tá bom? 🥰\n\nAgora é com você 💛\nVou te mandar um último áudio, e já passo os dados do pagamento 🙏"
             },
             "id": "node_flow_funil_3_11"
           },
@@ -1546,7 +1566,7 @@
               "x": 320,
               "y": 2420
             },
-            "label": "💬 Instruções da Chave PIX",
+            "label": "💬 Mensagem #7",
             "config": {
               "text": "O pix estará em nome do meu filho:\n• Marco Antonio\n\nEle que me ajuda a organizar as finanças 🥰\n\nChave Pix Celular: 11 967837631",
               "messageText": "O pix estará em nome do meu filho:\n• Marco Antonio\n\nEle que me ajuda a organizar as finanças 🥰\n\nChave Pix Celular: 11 967837631"
@@ -1576,7 +1596,7 @@
               "x": 320,
               "y": 2700
             },
-            "label": "🔑 Chave PIX (Só a Chave)",
+            "label": "💬 Mensagem #8",
             "config": {
               "text": "11967837631",
               "messageText": "11967837631"
@@ -1604,9 +1624,10 @@
               "x": 320,
               "y": 2980
             },
-            "label": "Instruções de Comprovante",
+            "label": "💬 Mensagem #9",
             "config": {
-              "text": "4 BÔNUS EXCLUSIVOS APÓS SUA CONTRIBUIÇÃO 🎁🙏\n\n💬 Comunidade de Pregadoras no WhatsApp, com conteúdos para suas ministrações;\n📕 Guia da Pregadora, para preparar e organizar suas mensagens com confiança;\n🖼️ 50 Ilustrações, para tornar suas pregações mais marcantes;\n📖 500 Versículos Organizados por Tema, para facilitar seus estudos.\n\nQuando pagar, por gentileza, manda o comprovante aqui na nossa conversa!!\nPode ser um Print também, apenas para me ajudar com o controle do financeiro ❤️"
+              "text": "4 BÔNUS EXCLUSIVOS APÓS SUA CONTRIBUIÇÃO 🎁🙏\n\n💬 Comunidade de Pregadoras no WhatsApp, com conteúdos para suas ministrações;\n📕 Guia da Pregadora, para preparar e organizar suas mensagens com confiança;\n🖼️ 50 Ilustrações, para tornar suas pregações mais marcantes;\n📖 500 Versículos Organizados por Tema, para facilitar seus estudos.\n\nQuando pagar, por gentileza, manda o comprovante aqui na nossa conversa!!\nPode ser um Print também, apenas para me ajudar com o controle do financeiro ❤️",
+              "messageText": "4 BÔNUS EXCLUSIVOS APÓS SUA CONTRIBUIÇÃO 🎁🙏\n\n💬 Comunidade de Pregadoras no WhatsApp, com conteúdos para suas ministrações;\n📕 Guia da Pregadora, para preparar e organizar suas mensagens com confiança;\n🖼️ 50 Ilustrações, para tornar suas pregações mais marcantes;\n📖 500 Versículos Organizados por Tema, para facilitar seus estudos.\n\nQuando pagar, por gentileza, manda o comprovante aqui na nossa conversa!!\nPode ser um Print também, apenas para me ajudar com o controle do financeiro ❤️"
             },
             "id": "node_flow_funil_3_16"
           },
@@ -1627,7 +1648,7 @@
           {
             "nodeId": "flow_funil_3_msg_rem1",
             "nodeType": "MESSAGE",
-            "label": "💬 Remarketing 1: Conferiu os 500 Esboços?",
+            "label": "💬 Mensagem #10",
             "config": {
               "text": "Irmã, a Paz do Senhor! 🙏\n\nConseguiu conferir os 500 Esboços?\n\nFico no aguardo do comprovante para te enviar o acesso à Comunidade VIP e todos os 4 bônus exclusivos! Que Deus te abençoe! 💛",
               "messageText": "Irmã, a Paz do Senhor! 🙏\n\nConseguiu conferir os 500 Esboços?\n\nFico no aguardo do comprovante para te enviar o acesso à Comunidade VIP e todos os 4 bônus exclusivos! Que Deus te abençoe! 💛"
@@ -1654,7 +1675,7 @@
           {
             "nodeId": "flow_funil_3_msg_rem2",
             "nodeType": "MESSAGE",
-            "label": "💬 Remarketing 2: Carinho & Confiança",
+            "label": "💬 Mensagem #11",
             "config": {
               "text": "A paz do Senhor, minha irmã! Conseguiu realizar sua contribuição? 🙏\n\nPeço com carinho que não deixe nosso projeto no prejuízo, pois preparamos e enviamos o material com confiança. Esse trabalho ajuda muitas famílias, e sua honestidade diante de Deus faz toda diferença. 💛",
               "messageText": "A paz do Senhor, minha irmã! Conseguiu realizar sua contribuição? 🙏\n\nPeço com carinho que não deixe nosso projeto no prejuízo, pois preparamos e enviamos o material com confiança. Esse trabalho ajuda muitas famílias, e sua honestidade diante de Deus faz toda diferença. 💛"
@@ -1719,9 +1740,10 @@
               "x": 320,
               "y": 3600
             },
-            "label": "Agradecimento Final & Acesso Vitalício",
+            "label": "💬 Mensagem #12",
             "config": {
-              "text": "A paz do Senhor, amada! Comprovante confirmado! 🙏📖\n\nTodos os *500 Esboços de Pregações* e bônus estão liberados para você. Seja muito bem-vinda ao ministério feminino!"
+              "text": "A paz do Senhor, amada! Comprovante confirmado! 🙏📖\n\nTodos os *500 Esboços de Pregações* e bônus estão liberados para você. Seja muito bem-vinda ao ministério feminino!",
+              "messageText": "A paz do Senhor, amada! Comprovante confirmado! 🙏📖\n\nTodos os *500 Esboços de Pregações* e bônus estão liberados para você. Seja muito bem-vinda ao ministério feminino!"
             }
           }
         ],
@@ -2024,9 +2046,10 @@
               "x": 320,
               "y": 180
             },
-            "label": "Saudação Pastor Guilherme",
+            "label": "💬 Mensagem #1",
             "config": {
-              "text": "A Paz do Senhor!"
+              "text": "A Paz do Senhor!",
+              "messageText": "A Paz do Senhor!"
             }
           },
           {
@@ -2051,9 +2074,10 @@
               "x": 320,
               "y": 460
             },
-            "label": "Oferta Jornada da Bíblia",
+            "label": "💬 Mensagem #2",
             "config": {
-              "text": "📘 Jornada da Bíblia - de Gênesis a Apocalipse\n(Uma explicação simples e didática de todos os 66 livros da Bíblia)\n\nDe 59,00 por: R$20,00\n\nPentateuco, Livros Históricos, Livros Poéticos, Profetas Maiores e Menores, Evangelhos, Livro Histórico, Cartas e Livro Profético\n\nBônus após o pagamento 👇\n• Bônus Especial: 7 Estudos do Apocalipse"
+              "text": "📘 Jornada da Bíblia - de Gênesis a Apocalipse\n(Uma explicação simples e didática de todos os 66 livros da Bíblia)\n\nDe 59,00 por: R$20,00\n\nPentateuco, Livros Históricos, Livros Poéticos, Profetas Maiores e Menores, Evangelhos, Livro Histórico, Cartas e Livro Profético\n\nBônus após o pagamento 👇\n• Bônus Especial: 7 Estudos do Apocalipse",
+              "messageText": "📘 Jornada da Bíblia - de Gênesis a Apocalipse\n(Uma explicação simples e didática de todos os 66 livros da Bíblia)\n\nDe 59,00 por: R$20,00\n\nPentateuco, Livros Históricos, Livros Poéticos, Profetas Maiores e Menores, Evangelhos, Livro Histórico, Cartas e Livro Profético\n\nBônus após o pagamento 👇\n• Bônus Especial: 7 Estudos do Apocalipse"
             }
           },
           {
@@ -2063,9 +2087,10 @@
               "x": 320,
               "y": 600
             },
-            "label": "Acesso Vitalício & Contribuição Voluntária",
+            "label": "💬 Mensagem #3",
             "config": {
-              "text": "O acesso ao conteúdo é vitalício! Você pode imprimir ou ler pelo celular\n\nO valor sugerido é R$20,00\nVocê só paga depois de receber tudo!\n\nPorém a contribuição é voluntária e pode ser até menos, seja 10, 15 reais.\n\nPosso lhe enviar o estudo?"
+              "text": "O acesso ao conteúdo é vitalício! Você pode imprimir ou ler pelo celular\n\nO valor sugerido é R$20,00\nVocê só paga depois de receber tudo!\n\nPorém a contribuição é voluntária e pode ser até menos, seja 10, 15 reais.\n\nPosso lhe enviar o estudo?",
+              "messageText": "O acesso ao conteúdo é vitalício! Você pode imprimir ou ler pelo celular\n\nO valor sugerido é R$20,00\nVocê só paga depois de receber tudo!\n\nPorém a contribuição é voluntária e pode ser até menos, seja 10, 15 reais.\n\nPosso lhe enviar o estudo?"
             }
           },
           {
@@ -2088,9 +2113,10 @@
               "x": 320,
               "y": 880
             },
-            "label": "Mensagem de Confiança",
+            "label": "💬 Mensagem #4",
             "config": {
-              "text": "Estarei enviando e confiando em você, fique à vontade para abrir o material"
+              "text": "Estarei enviando e confiando em você, fique à vontade para abrir o material",
+              "messageText": "Estarei enviando e confiando em você, fique à vontade para abrir o material"
             }
           },
           {
@@ -2175,9 +2201,10 @@
               "x": 320,
               "y": 1720
             },
-            "label": "Tabela de Valores Sugeridos",
+            "label": "💬 Mensagem #5",
             "config": {
-              "text": "Acabei de enviar todos os 5 livros em PDF aqui na conversa para você baixar e ler no seu celular ou imprimir!\n\nValor sugerido: R$20,00\n⭐️ Gostei muito: R$30,00\n⭐️⭐️ Quero abençoar ainda mais: R$50,00\n\nIsso ajuda a continuarmos esse propósito!\nCaso não possa contribuir com o valor integral, fique à vontade para enviar o valor que puder!"
+              "text": "Acabei de enviar todos os 5 livros em PDF aqui na conversa para você baixar e ler no seu celular ou imprimir!\n\nValor sugerido: R$20,00\n⭐️ Gostei muito: R$30,00\n⭐️⭐️ Quero abençoar ainda mais: R$50,00\n\nIsso ajuda a continuarmos esse propósito!\nCaso não possa contribuir com o valor integral, fique à vontade para enviar o valor que puder!",
+              "messageText": "Acabei de enviar todos os 5 livros em PDF aqui na conversa para você baixar e ler no seu celular ou imprimir!\n\nValor sugerido: R$20,00\n⭐️ Gostei muito: R$30,00\n⭐️⭐️ Quero abençoar ainda mais: R$50,00\n\nIsso ajuda a continuarmos esse propósito!\nCaso não possa contribuir com o valor integral, fique à vontade para enviar o valor que puder!"
             }
           },
           {
@@ -2188,7 +2215,7 @@
               "x": 320,
               "y": 1860
             },
-            "label": "💬 Instruções da Chave PIX",
+            "label": "💬 Mensagem #6",
             "config": {
               "text": "Chave Pix E-MAIL\nNome: Pastor Guilherme\n👇 Só clicar no botão ou copiar a chave abaixo 👇",
               "messageText": "Chave Pix E-MAIL\nNome: Pastor Guilherme\n👇 Só clicar no botão ou copiar a chave abaixo 👇"
@@ -2217,7 +2244,7 @@
               "x": 320,
               "y": 2140
             },
-            "label": "🔑 Chave PIX (Só a Chave)",
+            "label": "💬 Mensagem #7",
             "config": {
               "text": "pastorguilhermeigreja@gmail.com",
               "messageText": "pastorguilhermeigreja@gmail.com"
@@ -2230,9 +2257,10 @@
               "x": 320,
               "y": 2280
             },
-            "label": "Bônus 7 Estudos do Apocalipse",
+            "label": "💬 Mensagem #8",
             "config": {
-              "text": "Após o pagamento, me envie o comprovante aqui, que eu vou te enviar como BÔNUS:\n7 ESTUDOS DO APOCALIPSE EM PDF 🎁"
+              "text": "Após o pagamento, me envie o comprovante aqui, que eu vou te enviar como BÔNUS:\n7 ESTUDOS DO APOCALIPSE EM PDF 🎁",
+              "messageText": "Após o pagamento, me envie o comprovante aqui, que eu vou te enviar como BÔNUS:\n7 ESTUDOS DO APOCALIPSE EM PDF 🎁"
             }
           },
           {
@@ -2256,7 +2284,7 @@
               "x": 1280,
               "y": 2520
             },
-            "label": "💬 Remarketing: Faltou alguma coisa?",
+            "label": "💬 Mensagem #10",
             "config": {
               "text": "Faltou alguma coisa?",
               "messageText": "Faltou alguma coisa?"
@@ -2283,7 +2311,7 @@
               "x": 2060,
               "y": 2520
             },
-            "label": "💬 Remarketing 2: Apoio e Dúvidas",
+            "label": "💬 Mensagem #11",
             "config": {
               "text": "Paz de Deus! Conseguiu abrir os livros da Jornada da Bíblia? Se tiver qualquer dúvida ou se precisar de uma condição especial para sua contribuição, me avisa aqui! 🙏",
               "messageText": "Paz de Deus! Conseguiu abrir os livros da Jornada da Bíblia? Se tiver qualquer dúvida ou se precisar de uma condição especial para sua contribuição, me avisa aqui! 🙏"
@@ -2343,9 +2371,10 @@
               "x": 1580,
               "y": 2340
             },
-            "label": "Agradecimento Final & Acesso Vitalício",
+            "label": "💬 Mensagem #9",
             "config": {
-              "text": "Glória a Deus! Seu comprovante foi aprovado com sucesso! 🙏✨\n\nTodos os 5 livros da *Jornada da Bíblia* e o *Bônus do Apocalipse* estão liberados para você com acesso vitalício.\n\nQualquer dúvida estou à disposição por aqui. Que Deus abençoe grandemente a sua vida e seu ministério! 📖❤️"
+              "text": "Glória a Deus! Seu comprovante foi aprovado com sucesso! 🙏✨\n\nTodos os 5 livros da *Jornada da Bíblia* e o *Bônus do Apocalipse* estão liberados para você com acesso vitalício.\n\nQualquer dúvida estou à disposição por aqui. Que Deus abençoe grandemente a sua vida e seu ministério! 📖❤️",
+              "messageText": "Glória a Deus! Seu comprovante foi aprovado com sucesso! 🙏✨\n\nTodos os 5 livros da *Jornada da Bíblia* e o *Bônus do Apocalipse* estão liberados para você com acesso vitalício.\n\nQualquer dúvida estou à disposição por aqui. Que Deus abençoe grandemente a sua vida e seu ministério! 📖❤️"
             }
           }
         ],
@@ -2581,9 +2610,10 @@
               "x": 320,
               "y": 180
             },
-            "label": "Saudação Pastor Guilherme",
+            "label": "💬 Mensagem #1",
             "config": {
-              "text": "A Paz do Senhor!"
+              "text": "A Paz do Senhor!",
+              "messageText": "A Paz do Senhor!"
             }
           },
           {
@@ -2608,9 +2638,10 @@
               "x": 320,
               "y": 460
             },
-            "label": "Oferta Jornada da Bíblia",
+            "label": "💬 Mensagem #2",
             "config": {
-              "text": "📘 Jornada da Bíblia - de Gênesis a Apocalipse\n(Uma explicação simples e didática de todos os 66 livros da Bíblia)\n\nDe 59,00 por: R$20,00\n\nPentateuco, Livros Históricos, Livros Poéticos, Profetas Maiores e Menores, Evangelhos, Livro Histórico, Cartas e Livro Profético\n\nBônus após o pagamento 👇\n• Bônus Especial: 7 Estudos do Apocalipse"
+              "text": "📘 Jornada da Bíblia - de Gênesis a Apocalipse\n(Uma explicação simples e didática de todos os 66 livros da Bíblia)\n\nDe 59,00 por: R$20,00\n\nPentateuco, Livros Históricos, Livros Poéticos, Profetas Maiores e Menores, Evangelhos, Livro Histórico, Cartas e Livro Profético\n\nBônus após o pagamento 👇\n• Bônus Especial: 7 Estudos do Apocalipse",
+              "messageText": "📘 Jornada da Bíblia - de Gênesis a Apocalipse\n(Uma explicação simples e didática de todos os 66 livros da Bíblia)\n\nDe 59,00 por: R$20,00\n\nPentateuco, Livros Históricos, Livros Poéticos, Profetas Maiores e Menores, Evangelhos, Livro Histórico, Cartas e Livro Profético\n\nBônus após o pagamento 👇\n• Bônus Especial: 7 Estudos do Apocalipse"
             }
           },
           {
@@ -2620,9 +2651,10 @@
               "x": 320,
               "y": 600
             },
-            "label": "Acesso Vitalício & Contribuição Voluntária",
+            "label": "💬 Mensagem #3",
             "config": {
-              "text": "O acesso ao conteúdo é vitalício! Você pode imprimir ou ler pelo celular\n\nO valor sugerido é R$20,00\nVocê só paga depois de receber tudo!\n\nPorém a contribuição é voluntária e pode ser até menos, seja 10, 15 reais.\n\nPosso lhe enviar o estudo?"
+              "text": "O acesso ao conteúdo é vitalício! Você pode imprimir ou ler pelo celular\n\nO valor sugerido é R$20,00\nVocê só paga depois de receber tudo!\n\nPorém a contribuição é voluntária e pode ser até menos, seja 10, 15 reais.\n\nPosso lhe enviar o estudo?",
+              "messageText": "O acesso ao conteúdo é vitalício! Você pode imprimir ou ler pelo celular\n\nO valor sugerido é R$20,00\nVocê só paga depois de receber tudo!\n\nPorém a contribuição é voluntária e pode ser até menos, seja 10, 15 reais.\n\nPosso lhe enviar o estudo?"
             }
           },
           {
@@ -2645,9 +2677,10 @@
               "x": 320,
               "y": 880
             },
-            "label": "Mensagem de Confiança",
+            "label": "💬 Mensagem #4",
             "config": {
-              "text": "Estarei enviando e confiando em você, fique à vontade para abrir o material"
+              "text": "Estarei enviando e confiando em você, fique à vontade para abrir o material",
+              "messageText": "Estarei enviando e confiando em você, fique à vontade para abrir o material"
             }
           },
           {
@@ -2732,9 +2765,10 @@
               "x": 320,
               "y": 1720
             },
-            "label": "Tabela de Valores Sugeridos",
+            "label": "💬 Mensagem #5",
             "config": {
-              "text": "Acabei de enviar todos os 5 livros em PDF aqui na conversa para você baixar e ler no seu celular ou imprimir!\n\nValor sugerido: R$20,00\n⭐️ Gostei muito: R$30,00\n⭐️⭐️ Quero abençoar ainda mais: R$50,00\n\nIsso ajuda a continuarmos esse propósito!\nCaso não possa contribuir com o valor integral, fique à vontade para enviar o valor que puder!"
+              "text": "Acabei de enviar todos os 5 livros em PDF aqui na conversa para você baixar e ler no seu celular ou imprimir!\n\nValor sugerido: R$20,00\n⭐️ Gostei muito: R$30,00\n⭐️⭐️ Quero abençoar ainda mais: R$50,00\n\nIsso ajuda a continuarmos esse propósito!\nCaso não possa contribuir com o valor integral, fique à vontade para enviar o valor que puder!",
+              "messageText": "Acabei de enviar todos os 5 livros em PDF aqui na conversa para você baixar e ler no seu celular ou imprimir!\n\nValor sugerido: R$20,00\n⭐️ Gostei muito: R$30,00\n⭐️⭐️ Quero abençoar ainda mais: R$50,00\n\nIsso ajuda a continuarmos esse propósito!\nCaso não possa contribuir com o valor integral, fique à vontade para enviar o valor que puder!"
             }
           },
           {
@@ -2745,7 +2779,7 @@
               "x": 320,
               "y": 1860
             },
-            "label": "💬 Instruções da Chave PIX",
+            "label": "💬 Mensagem #6",
             "config": {
               "text": "Chave Pix E-MAIL\nNome: Pastor Guilherme\n👇 Só clicar no botão ou copiar a chave abaixo 👇",
               "messageText": "Chave Pix E-MAIL\nNome: Pastor Guilherme\n👇 Só clicar no botão ou copiar a chave abaixo 👇"
@@ -2774,7 +2808,7 @@
               "x": 320,
               "y": 2140
             },
-            "label": "🔑 Chave PIX (Só a Chave)",
+            "label": "💬 Mensagem #7",
             "config": {
               "text": "pastorguilhermeigreja@gmail.com",
               "messageText": "pastorguilhermeigreja@gmail.com"
@@ -2787,9 +2821,10 @@
               "x": 320,
               "y": 2280
             },
-            "label": "Bônus 7 Estudos do Apocalipse",
+            "label": "💬 Mensagem #8",
             "config": {
-              "text": "Após o pagamento, me envie o comprovante aqui, que eu vou te enviar como BÔNUS:\n7 ESTUDOS DO APOCALIPSE EM PDF 🎁"
+              "text": "Após o pagamento, me envie o comprovante aqui, que eu vou te enviar como BÔNUS:\n7 ESTUDOS DO APOCALIPSE EM PDF 🎁",
+              "messageText": "Após o pagamento, me envie o comprovante aqui, que eu vou te enviar como BÔNUS:\n7 ESTUDOS DO APOCALIPSE EM PDF 🎁"
             }
           },
           {
@@ -2813,7 +2848,7 @@
               "x": 1280,
               "y": 2520
             },
-            "label": "💬 Remarketing: Faltou alguma coisa?",
+            "label": "💬 Mensagem #10",
             "config": {
               "text": "Faltou alguma coisa?",
               "messageText": "Faltou alguma coisa?"
@@ -2840,7 +2875,7 @@
               "x": 2060,
               "y": 2520
             },
-            "label": "💬 Remarketing 2: Apoio e Dúvidas",
+            "label": "💬 Mensagem #11",
             "config": {
               "text": "Paz de Deus! Conseguiu abrir os livros da Jornada da Bíblia? Se tiver qualquer dúvida ou se precisar de uma condição especial para sua contribuição, me avisa aqui! 🙏",
               "messageText": "Paz de Deus! Conseguiu abrir os livros da Jornada da Bíblia? Se tiver qualquer dúvida ou se precisar de uma condição especial para sua contribuição, me avisa aqui! 🙏"
@@ -2900,9 +2935,10 @@
               "x": 1580,
               "y": 2340
             },
-            "label": "Agradecimento Final & Acesso Vitalício",
+            "label": "💬 Mensagem #9",
             "config": {
-              "text": "Glória a Deus! Seu comprovante foi aprovado com sucesso! 🙏✨\n\nTodos os 5 livros da *Jornada da Bíblia* e o *Bônus do Apocalipse* estão liberados para você com acesso vitalício.\n\nQualquer dúvida estou à disposição por aqui. Que Deus abençoe grandemente a sua vida e seu ministério! 📖❤️"
+              "text": "Glória a Deus! Seu comprovante foi aprovado com sucesso! 🙏✨\n\nTodos os 5 livros da *Jornada da Bíblia* e o *Bônus do Apocalipse* estão liberados para você com acesso vitalício.\n\nQualquer dúvida estou à disposição por aqui. Que Deus abençoe grandemente a sua vida e seu ministério! 📖❤️",
+              "messageText": "Glória a Deus! Seu comprovante foi aprovado com sucesso! 🙏✨\n\nTodos os 5 livros da *Jornada da Bíblia* e o *Bônus do Apocalipse* estão liberados para você com acesso vitalício.\n\nQualquer dúvida estou à disposição por aqui. Que Deus abençoe grandemente a sua vida e seu ministério! 📖❤️"
             }
           }
         ],
@@ -3139,9 +3175,10 @@
               "x": 320,
               "y": 180
             },
-            "label": "Saudação Inicial",
+            "label": "💬 Mensagem #1",
             "config": {
-              "text": "Bom dia, tudo bem? A Paz do Senhor Jesus!"
+              "text": "Bom dia, tudo bem? A Paz do Senhor Jesus!",
+              "messageText": "Bom dia, tudo bem? A Paz do Senhor Jesus!"
             },
             "id": "node_flow_funil_5_2"
           },
@@ -3167,9 +3204,10 @@
               "x": 320,
               "y": 460
             },
-            "label": "Salvar Contato",
+            "label": "💬 Mensagem #2",
             "config": {
-              "text": "Salva meu contato para eu poder te enviar mais materiais e conteúdos como esses, amém?"
+              "text": "Salva meu contato para eu poder te enviar mais materiais e conteúdos como esses, amém?",
+              "messageText": "Salva meu contato para eu poder te enviar mais materiais e conteúdos como esses, amém?"
             },
             "id": "node_flow_funil_5_4"
           },
@@ -3195,9 +3233,10 @@
               "x": 320,
               "y": 740
             },
-            "label": "Oferta Completa & 4 Presentes",
+            "label": "💬 Mensagem #3",
             "config": {
-              "text": "+ DE 5 MIL SERMÕES PRONTOS\nOrganizados e fáceis de usar 📖\n\n👉 É só ler, adaptar e ministrar.\n\n📲 Acesso imediato (PDFs)\n🖨️ Pode imprimir.\n\nO que você vai receber: 👇\n\n✅ Acesso ao acervo completo com + de 5MIL Sermões.\n✅ Sermões organizados por temas e categorias.\n✅ Acesso ao Grupo EXCLUSIVO no WhatsApp.\n✅ Materiais prontos pra usar, baixar e ministrar.\n\n👉 Você receberá atualizações semanais e você tem acesso VITALÍCIO!\n\nVocê vai receber 4 PRESENTES EXCLUSIVOS: 👇\n\n🎁 Os 150 Salmos explicados passo a passo.\n🎁 Os 66 livros da Bíblia Explicados (De Gênises a Apocalipse)\n🎁 AS CARTAS DE PAULO\n🎁 APLICATIVO DO APOCALIPSE\n\nAcervo completo 100% completo ⭐"
+              "text": "+ DE 5 MIL SERMÕES PRONTOS\nOrganizados e fáceis de usar 📖\n\n👉 É só ler, adaptar e ministrar.\n\n📲 Acesso imediato (PDFs)\n🖨️ Pode imprimir.\n\nO que você vai receber: 👇\n\n✅ Acesso ao acervo completo com + de 5MIL Sermões.\n✅ Sermões organizados por temas e categorias.\n✅ Acesso ao Grupo EXCLUSIVO no WhatsApp.\n✅ Materiais prontos pra usar, baixar e ministrar.\n\n👉 Você receberá atualizações semanais e você tem acesso VITALÍCIO!\n\nVocê vai receber 4 PRESENTES EXCLUSIVOS: 👇\n\n🎁 Os 150 Salmos explicados passo a passo.\n🎁 Os 66 livros da Bíblia Explicados (De Gênises a Apocalipse)\n🎁 AS CARTAS DE PAULO\n🎁 APLICATIVO DO APOCALIPSE\n\nAcervo completo 100% completo ⭐",
+              "messageText": "+ DE 5 MIL SERMÕES PRONTOS\nOrganizados e fáceis de usar 📖\n\n👉 É só ler, adaptar e ministrar.\n\n📲 Acesso imediato (PDFs)\n🖨️ Pode imprimir.\n\nO que você vai receber: 👇\n\n✅ Acesso ao acervo completo com + de 5MIL Sermões.\n✅ Sermões organizados por temas e categorias.\n✅ Acesso ao Grupo EXCLUSIVO no WhatsApp.\n✅ Materiais prontos pra usar, baixar e ministrar.\n\n👉 Você receberá atualizações semanais e você tem acesso VITALÍCIO!\n\nVocê vai receber 4 PRESENTES EXCLUSIVOS: 👇\n\n🎁 Os 150 Salmos explicados passo a passo.\n🎁 Os 66 livros da Bíblia Explicados (De Gênises a Apocalipse)\n🎁 AS CARTAS DE PAULO\n🎁 APLICATIVO DO APOCALIPSE\n\nAcervo completo 100% completo ⭐"
             },
             "id": "node_flow_funil_5_6"
           },
@@ -3208,9 +3247,10 @@
               "x": 320,
               "y": 880
             },
-            "label": "Preço R$ 19,90 & Pagamento Posterior",
+            "label": "💬 Mensagem #4",
             "config": {
-              "text": "Normalmente esses materiais custariam no mínimo R$79,90\n\nMais Somente HOJE você recebe tudo isso por apenas R$19,90 no PIX\n\n(valor simbólico para ajudar nosso projeto)\n\nVOCÊ RECEBE TUDO PRIMEIRO\n\nE depois que eu enviar os materiais você faz a contribuição simbólica para apoiar essa obra ok? 🙏"
+              "text": "Normalmente esses materiais custariam no mínimo R$79,90\n\nMais Somente HOJE você recebe tudo isso por apenas R$19,90 no PIX\n\n(valor simbólico para ajudar nosso projeto)\n\nVOCÊ RECEBE TUDO PRIMEIRO\n\nE depois que eu enviar os materiais você faz a contribuição simbólica para apoiar essa obra ok? 🙏",
+              "messageText": "Normalmente esses materiais custariam no mínimo R$79,90\n\nMais Somente HOJE você recebe tudo isso por apenas R$19,90 no PIX\n\n(valor simbólico para ajudar nosso projeto)\n\nVOCÊ RECEBE TUDO PRIMEIRO\n\nE depois que eu enviar os materiais você faz a contribuição simbólica para apoiar essa obra ok? 🙏"
             },
             "id": "node_flow_funil_5_7"
           },
@@ -3236,9 +3276,10 @@
               "x": 320,
               "y": 1160
             },
-            "label": "Pergunta de Compromisso (SIM/NÃO)",
+            "label": "💬 Mensagem #5",
             "config": {
-              "text": "Posso te enviar agora mesmo e você faz o pix após receber os materiais ?\n\n⚠️ Atenção: responda SIM apenas se você se comprometer a realizar o pagamento em seguida.\n\nResponda apenas SIM ou NÃO por favor."
+              "text": "Posso te enviar agora mesmo e você faz o pix após receber os materiais ?\n\n⚠️ Atenção: responda SIM apenas se você se comprometer a realizar o pagamento em seguida.\n\nResponda apenas SIM ou NÃO por favor.",
+              "messageText": "Posso te enviar agora mesmo e você faz o pix após receber os materiais ?\n\n⚠️ Atenção: responda SIM apenas se você se comprometer a realizar o pagamento em seguida.\n\nResponda apenas SIM ou NÃO por favor."
             },
             "id": "node_flow_funil_5_9"
           },
@@ -3406,9 +3447,10 @@
               "x": 320,
               "y": 2700
             },
-            "label": "Biblioteca Online Exclusiva",
+            "label": "💬 Mensagem #6",
             "config": {
-              "text": "Como são muitos materiais eu separei eles em uma Biblioteca Exclusiva todos organizados por temas. 👇\n\n🚨 ACESSE O RESTANTE DOS ESBOÇOS NO LINK ABAIXO 👇\n\nhttps://bibliotecapregacoes.netlify.app/\n\nSEU ACESSO FOI LIBERADO ✅\n\nVeja no tutorial abaixo como acessar sua biblioteca online 👇👇"
+              "text": "Como são muitos materiais eu separei eles em uma Biblioteca Exclusiva todos organizados por temas. 👇\n\n🚨 ACESSE O RESTANTE DOS ESBOÇOS NO LINK ABAIXO 👇\n\nhttps://bibliotecapregacoes.netlify.app/\n\nSEU ACESSO FOI LIBERADO ✅\n\nVeja no tutorial abaixo como acessar sua biblioteca online 👇👇",
+              "messageText": "Como são muitos materiais eu separei eles em uma Biblioteca Exclusiva todos organizados por temas. 👇\n\n🚨 ACESSE O RESTANTE DOS ESBOÇOS NO LINK ABAIXO 👇\n\nhttps://bibliotecapregacoes.netlify.app/\n\nSEU ACESSO FOI LIBERADO ✅\n\nVeja no tutorial abaixo como acessar sua biblioteca online 👇👇"
             },
             "id": "node_flow_funil_5_13"
           },
@@ -3434,9 +3476,10 @@
               "x": 320,
               "y": 2980
             },
-            "label": "Liberação dos 4 Presentes & Grupo VIP",
+            "label": "💬 Mensagem #7",
             "config": {
-              "text": "PRESENTE 1 🎁\nAcesse os 66 livros da bíblia de gênises a apocallipse 👇\nhttps://drive.google.com/drive/folders/10oLG9FY90lp5gQGIbfFrdzME8tytdMGm?usp=drive_link\n\nPRESENTE 2 - APLICATIVO SERMÃO DO APOCALIPSE 🎁👇\nhttps://sermoesbiblicos.online (Usuário: Apocalipse / Senha: 1234)\n\nPRESENTE 3 - AS CARTAS DE PAULO 🎁👇\nhttps://drive.google.com/drive/folders/1uNovAhcit1QUosY7Srk2-jSNvG5S0dS0?usp=drive_link\n\n📲 Grupo Oficial no WhatsApp:\nhttps://chat.whatsapp.com/DDrnWQKV5vTB2UAYyQj3M2"
+              "text": "PRESENTE 1 🎁\nAcesse os 66 livros da bíblia de gênises a apocallipse 👇\nhttps://drive.google.com/drive/folders/10oLG9FY90lp5gQGIbfFrdzME8tytdMGm?usp=drive_link\n\nPRESENTE 2 - APLICATIVO SERMÃO DO APOCALIPSE 🎁👇\nhttps://sermoesbiblicos.online (Usuário: Apocalipse / Senha: 1234)\n\nPRESENTE 3 - AS CARTAS DE PAULO 🎁👇\nhttps://drive.google.com/drive/folders/1uNovAhcit1QUosY7Srk2-jSNvG5S0dS0?usp=drive_link\n\n📲 Grupo Oficial no WhatsApp:\nhttps://chat.whatsapp.com/DDrnWQKV5vTB2UAYyQj3M2",
+              "messageText": "PRESENTE 1 🎁\nAcesse os 66 livros da bíblia de gênises a apocallipse 👇\nhttps://drive.google.com/drive/folders/10oLG9FY90lp5gQGIbfFrdzME8tytdMGm?usp=drive_link\n\nPRESENTE 2 - APLICATIVO SERMÃO DO APOCALIPSE 🎁👇\nhttps://sermoesbiblicos.online (Usuário: Apocalipse / Senha: 1234)\n\nPRESENTE 3 - AS CARTAS DE PAULO 🎁👇\nhttps://drive.google.com/drive/folders/1uNovAhcit1QUosY7Srk2-jSNvG5S0dS0?usp=drive_link\n\n📲 Grupo Oficial no WhatsApp:\nhttps://chat.whatsapp.com/DDrnWQKV5vTB2UAYyQj3M2"
             },
             "id": "node_flow_funil_5_15"
           },
@@ -3448,7 +3491,7 @@
               "x": 320,
               "y": 3120
             },
-            "label": "💬 Instruções da Chave PIX",
+            "label": "💬 Mensagem #8",
             "config": {
               "text": "🔑 - Chave PIX CNPJ: 64158407000124\n💵 - Valor: R$ 19,90\n👤 - Nome: Vitor Bueno de Carvalho\n🏦 - Banco: CloudWalk I.P",
               "messageText": "🔑 - Chave PIX CNPJ: 64158407000124\n💵 - Valor: R$ 19,90\n👤 - Nome: Vitor Bueno de Carvalho\n🏦 - Banco: CloudWalk I.P"
@@ -3478,7 +3521,7 @@
               "x": 320,
               "y": 3400
             },
-            "label": "🔑 Chave PIX (Só a Chave)",
+            "label": "💬 Mensagem #9",
             "config": {
               "text": "64158407000124",
               "messageText": "64158407000124"
@@ -3506,9 +3549,10 @@
               "x": 320,
               "y": 3680
             },
-            "label": "Instruções Comprovante",
+            "label": "💬 Mensagem #10",
             "config": {
-              "text": "Fico no aguardo do pagamento, só me enviar o comprovante!\n\nAgora conto com a sua honestidade amém. 🙏"
+              "text": "Fico no aguardo do pagamento, só me enviar o comprovante!\n\nAgora conto com a sua honestidade amém. 🙏",
+              "messageText": "Fico no aguardo do pagamento, só me enviar o comprovante!\n\nAgora conto com a sua honestidade amém. 🙏"
             },
             "id": "node_flow_funil_5_18"
           },
@@ -3529,7 +3573,7 @@
           {
             "nodeId": "flow_funil_5_msg_rem1",
             "nodeType": "MESSAGE",
-            "label": "💬 Remarketing 1: Confiei na sua palavra",
+            "label": "💬 Mensagem #11",
             "config": {
               "text": "Paz.. Fiquei aqui esperando o pagamento, confiei na sua palavra...",
               "messageText": "Paz.. Fiquei aqui esperando o pagamento, confiei na sua palavra..."
@@ -3556,7 +3600,7 @@
           {
             "nodeId": "flow_funil_5_msg_rem2",
             "nodeType": "MESSAGE",
-            "label": "💬 Remarketing 2: Chave PIX reforço",
+            "label": "💬 Mensagem #12",
             "config": {
               "text": "Você consegue fazer a sua contribuição agora? Se sim vou agradecer e muito! 🙏\n\nNosso PIX, só você copiar e colar 👇\n(CNPJ)\n64158407000124\n\nFico no aguardo amém ?",
               "messageText": "Você consegue fazer a sua contribuição agora? Se sim vou agradecer e muito! 🙏\n\nNosso PIX, só você copiar e colar 👇\n(CNPJ)\n64158407000124\n\nFico no aguardo amém ?"
@@ -3583,7 +3627,7 @@
           {
             "nodeId": "flow_funil_5_msg_rem3",
             "nodeType": "MESSAGE",
-            "label": "💬 Remarketing 3: Cobrança Amigável",
+            "label": "💬 Mensagem #14",
             "config": {
               "text": "Conforme combinamos, os materiais e os bônus já foram enviados, e você *confirmou* o recebimento.\n\nAgora estou aguardando apenas a contribuição combinada. Assim que realizar, me envie o comprovante por aqui. Deus abençoe.\n\n🔑 CHAVE PIX *CNPJ* : 64158407000124\n\n*VALOR*: R$19,90\n\n*NOME:* Vitor Bueno de Carvalho",
               "messageText": "Conforme combinamos, os materiais e os bônus já foram enviados, e você *confirmou* o recebimento.\n\nAgora estou aguardando apenas a contribuição combinada. Assim que realizar, me envie o comprovante por aqui. Deus abençoe.\n\n🔑 CHAVE PIX *CNPJ* : 64158407000124\n\n*VALOR*: R$19,90\n\n*NOME:* Vitor Bueno de Carvalho"
@@ -3676,9 +3720,10 @@
               "x": 320,
               "y": 4300
             },
-            "label": "Agradecimento Final & Acesso Vitalício",
+            "label": "💬 Mensagem #13",
             "config": {
-              "text": "Glória a Deus, meu irmão! Contribuição recebida e validada! 🙌\n\nTodo o *Acervo com 5.000+ Sermões* e bônus estão 100% liberados com acesso vitalício. Deus prospere abundantemente o seu ministério pastoral!"
+              "text": "Glória a Deus, meu irmão! Contribuição recebida e validada! 🙌\n\nTodo o *Acervo com 5.000+ Sermões* e bônus estão 100% liberados com acesso vitalício. Deus prospere abundantemente o seu ministério pastoral!",
+              "messageText": "Glória a Deus, meu irmão! Contribuição recebida e validada! 🙌\n\nTodo o *Acervo com 5.000+ Sermões* e bônus estão 100% liberados com acesso vitalício. Deus prospere abundantemente o seu ministério pastoral!"
             }
           }
         ],
@@ -4063,9 +4108,10 @@
               "x": 320,
               "y": 180
             },
-            "label": "Saudação Missionária Flávia",
+            "label": "💬 Mensagem #1",
             "config": {
-              "text": "A paz do Senhor, minha irmã! Que Deus abençoe ✨\n\nSó 1 minuto, que vou te mandar um áudio explicando sobre o Devocional."
+              "text": "A paz do Senhor, minha irmã! Que Deus abençoe ✨\n\nSó 1 minuto, que vou te mandar um áudio explicando sobre o Devocional.",
+              "messageText": "A paz do Senhor, minha irmã! Que Deus abençoe ✨\n\nSó 1 minuto, que vou te mandar um áudio explicando sobre o Devocional."
             },
             "id": "node_flow_funil_6_2"
           },
@@ -4091,9 +4137,10 @@
               "x": 320,
               "y": 460
             },
-            "label": "Pergunta do Nome do Filho",
+            "label": "💬 Mensagem #2",
             "config": {
-              "text": "Deixa eu te perguntar mais uma coisa: como se chama o seu filho ou filha que se afastou?"
+              "text": "Deixa eu te perguntar mais uma coisa: como se chama o seu filho ou filha que se afastou?",
+              "messageText": "Deixa eu te perguntar mais uma coisa: como se chama o seu filho ou filha que se afastou?"
             },
             "id": "node_flow_funil_6_4"
           },
@@ -4118,9 +4165,10 @@
               "x": 320,
               "y": 740
             },
-            "label": "Oração & Conexão Emocional",
+            "label": "💬 Mensagem #3",
             "config": {
-              "text": "Sei que o coração aperta, mas Deus não esquece, vamos orar juntos pra que dê tudo certo 🙏\n\nMas sabe o que realmente toca o meu coração, irmã?"
+              "text": "Sei que o coração aperta, mas Deus não esquece, vamos orar juntos pra que dê tudo certo 🙏\n\nMas sabe o que realmente toca o meu coração, irmã?",
+              "messageText": "Sei que o coração aperta, mas Deus não esquece, vamos orar juntos pra que dê tudo certo 🙏\n\nMas sabe o que realmente toca o meu coração, irmã?"
             },
             "id": "node_flow_funil_6_6"
           },
@@ -4146,9 +4194,10 @@
               "x": 320,
               "y": 1020
             },
-            "label": "Pergunta de Fé no Milagre",
+            "label": "💬 Mensagem #4",
             "config": {
-              "text": "Os testemunhos das mulheres que fazem o devocional\n\nE eu sei que Deus pode fazer um milagre na sua família também! Você acredita? 🙏"
+              "text": "Os testemunhos das mulheres que fazem o devocional\n\nE eu sei que Deus pode fazer um milagre na sua família também! Você acredita? 🙏",
+              "messageText": "Os testemunhos das mulheres que fazem o devocional\n\nE eu sei que Deus pode fazer um milagre na sua família também! Você acredita? 🙏"
             },
             "id": "node_flow_funil_6_8"
           },
@@ -4173,9 +4222,10 @@
               "x": 320,
               "y": 1300
             },
-            "label": "Cuidado de Deus & Explicação",
+            "label": "💬 Mensagem #5",
             "config": {
-              "text": "Amém irmã! Deus está cuidando de cada detalhe com muito amor ❤️\n\nIrmã, eu vou te mandar mais 1 áudio explicando como funciona o Devocional ⬇️"
+              "text": "Amém irmã! Deus está cuidando de cada detalhe com muito amor ❤️\n\nIrmã, eu vou te mandar mais 1 áudio explicando como funciona o Devocional ⬇️",
+              "messageText": "Amém irmã! Deus está cuidando de cada detalhe com muito amor ❤️\n\nIrmã, eu vou te mandar mais 1 áudio explicando como funciona o Devocional ⬇️"
             },
             "id": "node_flow_funil_6_10"
           },
@@ -4233,9 +4283,10 @@
               "x": 320,
               "y": 1860
             },
-            "label": "Link Plataforma Online",
+            "label": "💬 Mensagem #6",
             "config": {
-              "text": "Caso a senhora não consiga abrir pelo PDF, vou te mandar o link pra abrir direto 👇\nhttps://devocional7diasonline.lovable.app"
+              "text": "Caso a senhora não consiga abrir pelo PDF, vou te mandar o link pra abrir direto 👇\nhttps://devocional7diasonline.lovable.app",
+              "messageText": "Caso a senhora não consiga abrir pelo PDF, vou te mandar o link pra abrir direto 👇\nhttps://devocional7diasonline.lovable.app"
             },
             "id": "node_flow_funil_6_13"
           },
@@ -4277,7 +4328,7 @@
               "x": 320,
               "y": 2280
             },
-            "label": "💬 Instruções da Chave PIX",
+            "label": "💬 Mensagem #7",
             "config": {
               "text": "📌 Chave Pix (Celular): 12983085720\n📌 Nome que aparece: DIGITAL DSX LTDA\n📌 Banco: DOCK IP S.A.\n📌 Valor: O que Deus tocar no seu coração",
               "messageText": "📌 Chave Pix (Celular): 12983085720\n📌 Nome que aparece: DIGITAL DSX LTDA\n📌 Banco: DOCK IP S.A.\n📌 Valor: O que Deus tocar no seu coração"
@@ -4307,7 +4358,7 @@
               "x": 320,
               "y": 2560
             },
-            "label": "🔑 Chave PIX (Só a Chave)",
+            "label": "💬 Mensagem #8",
             "config": {
               "text": "12983085720",
               "messageText": "12983085720"
@@ -4335,9 +4386,10 @@
               "x": 320,
               "y": 2840
             },
-            "label": "Instruções Comprovante & Grupo de Oração",
+            "label": "💬 Mensagem #9",
             "config": {
-              "text": "Me manda o comprovante, irmã, que eu já coloco a senhora no nosso grupo de oração do WhatsApp 🙏"
+              "text": "Me manda o comprovante, irmã, que eu já coloco a senhora no nosso grupo de oração do WhatsApp 🙏",
+              "messageText": "Me manda o comprovante, irmã, que eu já coloco a senhora no nosso grupo de oração do WhatsApp 🙏"
             },
             "id": "node_flow_funil_6_18"
           },
@@ -4358,7 +4410,7 @@
           {
             "nodeId": "flow_funil_6_msg_rem1",
             "nodeType": "MESSAGE",
-            "label": "💬 Remarketing: ⏰ Lembrete: Conseguiu ver o devocional? (20 min)",
+            "label": "💬 Mensagem #10",
             "config": {
               "text": "A paz do Senhor, irmã! Conseguiu ver o devocional?\n\nFico no aguardo do comprovante para te colocar no nosso altar de oração e liberar o sorteio da Caixa Devocional! 🙏❤️",
               "messageText": "A paz do Senhor, irmã! Conseguiu ver o devocional?\n\nFico no aguardo do comprovante para te colocar no nosso altar de oração e liberar o sorteio da Caixa Devocional! 🙏❤️"
@@ -4423,9 +4475,10 @@
               "x": 320,
               "y": 3460
             },
-            "label": "Agradecimento Final & Acesso Vitalício",
+            "label": "💬 Mensagem #11",
             "config": {
-              "text": "Amém, irmã querida! Comprovante confirmado com muita alegria. Seus devocionais estão liberados e que o Senhor derrame uma bênção sem medidas sobre a vida dos seus filhos! 🙏❤️"
+              "text": "Amém, irmã querida! Comprovante confirmado com muita alegria. Seus devocionais estão liberados e que o Senhor derrame uma bênção sem medidas sobre a vida dos seus filhos! 🙏❤️",
+              "messageText": "Amém, irmã querida! Comprovante confirmado com muita alegria. Seus devocionais estão liberados e que o Senhor derrame uma bênção sem medidas sobre a vida dos seus filhos! 🙏❤️"
             }
           }
         ],
@@ -4702,9 +4755,10 @@
               "x": 320,
               "y": 180
             },
-            "label": "Saudação Inicial",
+            "label": "💬 Mensagem #1",
             "config": {
-              "text": "Olá! Bom dia, tudo bem?"
+              "text": "Olá! Bom dia, tudo bem?",
+              "messageText": "Olá! Bom dia, tudo bem?"
             },
             "id": "node_flow_funil_7_2"
           },
@@ -4730,9 +4784,10 @@
               "x": 320,
               "y": 460
             },
-            "label": "Oferta da Amostra Grátis",
+            "label": "💬 Mensagem #2",
             "config": {
-              "text": "Posso te enviar nosso material gratuito?"
+              "text": "Posso te enviar nosso material gratuito?",
+              "messageText": "Posso te enviar nosso material gratuito?"
             },
             "id": "node_flow_funil_7_4"
           },
@@ -4757,9 +4812,10 @@
               "x": 320,
               "y": 740
             },
-            "label": "Envio da Amostra",
+            "label": "💬 Mensagem #3",
             "config": {
-              "text": "Segue o material gratuito Construtor de Palavras 👇"
+              "text": "Segue o material gratuito Construtor de Palavras 👇",
+              "messageText": "Segue o material gratuito Construtor de Palavras 👇"
             },
             "id": "node_flow_funil_7_6"
           },
@@ -4912,9 +4968,10 @@
               "x": 320,
               "y": 2140
             },
-            "label": "Oferta Válida Apenas Hoje R$ 11,90",
+            "label": "💬 Mensagem #4",
             "config": {
-              "text": "VÁLIDO APENAS HOJE ⭐️\nVocê paga apenas R$ 11,90 pelo KIT COMPLETO! ✅\n\nVocê gostaria de receber?"
+              "text": "VÁLIDO APENAS HOJE ⭐️\nVocê paga apenas R$ 11,90 pelo KIT COMPLETO! ✅\n\nVocê gostaria de receber?",
+              "messageText": "VÁLIDO APENAS HOJE ⭐️\nVocê paga apenas R$ 11,90 pelo KIT COMPLETO! ✅\n\nVocê gostaria de receber?"
             },
             "id": "node_flow_funil_7_10"
           },
@@ -4939,9 +4996,10 @@
               "x": 320,
               "y": 2420
             },
-            "label": "Envio do Kit Completo (7 PDFs)",
+            "label": "💬 Mensagem #5",
             "config": {
-              "text": "Segue o KIT COMPLETO ABAIXO 👇"
+              "text": "Segue o KIT COMPLETO ABAIXO 👇",
+              "messageText": "Segue o KIT COMPLETO ABAIXO 👇"
             },
             "id": "node_flow_funil_7_12"
           },
@@ -4968,7 +5026,7 @@
               "x": 320,
               "y": 2700
             },
-            "label": "💬 Instruções da Chave PIX",
+            "label": "💬 Mensagem #6",
             "config": {
               "text": "🔑 Chave PIX:\n📲 TELEFONE: 37999387172\n👤 Editora Branth\n\nO valor é R$ 11,90 se você quiser copiar e colar a chave 👇",
               "messageText": "🔑 Chave PIX:\n📲 TELEFONE: 37999387172\n👤 Editora Branth\n\nO valor é R$ 11,90 se você quiser copiar e colar a chave 👇"
@@ -4998,7 +5056,7 @@
               "x": 320,
               "y": 2980
             },
-            "label": "🔑 Chave PIX (Só a Chave)",
+            "label": "💬 Mensagem #7",
             "config": {
               "text": "37999387172",
               "messageText": "37999387172"
@@ -5011,9 +5069,10 @@
               "x": 320,
               "y": 3120
             },
-            "label": "Aguardando Comprovante",
+            "label": "💬 Mensagem #8",
             "config": {
-              "text": "Fico aguardando o comprovante 🙏"
+              "text": "Fico aguardando o comprovante 🙏",
+              "messageText": "Fico aguardando o comprovante 🙏"
             },
             "id": "node_flow_funil_7_15"
           },
@@ -5034,7 +5093,7 @@
           {
             "nodeId": "flow_funil_7_msg_rem1",
             "nodeType": "MESSAGE",
-            "label": "💬 Remarketing: ⏰ Lembrete: Conseguiu imprimir o construtor? (20 min)",
+            "label": "💬 Mensagem #9",
             "config": {
               "text": "Oi! Conseguiu imprimir o construtor de palavras para o seu pequeno?\n\nFico no aguardo do comprovante para liberar o material completo de alfabetização e os 5 jogos extras! 🎈",
               "messageText": "Oi! Conseguiu imprimir o construtor de palavras para o seu pequeno?\n\nFico no aguardo do comprovante para liberar o material completo de alfabetização e os 5 jogos extras! 🎈"
@@ -5099,9 +5158,10 @@
               "x": 320,
               "y": 3740
             },
-            "label": "Agradecimento Final & Acesso Vitalício",
+            "label": "💬 Mensagem #10",
             "config": {
-              "text": "Pagamento confirmado com sucesso! 🎉\n\nTodos os kits do *Construtor de Palavras e Alfabetização* estão disponíveis para download imediato. Bom aprendizado com os pequenos!"
+              "text": "Pagamento confirmado com sucesso! 🎉\n\nTodos os kits do *Construtor de Palavras e Alfabetização* estão disponíveis para download imediato. Bom aprendizado com os pequenos!",
+              "messageText": "Pagamento confirmado com sucesso! 🎉\n\nTodos os kits do *Construtor de Palavras e Alfabetização* estão disponíveis para download imediato. Bom aprendizado com os pequenos!"
             }
           }
         ],
@@ -5396,9 +5456,10 @@
               "x": 320,
               "y": 180
             },
-            "label": "Acolhimento & Saúde do Pet",
+            "label": "💬 Mensagem #1",
             "config": {
-              "text": "Oi! Que alegria ter você aqui 🤍\n\nSe você chegou até aqui, é porque se preocupa de verdade com a saúde do seu doguinho 🐶"
+              "text": "Oi! Que alegria ter você aqui 🤍\n\nSe você chegou até aqui, é porque se preocupa de verdade com a saúde do seu doguinho 🐶",
+              "messageText": "Oi! Que alegria ter você aqui 🤍\n\nSe você chegou até aqui, é porque se preocupa de verdade com a saúde do seu doguinho 🐶"
             },
             "id": "node_flow_funil_8_2"
           },
@@ -5424,9 +5485,10 @@
               "x": 320,
               "y": 460
             },
-            "label": "Oferta Guia Pet Comilão + 100 Receitas",
+            "label": "💬 Mensagem #2",
             "config": {
-              "text": "Criei o Guia do Pet Comilão, com o passo a passo pra você introduzir a Alimentação Natural e mais 100 Receitas de Alimentação Natural para cães 🐶🐱\n\nDá uma olhada no que você vai receber 👇\n\n✅ Guia Completo de Alimentação Natural (passo a passo)\n✅ 100 Receitas de Alimentação Natural para Cães\n✅ Lista Semáforo: o que Pode, o que Cuidado e o que Nunca dar\n✅ Material em PDF pronto pra usar direto do celular\n✅ Acesso vitalício\n✅ Suporte direto comigo no WhatsApp\n\nBÔNUS ⭐️⭐️⭐️\n✅ Calculadora de Porção, a quantidade exata pro peso e porte do seu pet\n\n👉 Tudo isso por uma contribuição simbólica de apenas R$15,00 SOMENTE HOJE!\n\n🐶🤍 Posso te enviar o material completo agora?"
+              "text": "Criei o Guia do Pet Comilão, com o passo a passo pra você introduzir a Alimentação Natural e mais 100 Receitas de Alimentação Natural para cães 🐶🐱\n\nDá uma olhada no que você vai receber 👇\n\n✅ Guia Completo de Alimentação Natural (passo a passo)\n✅ 100 Receitas de Alimentação Natural para Cães\n✅ Lista Semáforo: o que Pode, o que Cuidado e o que Nunca dar\n✅ Material em PDF pronto pra usar direto do celular\n✅ Acesso vitalício\n✅ Suporte direto comigo no WhatsApp\n\nBÔNUS ⭐️⭐️⭐️\n✅ Calculadora de Porção, a quantidade exata pro peso e porte do seu pet\n\n👉 Tudo isso por uma contribuição simbólica de apenas R$15,00 SOMENTE HOJE!\n\n🐶🤍 Posso te enviar o material completo agora?",
+              "messageText": "Criei o Guia do Pet Comilão, com o passo a passo pra você introduzir a Alimentação Natural e mais 100 Receitas de Alimentação Natural para cães 🐶🐱\n\nDá uma olhada no que você vai receber 👇\n\n✅ Guia Completo de Alimentação Natural (passo a passo)\n✅ 100 Receitas de Alimentação Natural para Cães\n✅ Lista Semáforo: o que Pode, o que Cuidado e o que Nunca dar\n✅ Material em PDF pronto pra usar direto do celular\n✅ Acesso vitalício\n✅ Suporte direto comigo no WhatsApp\n\nBÔNUS ⭐️⭐️⭐️\n✅ Calculadora de Porção, a quantidade exata pro peso e porte do seu pet\n\n👉 Tudo isso por uma contribuição simbólica de apenas R$15,00 SOMENTE HOJE!\n\n🐶🤍 Posso te enviar o material completo agora?"
             },
             "id": "node_flow_funil_8_4"
           },
@@ -5451,9 +5513,10 @@
               "x": 320,
               "y": 740
             },
-            "label": "Confiança & Envio dos Materiais",
+            "label": "💬 Mensagem #3",
             "config": {
-              "text": "Eu faço questão de enviar antes porque acredito muito na honestidade de quem ama de verdade seus pets 🤍\n\nVou te enviar o material agora 👇"
+              "text": "Eu faço questão de enviar antes porque acredito muito na honestidade de quem ama de verdade seus pets 🤍\n\nVou te enviar o material agora 👇",
+              "messageText": "Eu faço questão de enviar antes porque acredito muito na honestidade de quem ama de verdade seus pets 🤍\n\nVou te enviar o material agora 👇"
             },
             "id": "node_flow_funil_8_6"
           },
@@ -5528,9 +5591,10 @@
               "x": 320,
               "y": 1440
             },
-            "label": "Tabela de Contribuição Pet",
+            "label": "💬 Mensagem #4",
             "config": {
-              "text": "🎁 AGORA QUE VOCÊ JÁ TEM TODO O MATERIAL...\n\nConfio 100% na sua honestidade. ❤️\n\nPor favor, contribua com o valor que seu coração mandar para que ela possa continuar salvando mais pets como o seu:\n\nR$ 15,00 (recomendado)\n🌟 R$19,90 (mais escolhido) 🌟\n💰 R$24,90 - Contribuição abençoada"
+              "text": "🎁 AGORA QUE VOCÊ JÁ TEM TODO O MATERIAL...\n\nConfio 100% na sua honestidade. ❤️\n\nPor favor, contribua com o valor que seu coração mandar para que ela possa continuar salvando mais pets como o seu:\n\nR$ 15,00 (recomendado)\n🌟 R$19,90 (mais escolhido) 🌟\n💰 R$24,90 - Contribuição abençoada",
+              "messageText": "🎁 AGORA QUE VOCÊ JÁ TEM TODO O MATERIAL...\n\nConfio 100% na sua honestidade. ❤️\n\nPor favor, contribua com o valor que seu coração mandar para que ela possa continuar salvando mais pets como o seu:\n\nR$ 15,00 (recomendado)\n🌟 R$19,90 (mais escolhido) 🌟\n💰 R$24,90 - Contribuição abençoada"
             },
             "id": "node_flow_funil_8_8"
           },
@@ -5557,7 +5621,7 @@
               "x": 320,
               "y": 1720
             },
-            "label": "💬 Instruções da Chave PIX",
+            "label": "💬 Mensagem #5",
             "config": {
               "text": "PIX TELEFONE: 11965034611\nNome: Projeto Feliz (KV DIGITAL)\n\nEscolha o valor que toca o seu coração! 💚\n\nAlgumas tutoras mandam até R$50 porque viram a vida dos pets transformar...",
               "messageText": "PIX TELEFONE: 11965034611\nNome: Projeto Feliz (KV DIGITAL)\n\nEscolha o valor que toca o seu coração! 💚\n\nAlgumas tutoras mandam até R$50 porque viram a vida dos pets transformar..."
@@ -5587,7 +5651,7 @@
               "x": 320,
               "y": 2000
             },
-            "label": "🔑 Chave PIX (Só a Chave)",
+            "label": "💬 Mensagem #6",
             "config": {
               "text": "11965034611",
               "messageText": "11965034611"
@@ -5600,9 +5664,10 @@
               "x": 320,
               "y": 2140
             },
-            "label": "Bônus Calculadora de Porção",
+            "label": "💬 Mensagem #7",
             "config": {
-              "text": "Após o pagamento, me envie o comprovante aqui, que eu vou te enviar como BÔNUS:\n\n📲 CALCULADORA DE PORÇÃO pra você saber exatamente quanto dar para o seu pet 🐶"
+              "text": "Após o pagamento, me envie o comprovante aqui, que eu vou te enviar como BÔNUS:\n\n📲 CALCULADORA DE PORÇÃO pra você saber exatamente quanto dar para o seu pet 🐶",
+              "messageText": "Após o pagamento, me envie o comprovante aqui, que eu vou te enviar como BÔNUS:\n\n📲 CALCULADORA DE PORÇÃO pra você saber exatamente quanto dar para o seu pet 🐶"
             },
             "id": "node_flow_funil_8_11"
           },
@@ -5623,7 +5688,7 @@
           {
             "nodeId": "flow_funil_8_msg_rem1",
             "nodeType": "MESSAGE",
-            "label": "💬 Remarketing: ⏰ Lembrete: Conseguiu ver as receitas pet? (20 min)",
+            "label": "💬 Mensagem #8",
             "config": {
               "text": "Oi! Conseguiu dar uma olhada no Guia do Pet Comilão?\n\nAssim que puder me envie o comprovante do Pix para eu te enviar o cardápio e todos os bônus! 🐶💚",
               "messageText": "Oi! Conseguiu dar uma olhada no Guia do Pet Comilão?\n\nAssim que puder me envie o comprovante do Pix para eu te enviar o cardápio e todos os bônus! 🐶💚"
@@ -5688,9 +5753,10 @@
               "x": 320,
               "y": 2760
             },
-            "label": "Agradecimento Final & Acesso Vitalício",
+            "label": "💬 Mensagem #9",
             "config": {
-              "text": "Comprovante aprovado! 🐾🐶\n\nO *Guia Pet Comilão* e todos os materiais estão liberados. Seu pet vai amar essa alimentação muito mais saudável e nutritiva!"
+              "text": "Comprovante aprovado! 🐾🐶\n\nO *Guia Pet Comilão* e todos os materiais estão liberados. Seu pet vai amar essa alimentação muito mais saudável e nutritiva!",
+              "messageText": "Comprovante aprovado! 🐾🐶\n\nO *Guia Pet Comilão* e todos os materiais estão liberados. Seu pet vai amar essa alimentação muito mais saudável e nutritiva!"
             }
           }
         ],
@@ -5922,9 +5988,10 @@
               "x": 320,
               "y": 180
             },
-            "label": "Saudação Inicial",
+            "label": "💬 Mensagem #1",
             "config": {
-              "text": "olá tudo bem"
+              "text": "olá tudo bem",
+              "messageText": "olá tudo bem"
             },
             "id": "node_flow_funil_9_2"
           },
@@ -5965,9 +6032,10 @@
               "x": 320,
               "y": 600
             },
-            "label": "Oferta R$ 25 & Contribuição",
+            "label": "💬 Mensagem #2",
             "config": {
-              "text": "peço apenas *25,00* pelas receitas de produtos de limpeza\nmas aceito o valor que puder 🙏🏻❤️"
+              "text": "peço apenas *25,00* pelas receitas de produtos de limpeza\nmas aceito o valor que puder 🙏🏻❤️",
+              "messageText": "peço apenas *25,00* pelas receitas de produtos de limpeza\nmas aceito o valor que puder 🙏🏻❤️"
             },
             "id": "node_flow_funil_9_5"
           },
@@ -5979,7 +6047,7 @@
               "x": 320,
               "y": 740
             },
-            "label": "💬 Instruções da Chave PIX",
+            "label": "💬 Mensagem #3",
             "config": {
               "text": "chave pix Celular\n*42999944139*\nconfira meu nome\n(Junior Campos dos Santos)",
               "messageText": "chave pix Celular\n*42999944139*\nconfira meu nome\n(Junior Campos dos Santos)"
@@ -6009,7 +6077,7 @@
               "x": 320,
               "y": 1020
             },
-            "label": "🔑 Chave PIX (Só a Chave)",
+            "label": "💬 Mensagem #4",
             "config": {
               "text": "42999944139",
               "messageText": "42999944139"
@@ -6022,9 +6090,10 @@
               "x": 320,
               "y": 1160
             },
-            "label": "Envio Antecipado por Honestidade",
+            "label": "💬 Mensagem #5",
             "config": {
-              "text": "confio na tua honestidade e já vou enviar as receitas para você 🙏"
+              "text": "confio na tua honestidade e já vou enviar as receitas para você 🙏",
+              "messageText": "confio na tua honestidade e já vou enviar as receitas para você 🙏"
             },
             "id": "node_flow_funil_9_7"
           },
@@ -6061,7 +6130,7 @@
           {
             "nodeId": "flow_funil_9_msg_rem1",
             "nodeType": "MESSAGE",
-            "label": "💬 Remarketing: ⏰ Lembrete: Conseguiu ver as receitas de limpeza? (20 min)",
+            "label": "💬 Mensagem #6",
             "config": {
               "text": "Olá! Conseguiu ver as receitas de limpeza?\n\nFico no aguardo do comprovante para liberar o seu acesso completo aos vídeos e suporte! 🧼✨",
               "messageText": "Olá! Conseguiu ver as receitas de limpeza?\n\nFico no aguardo do comprovante para liberar o seu acesso completo aos vídeos e suporte! 🧼✨"
@@ -6126,9 +6195,10 @@
               "x": 320,
               "y": 1920
             },
-            "label": "Agradecimento Final & Acesso Vitalício",
+            "label": "💬 Mensagem #7",
             "config": {
-              "text": "Pagamento confirmado! 🧼✨\n\nEconomia e sustentabilidade garantidas para o seu lar. Todos os manuais estão liberados com acesso vitalício!"
+              "text": "Pagamento confirmado! 🧼✨\n\nEconomia e sustentabilidade garantidas para o seu lar. Todos os manuais estão liberados com acesso vitalício!",
+              "messageText": "Pagamento confirmado! 🧼✨\n\nEconomia e sustentabilidade garantidas para o seu lar. Todos os manuais estão liberados com acesso vitalício!"
             }
           }
         ],
@@ -6321,9 +6391,10 @@
               "x": 320,
               "y": 320
             },
-            "label": "Pergunta de Renda Extra",
+            "label": "💬 Mensagem #1",
             "config": {
-              "text": "Você quer aprender uma coisa que te dá uma renda extra garantida, né?"
+              "text": "Você quer aprender uma coisa que te dá uma renda extra garantida, né?",
+              "messageText": "Você quer aprender uma coisa que te dá uma renda extra garantida, né?"
             },
             "id": "node_flow_funil_10_3"
           },
@@ -6348,9 +6419,10 @@
               "x": 320,
               "y": 600
             },
-            "label": "Salvar Contato & Confirmação",
+            "label": "💬 Mensagem #2",
             "config": {
-              "text": "Perfeito!! Salvou meu contato? Me avisa que já te envio! 🧵✨"
+              "text": "Perfeito!! Salvou meu contato? Me avisa que já te envio! 🧵✨",
+              "messageText": "Perfeito!! Salvou meu contato? Me avisa que já te envio! 🧵✨"
             },
             "id": "node_flow_funil_10_5"
           },
@@ -6376,9 +6448,10 @@
               "x": 320,
               "y": 880
             },
-            "label": "Detalhes do Pacote R$ 14,90",
+            "label": "💬 Mensagem #3",
             "config": {
-              "text": "📲✨ APLICATIVO WEB EXCLUSIVO + CURSO COMPLETO!\n\n💻 Aplicativo Web com materiais organizados e ferramentas digitais\n✂️ +200 moldes de BOLSAS, NECESSAIRES, MOCHILAS E CARTEIRAS\n🎬 Videoaulas passo a passo + medidas e dicas práticas\n🧵 Técnicas de acabamento para valorizar suas peças\n💰 Ferramenta de precificação + cálculo de custos e lucros\n📋 Lista de fornecedores de materiais e aviamentos\n📸 Tutorial de fotografia para deixar suas peças mais atrativas\n🛍️ Tutorial de vendas para aprender a vender no Instagram, Mercado Livre, Shopee, lojas e feirinhas\n🎁 Modelos extras + Grupo no WhatsApp com materiais gratuitos e novidades\n\n🔥 HOJE: APENAS R$ 14,90!🔥"
+              "text": "📲✨ APLICATIVO WEB EXCLUSIVO + CURSO COMPLETO!\n\n💻 Aplicativo Web com materiais organizados e ferramentas digitais\n✂️ +200 moldes de BOLSAS, NECESSAIRES, MOCHILAS E CARTEIRAS\n🎬 Videoaulas passo a passo + medidas e dicas práticas\n🧵 Técnicas de acabamento para valorizar suas peças\n💰 Ferramenta de precificação + cálculo de custos e lucros\n📋 Lista de fornecedores de materiais e aviamentos\n📸 Tutorial de fotografia para deixar suas peças mais atrativas\n🛍️ Tutorial de vendas para aprender a vender no Instagram, Mercado Livre, Shopee, lojas e feirinhas\n🎁 Modelos extras + Grupo no WhatsApp com materiais gratuitos e novidades\n\n🔥 HOJE: APENAS R$ 14,90!🔥",
+              "messageText": "📲✨ APLICATIVO WEB EXCLUSIVO + CURSO COMPLETO!\n\n💻 Aplicativo Web com materiais organizados e ferramentas digitais\n✂️ +200 moldes de BOLSAS, NECESSAIRES, MOCHILAS E CARTEIRAS\n🎬 Videoaulas passo a passo + medidas e dicas práticas\n🧵 Técnicas de acabamento para valorizar suas peças\n💰 Ferramenta de precificação + cálculo de custos e lucros\n📋 Lista de fornecedores de materiais e aviamentos\n📸 Tutorial de fotografia para deixar suas peças mais atrativas\n🛍️ Tutorial de vendas para aprender a vender no Instagram, Mercado Livre, Shopee, lojas e feirinhas\n🎁 Modelos extras + Grupo no WhatsApp com materiais gratuitos e novidades\n\n🔥 HOJE: APENAS R$ 14,90!🔥"
             },
             "id": "node_flow_funil_10_7"
           },
@@ -6419,9 +6492,10 @@
               "x": 320,
               "y": 1300
             },
-            "label": "Posso confiar e te enviar agora?",
+            "label": "💬 Mensagem #4",
             "config": {
-              "text": "Posso confiar em você e te enviar agora? 💖"
+              "text": "Posso confiar em você e te enviar agora? 💖",
+              "messageText": "Posso confiar em você e te enviar agora? 💖"
             },
             "id": "node_flow_funil_10_10"
           },
@@ -6461,9 +6535,10 @@
               "x": 320,
               "y": 1720
             },
-            "label": "Link App Web & Drive",
+            "label": "💬 Mensagem #5",
             "config": {
-              "text": "https://bolsas-lucrativas.vercel.app/\n\n🟢 Material Completo + Bônus:\n👉 https://drive.google.com/drive/folders/1pMwwl2EbCe2i2Zf3QXXuHGRSzlFIdyxR\n✅ Material liberado."
+              "text": "https://bolsas-lucrativas.vercel.app/\n\n🟢 Material Completo + Bônus:\n👉 https://drive.google.com/drive/folders/1pMwwl2EbCe2i2Zf3QXXuHGRSzlFIdyxR\n✅ Material liberado.",
+              "messageText": "https://bolsas-lucrativas.vercel.app/\n\n🟢 Material Completo + Bônus:\n👉 https://drive.google.com/drive/folders/1pMwwl2EbCe2i2Zf3QXXuHGRSzlFIdyxR\n✅ Material liberado."
             },
             "id": "node_flow_funil_10_13"
           },
@@ -6504,9 +6579,10 @@
               "x": 320,
               "y": 2140
             },
-            "label": "Valores de Apoio",
+            "label": "💬 Mensagem #6",
             "config": {
-              "text": "Agora conto com você! 🙏\nConfiei em você e te enviei tudo primeiro, agora, contamos com sua palavra de pessoa honesta!\nEsses valores vão para trazer comida e roupas para meu filho dentro de casa. 🩷\n\nEscolha sua forma de contribuição:\n🟡 R$ 14,90 –> Recebe 200 MOLDES VITALÍCIO\n🟢 R$ 19,00 –> Recebe 200 MOLDES +10 MOLDES extras. VITALÍCIO\n💖 R$ 25,00 –> Recebe 200 MOLDES +14 MOLDES extras.VITALÍCIO\n🩷 R$ 37,00 –> Recebe 200 MOLDES +16 MOLDES extras VITALÍCIO\n💜 R$ 49,00 –> Recebe 200 MOLDES +30 MOLDES extras VITALÍCIO\n\n👉 Esse apoio mantém o projeto ativo e abençoando mais costureiras ✝️"
+              "text": "Agora conto com você! 🙏\nConfiei em você e te enviei tudo primeiro, agora, contamos com sua palavra de pessoa honesta!\nEsses valores vão para trazer comida e roupas para meu filho dentro de casa. 🩷\n\nEscolha sua forma de contribuição:\n🟡 R$ 14,90 –> Recebe 200 MOLDES VITALÍCIO\n🟢 R$ 19,00 –> Recebe 200 MOLDES +10 MOLDES extras. VITALÍCIO\n💖 R$ 25,00 –> Recebe 200 MOLDES +14 MOLDES extras.VITALÍCIO\n🩷 R$ 37,00 –> Recebe 200 MOLDES +16 MOLDES extras VITALÍCIO\n💜 R$ 49,00 –> Recebe 200 MOLDES +30 MOLDES extras VITALÍCIO\n\n👉 Esse apoio mantém o projeto ativo e abençoando mais costureiras ✝️",
+              "messageText": "Agora conto com você! 🙏\nConfiei em você e te enviei tudo primeiro, agora, contamos com sua palavra de pessoa honesta!\nEsses valores vão para trazer comida e roupas para meu filho dentro de casa. 🩷\n\nEscolha sua forma de contribuição:\n🟡 R$ 14,90 –> Recebe 200 MOLDES VITALÍCIO\n🟢 R$ 19,00 –> Recebe 200 MOLDES +10 MOLDES extras. VITALÍCIO\n💖 R$ 25,00 –> Recebe 200 MOLDES +14 MOLDES extras.VITALÍCIO\n🩷 R$ 37,00 –> Recebe 200 MOLDES +16 MOLDES extras VITALÍCIO\n💜 R$ 49,00 –> Recebe 200 MOLDES +30 MOLDES extras VITALÍCIO\n\n👉 Esse apoio mantém o projeto ativo e abençoando mais costureiras ✝️"
             },
             "id": "node_flow_funil_10_16"
           },
@@ -6518,7 +6594,7 @@
               "x": 320,
               "y": 2280
             },
-            "label": "💬 Instruções da Chave PIX",
+            "label": "💬 Mensagem #7",
             "config": {
               "text": "✅ Acesso vitalício\n🔑 Chave Pix TELEFONE\n*PIX (celular):* 71992287791\n*BANCO:* NUBANK\n*NOME:* THAISE OLIVEIRA LIMA\n\n*👇 Só copiar e colar o TELEFONE👇*",
               "messageText": "✅ Acesso vitalício\n🔑 Chave Pix TELEFONE\n*PIX (celular):* 71992287791\n*BANCO:* NUBANK\n*NOME:* THAISE OLIVEIRA LIMA\n\n*👇 Só copiar e colar o TELEFONE👇*"
@@ -6548,7 +6624,7 @@
               "x": 320,
               "y": 2560
             },
-            "label": "🔑 Chave PIX (Só a Chave)",
+            "label": "💬 Mensagem #8",
             "config": {
               "text": "71992287791",
               "messageText": "71992287791"
@@ -6587,7 +6663,7 @@
           {
             "nodeId": "flow_funil_10_msg_rem1",
             "nodeType": "MESSAGE",
-            "label": "💬 Remarketing: ⏰ Lembrete: Conseguiu abrir os moldes de bolsas? (20 min)",
+            "label": "💬 Mensagem #9",
             "config": {
               "text": "Oi! Conseguiu abrir os moldes de bolsas?\n\nAssim que fizer a contribuição me envie o comprovante para eu liberar o aplicativo completo e o certificado! 🧵👜",
               "messageText": "Oi! Conseguiu abrir os moldes de bolsas?\n\nAssim que fizer a contribuição me envie o comprovante para eu liberar o aplicativo completo e o certificado! 🧵👜"
@@ -6652,9 +6728,10 @@
               "x": 320,
               "y": 3320
             },
-            "label": "Agradecimento Final & Acesso Vitalício",
+            "label": "💬 Mensagem #10",
             "config": {
-              "text": "Aprovado com sucesso! 👜✂️\n\nParabéns pelo investimento! Todos os moldes e aulas estão liberados. Muito sucesso nas suas criações e vendas!"
+              "text": "Aprovado com sucesso! 👜✂️\n\nParabéns pelo investimento! Todos os moldes e aulas estão liberados. Muito sucesso nas suas criações e vendas!",
+              "messageText": "Aprovado com sucesso! 👜✂️\n\nParabéns pelo investimento! Todos os moldes e aulas estão liberados. Muito sucesso nas suas criações e vendas!"
             }
           }
         ],
@@ -6984,9 +7061,10 @@
               "x": 320,
               "y": 740
             },
-            "label": "Envio Sem Pagar Nada Antes",
+            "label": "💬 Mensagem #1",
             "config": {
-              "text": "Viu como fica bonita no papel? 😊\nEu te mando as apostilas aqui, sem pagar nada antes.\n\nPosso mandar?"
+              "text": "Viu como fica bonita no papel? 😊\nEu te mando as apostilas aqui, sem pagar nada antes.\n\nPosso mandar?",
+              "messageText": "Viu como fica bonita no papel? 😊\nEu te mando as apostilas aqui, sem pagar nada antes.\n\nPosso mandar?"
             },
             "id": "node_flow_funil_11_5"
           },
@@ -7011,9 +7089,10 @@
               "x": 320,
               "y": 1020
             },
-            "label": "Envio das Apostilas",
+            "label": "💬 Mensagem #2",
             "config": {
-              "text": "Vou te enviar! Segue aqui os materiais 👇"
+              "text": "Vou te enviar! Segue aqui os materiais 👇",
+              "messageText": "Vou te enviar! Segue aqui os materiais 👇"
             },
             "id": "node_flow_funil_11_7"
           },
@@ -7039,9 +7118,10 @@
               "x": 320,
               "y": 1300
             },
-            "label": "Orientações de Impressão",
+            "label": "💬 Mensagem #3",
             "config": {
-              "text": "Você já pode imprimir as atividades e começar hoje mesmo, no seu tempo e no conforto da sua casa 💛\nEspero que goste do material 🥰"
+              "text": "Você já pode imprimir as atividades e começar hoje mesmo, no seu tempo e no conforto da sua casa 💛\nEspero que goste do material 🥰",
+              "messageText": "Você já pode imprimir as atividades e começar hoje mesmo, no seu tempo e no conforto da sua casa 💛\nEspero que goste do material 🥰"
             },
             "id": "node_flow_funil_11_9"
           },
@@ -7067,9 +7147,10 @@
               "x": 320,
               "y": 1580
             },
-            "label": "Tabela de Apoio Voluntário",
+            "label": "💬 Mensagem #4",
             "config": {
-              "text": "Nós mantemos o projeto Mente Viva pela contribuição de quem recebe e gosta 😊\n\n💰O apoio mínimo é de R$20.\n✨ R$ 30, o apoio mais escolhido, e vai junto o app Mente Viva ✨\n💎 R$ 50+ — uma forma especial de me ajudar a chegar a mais pessoas 💎\n\nCada apoio ajuda este projeto a continuar levando atividades que estimulam a mente e fazem a diferença na rotina de muitas pessoas. 💙"
+              "text": "Nós mantemos o projeto Mente Viva pela contribuição de quem recebe e gosta 😊\n\n💰O apoio mínimo é de R$20.\n✨ R$ 30, o apoio mais escolhido, e vai junto o app Mente Viva ✨\n💎 R$ 50+ — uma forma especial de me ajudar a chegar a mais pessoas 💎\n\nCada apoio ajuda este projeto a continuar levando atividades que estimulam a mente e fazem a diferença na rotina de muitas pessoas. 💙",
+              "messageText": "Nós mantemos o projeto Mente Viva pela contribuição de quem recebe e gosta 😊\n\n💰O apoio mínimo é de R$20.\n✨ R$ 30, o apoio mais escolhido, e vai junto o app Mente Viva ✨\n💎 R$ 50+ — uma forma especial de me ajudar a chegar a mais pessoas 💎\n\nCada apoio ajuda este projeto a continuar levando atividades que estimulam a mente e fazem a diferença na rotina de muitas pessoas. 💙"
             },
             "id": "node_flow_funil_11_11"
           },
@@ -7081,7 +7162,7 @@
               "x": 320,
               "y": 1720
             },
-            "label": "💬 Instruções da Chave PIX",
+            "label": "💬 Mensagem #5",
             "config": {
               "text": "💌 PIX: 31975362565\nNome: Projeto Viva Luz\nVou deixar a chave aqui para facilitar👇",
               "messageText": "💌 PIX: 31975362565\nNome: Projeto Viva Luz\nVou deixar a chave aqui para facilitar👇"
@@ -7111,7 +7192,7 @@
               "x": 320,
               "y": 2000
             },
-            "label": "🔑 Chave PIX (Só a Chave)",
+            "label": "💬 Mensagem #6",
             "config": {
               "text": "31975362565",
               "messageText": "31975362565"
@@ -7139,9 +7220,10 @@
               "x": 320,
               "y": 2280
             },
-            "label": "Bônus Extras e Liberação do App",
+            "label": "💬 Mensagem #7",
             "config": {
-              "text": "Quando você fizer a contribuição, é só me enviar o comprovante 😊\nAssim que confirmar, eu te envio os bônus:\n\n📙 80 Atividades Mentais Extras\n💪 Corpo Ativo em Casa\n🧘 Guia de Alongamentos\n📱 E com R$ 30 ou mais, o app Mente Viva, liberado no seu número na hora que eu conferir\n\nEstou por aqui! 🙏"
+              "text": "Quando você fizer a contribuição, é só me enviar o comprovante 😊\nAssim que confirmar, eu te envio os bônus:\n\n📙 80 Atividades Mentais Extras\n💪 Corpo Ativo em Casa\n🧘 Guia de Alongamentos\n📱 E com R$ 30 ou mais, o app Mente Viva, liberado no seu número na hora que eu conferir\n\nEstou por aqui! 🙏",
+              "messageText": "Quando você fizer a contribuição, é só me enviar o comprovante 😊\nAssim que confirmar, eu te envio os bônus:\n\n📙 80 Atividades Mentais Extras\n💪 Corpo Ativo em Casa\n🧘 Guia de Alongamentos\n📱 E com R$ 30 ou mais, o app Mente Viva, liberado no seu número na hora que eu conferir\n\nEstou por aqui! 🙏"
             },
             "id": "node_flow_funil_11_14"
           },
@@ -7162,7 +7244,7 @@
           {
             "nodeId": "flow_funil_11_msg_rem1",
             "nodeType": "MESSAGE",
-            "label": "💬 Remarketing: ⏰ Lembrete: Deu tudo certo com o Mente Viva? (20 min)",
+            "label": "💬 Mensagem #8",
             "config": {
               "text": "Olá! Deu tudo certo com o material Mente Viva?\n\nFico no aguardo do comprovante para liberar o aplicativo de exercícios diários para a memória! 🧠💛",
               "messageText": "Olá! Deu tudo certo com o material Mente Viva?\n\nFico no aguardo do comprovante para liberar o aplicativo de exercícios diários para a memória! 🧠💛"
@@ -7227,9 +7309,10 @@
               "x": 320,
               "y": 2900
             },
-            "label": "Agradecimento Final & Acesso Vitalício",
+            "label": "💬 Mensagem #9",
             "config": {
-              "text": "Comprovante recebido e validado! 🧠✨\n\nO acesso completo aos cadernos de estimulação está liberado. Desejo excelentes momentos de desenvolvimento e memória!"
+              "text": "Comprovante recebido e validado! 🧠✨\n\nO acesso completo aos cadernos de estimulação está liberado. Desejo excelentes momentos de desenvolvimento e memória!",
+              "messageText": "Comprovante recebido e validado! 🧠✨\n\nO acesso completo aos cadernos de estimulação está liberado. Desejo excelentes momentos de desenvolvimento e memória!"
             }
           }
         ],
@@ -7470,9 +7553,10 @@
               "x": 320,
               "y": 180
             },
-            "label": "Saudação & Alimentação Bíblica",
+            "label": "💬 Mensagem #1",
             "config": {
-              "text": "Oii, tudo bem? Que a paz de Deus esteja com você! Já vou te mandar o seu material agora mesmo 🙏🏼✨\n\nSe você é Adventista do Sétimo Dia, sabe o desafio que é manter uma alimentação 100% de acordo com o que a Bíblia ensina. Por isso eu organizei o Cardápio Adventista: com receitas saborosas, naturais, sem açúcar refinado, sem carnes impuras e saudável de verdade e além disso que agrada toda a família... 🥗\n\nVou te explicar em alguns segundos como você vai ter acesso a tudo isso!"
+              "text": "Oii, tudo bem? Que a paz de Deus esteja com você! Já vou te mandar o seu material agora mesmo 🙏🏼✨\n\nSe você é Adventista do Sétimo Dia, sabe o desafio que é manter uma alimentação 100% de acordo com o que a Bíblia ensina. Por isso eu organizei o Cardápio Adventista: com receitas saborosas, naturais, sem açúcar refinado, sem carnes impuras e saudável de verdade e além disso que agrada toda a família... 🥗\n\nVou te explicar em alguns segundos como você vai ter acesso a tudo isso!",
+              "messageText": "Oii, tudo bem? Que a paz de Deus esteja com você! Já vou te mandar o seu material agora mesmo 🙏🏼✨\n\nSe você é Adventista do Sétimo Dia, sabe o desafio que é manter uma alimentação 100% de acordo com o que a Bíblia ensina. Por isso eu organizei o Cardápio Adventista: com receitas saborosas, naturais, sem açúcar refinado, sem carnes impuras e saudável de verdade e além disso que agrada toda a família... 🥗\n\nVou te explicar em alguns segundos como você vai ter acesso a tudo isso!"
             },
             "id": "node_flow_funil_12_2"
           },
@@ -7498,9 +7582,10 @@
               "x": 320,
               "y": 460
             },
-            "label": "Posso te explicar?",
+            "label": "💬 Mensagem #2",
             "config": {
-              "text": "Posso te explicar?"
+              "text": "Posso te explicar?",
+              "messageText": "Posso te explicar?"
             },
             "id": "node_flow_funil_12_4"
           },
@@ -7555,9 +7640,10 @@
               "x": 320,
               "y": 1020
             },
-            "label": "Preço R$ 19,90 & Envio Antes",
+            "label": "💬 Mensagem #3",
             "config": {
-              "text": "O material é 100% digital, em formato PDF de alta resolução, enviado direto aqui no seu WhatsApp para você usar no celular ou imprimir quando quiser. 📱📄\n\nA contribuição é de apenas R$ 19,90 — um valor simbólico que me ajuda a cobrir os custos de pesquisa, edição e produção dessas receitas, permitindo que a gente continue mantendo esse projeto ativo e ajudando cada vez mais nossos irmãos e irmãs a cuidarem do corpo e da alimentação seguindo a Palavra.\n\nLembrando, que eu te envio todo o material antes para você analisar e só depois se gostar, nos ajudar com a contribuição, ok?\n\nPosso te enviar o material primeiro e depois você faz a sua contribuição?"
+              "text": "O material é 100% digital, em formato PDF de alta resolução, enviado direto aqui no seu WhatsApp para você usar no celular ou imprimir quando quiser. 📱📄\n\nA contribuição é de apenas R$ 19,90 — um valor simbólico que me ajuda a cobrir os custos de pesquisa, edição e produção dessas receitas, permitindo que a gente continue mantendo esse projeto ativo e ajudando cada vez mais nossos irmãos e irmãs a cuidarem do corpo e da alimentação seguindo a Palavra.\n\nLembrando, que eu te envio todo o material antes para você analisar e só depois se gostar, nos ajudar com a contribuição, ok?\n\nPosso te enviar o material primeiro e depois você faz a sua contribuição?",
+              "messageText": "O material é 100% digital, em formato PDF de alta resolução, enviado direto aqui no seu WhatsApp para você usar no celular ou imprimir quando quiser. 📱📄\n\nA contribuição é de apenas R$ 19,90 — um valor simbólico que me ajuda a cobrir os custos de pesquisa, edição e produção dessas receitas, permitindo que a gente continue mantendo esse projeto ativo e ajudando cada vez mais nossos irmãos e irmãs a cuidarem do corpo e da alimentação seguindo a Palavra.\n\nLembrando, que eu te envio todo o material antes para você analisar e só depois se gostar, nos ajudar com a contribuição, ok?\n\nPosso te enviar o material primeiro e depois você faz a sua contribuição?"
             },
             "id": "node_flow_funil_12_8"
           },
@@ -7645,9 +7731,10 @@
               "x": 320,
               "y": 1860
             },
-            "label": "Tabela de Contribuição",
+            "label": "💬 Mensagem #4",
             "config": {
-              "text": "Agora confio no seu coração e no agir de Deus ✝️🤍\n\nO Cardápio Adventista já foi enviado todinho para você! Agora é a sua vez de enviar o PIX para ajudar a esse material chegar mais a frente, combinado?\n\n🙏 VOCÊ PODE CONTRIBUIR COM:\n💰 R$ 19,90\n💰 R$ 24,90\n💰 R$ 29,90\n⭐ R$ 49,90\n\nOu o valor que o seu coração mandar. A maioria dos irmãos e irmãs estão contribuindo com R$ 29,90 ou mais... Contribua com o que DEUS tocou no seu coração! 💖\n\n. Nome: RP Empreendimentos Digitais LTDA.\n. Banco: STONE IP PAGAMENTOS\n\nPara facilitar, vou te enviar a chave Pix separada para você só copiar e colar 👇👇"
+              "text": "Agora confio no seu coração e no agir de Deus ✝️🤍\n\nO Cardápio Adventista já foi enviado todinho para você! Agora é a sua vez de enviar o PIX para ajudar a esse material chegar mais a frente, combinado?\n\n🙏 VOCÊ PODE CONTRIBUIR COM:\n💰 R$ 19,90\n💰 R$ 24,90\n💰 R$ 29,90\n⭐ R$ 49,90\n\nOu o valor que o seu coração mandar. A maioria dos irmãos e irmãs estão contribuindo com R$ 29,90 ou mais... Contribua com o que DEUS tocou no seu coração! 💖\n\n. Nome: RP Empreendimentos Digitais LTDA.\n. Banco: STONE IP PAGAMENTOS\n\nPara facilitar, vou te enviar a chave Pix separada para você só copiar e colar 👇👇",
+              "messageText": "Agora confio no seu coração e no agir de Deus ✝️🤍\n\nO Cardápio Adventista já foi enviado todinho para você! Agora é a sua vez de enviar o PIX para ajudar a esse material chegar mais a frente, combinado?\n\n🙏 VOCÊ PODE CONTRIBUIR COM:\n💰 R$ 19,90\n💰 R$ 24,90\n💰 R$ 29,90\n⭐ R$ 49,90\n\nOu o valor que o seu coração mandar. A maioria dos irmãos e irmãs estão contribuindo com R$ 29,90 ou mais... Contribua com o que DEUS tocou no seu coração! 💖\n\n. Nome: RP Empreendimentos Digitais LTDA.\n. Banco: STONE IP PAGAMENTOS\n\nPara facilitar, vou te enviar a chave Pix separada para você só copiar e colar 👇👇"
             },
             "id": "node_flow_funil_12_12"
           },
@@ -7659,7 +7746,7 @@
               "x": 320,
               "y": 2000
             },
-            "label": "💬 Instruções da Chave PIX",
+            "label": "💬 Mensagem #5",
             "config": {
               "text": "Chave PIX Celular: 71993667052\nNome: RP Empreendimentos Digitais LTDA.",
               "messageText": "Chave PIX Celular: 71993667052\nNome: RP Empreendimentos Digitais LTDA."
@@ -7689,7 +7776,7 @@
               "x": 320,
               "y": 2280
             },
-            "label": "🔑 Chave PIX (Só a Chave)",
+            "label": "💬 Mensagem #6",
             "config": {
               "text": "71993667052",
               "messageText": "71993667052"
@@ -7702,9 +7789,10 @@
               "x": 320,
               "y": 2420
             },
-            "label": "Bônus Ellen White & Lista Econômica",
+            "label": "💬 Mensagem #7",
             "config": {
-              "text": "Assim que você me mandar o comprovante da sua contribuição aqui, eu mesma vou te enviar na hora o restante do seu Pacote de Bônus Exclusivos! 🎁✨\n\nNele eu fiz questão de colocar:\n✅ Bônus 01 — Lista Inteligente & Econômica de Compras\n✅ Bônus 02 — Guia Alimentar dos Princípios de Ellen White\n\nJá te mandei a nossa chave pix. É só fazer a sua contribuição e me mandar o comprovante, desde já, agradeço."
+              "text": "Assim que você me mandar o comprovante da sua contribuição aqui, eu mesma vou te enviar na hora o restante do seu Pacote de Bônus Exclusivos! 🎁✨\n\nNele eu fiz questão de colocar:\n✅ Bônus 01 — Lista Inteligente & Econômica de Compras\n✅ Bônus 02 — Guia Alimentar dos Princípios de Ellen White\n\nJá te mandei a nossa chave pix. É só fazer a sua contribuição e me mandar o comprovante, desde já, agradeço.",
+              "messageText": "Assim que você me mandar o comprovante da sua contribuição aqui, eu mesma vou te enviar na hora o restante do seu Pacote de Bônus Exclusivos! 🎁✨\n\nNele eu fiz questão de colocar:\n✅ Bônus 01 — Lista Inteligente & Econômica de Compras\n✅ Bônus 02 — Guia Alimentar dos Princípios de Ellen White\n\nJá te mandei a nossa chave pix. É só fazer a sua contribuição e me mandar o comprovante, desde já, agradeço."
             },
             "id": "node_flow_funil_12_14"
           },
@@ -7725,7 +7813,7 @@
           {
             "nodeId": "flow_funil_12_msg_rem1",
             "nodeType": "MESSAGE",
-            "label": "💬 Remarketing: ⏰ Lembrete: Conseguiu conferir o Cardápio? (20 min)",
+            "label": "💬 Mensagem #8",
             "config": {
               "text": "Paz! Conseguiu conferir o Cardápio Adventista?\n\nAssim que contribuir no Pix me envie o comprovante para eu liberar seus 2 bônus de saúde! 🥗🙏",
               "messageText": "Paz! Conseguiu conferir o Cardápio Adventista?\n\nAssim que contribuir no Pix me envie o comprovante para eu liberar seus 2 bônus de saúde! 🥗🙏"
@@ -7790,9 +7878,10 @@
               "x": 320,
               "y": 3040
             },
-            "label": "Agradecimento Final & Acesso Vitalício",
+            "label": "💬 Mensagem #9",
             "config": {
-              "text": "Amém! Contribuição confirmada! 🥗🥑\n\nO *Cardápio Adventista de 90 Dias* e seus bônus de receitas saudáveis já estão liberados para você. Muita saúde e bênçãos!"
+              "text": "Amém! Contribuição confirmada! 🥗🥑\n\nO *Cardápio Adventista de 90 Dias* e seus bônus de receitas saudáveis já estão liberados para você. Muita saúde e bênçãos!",
+              "messageText": "Amém! Contribuição confirmada! 🥗🥑\n\nO *Cardápio Adventista de 90 Dias* e seus bônus de receitas saudáveis já estão liberados para você. Muita saúde e bênçãos!"
             }
           }
         ],
@@ -8042,9 +8131,10 @@
               "x": 320,
               "y": 180
             },
-            "label": "Saudação Missionária Maria",
+            "label": "💬 Mensagem #1",
             "config": {
-              "text": "A paz do Senhor, minha irmã! Que Deus abençoe ✨\n\nSó 1 minuto, que vou te mandar um áudio explicando sobre o Devocional."
+              "text": "A paz do Senhor, minha irmã! Que Deus abençoe ✨\n\nSó 1 minuto, que vou te mandar um áudio explicando sobre o Devocional.",
+              "messageText": "A paz do Senhor, minha irmã! Que Deus abençoe ✨\n\nSó 1 minuto, que vou te mandar um áudio explicando sobre o Devocional."
             },
             "id": "node_flow_funil_13_2"
           },
@@ -8070,9 +8160,10 @@
               "x": 320,
               "y": 460
             },
-            "label": "Pergunta do Nome do Filho",
+            "label": "💬 Mensagem #2",
             "config": {
-              "text": "Deixa eu te perguntar mais uma coisa: como se chama o seu filho ou filha que se afastou?"
+              "text": "Deixa eu te perguntar mais uma coisa: como se chama o seu filho ou filha que se afastou?",
+              "messageText": "Deixa eu te perguntar mais uma coisa: como se chama o seu filho ou filha que se afastou?"
             },
             "id": "node_flow_funil_13_4"
           },
@@ -8097,9 +8188,10 @@
               "x": 320,
               "y": 740
             },
-            "label": "Oração & Conexão",
+            "label": "💬 Mensagem #3",
             "config": {
-              "text": "Sei que o coração aperta, mas Deus não esquece, vamos orar juntos pra que dê tudo certo 🙏\n\nMas sabe o que realmente toca o meu coração, irmã?"
+              "text": "Sei que o coração aperta, mas Deus não esquece, vamos orar juntos pra que dê tudo certo 🙏\n\nMas sabe o que realmente toca o meu coração, irmã?",
+              "messageText": "Sei que o coração aperta, mas Deus não esquece, vamos orar juntos pra que dê tudo certo 🙏\n\nMas sabe o que realmente toca o meu coração, irmã?"
             },
             "id": "node_flow_funil_13_6"
           },
@@ -8125,9 +8217,10 @@
               "x": 320,
               "y": 1020
             },
-            "label": "Você acredita no milagre?",
+            "label": "💬 Mensagem #4",
             "config": {
-              "text": "E eu sei que Deus pode fazer um milagre na sua família também! *Você acredita?* 🙏🏼"
+              "text": "E eu sei que Deus pode fazer um milagre na sua família também! *Você acredita?* 🙏🏼",
+              "messageText": "E eu sei que Deus pode fazer um milagre na sua família também! *Você acredita?* 🙏🏼"
             },
             "id": "node_flow_funil_13_8"
           },
@@ -8153,9 +8246,10 @@
               "x": 320,
               "y": 1300
             },
-            "label": "Posso mandar o Devocional agora?",
+            "label": "💬 Mensagem #5",
             "config": {
-              "text": "Posso mandar o Devocional agora e contar com sua contribuição, com o que Deus tocar no seu coração? 🙏🏻"
+              "text": "Posso mandar o Devocional agora e contar com sua contribuição, com o que Deus tocar no seu coração? 🙏🏻",
+              "messageText": "Posso mandar o Devocional agora e contar com sua contribuição, com o que Deus tocar no seu coração? 🙏🏻"
             },
             "id": "node_flow_funil_13_10"
           },
@@ -8180,9 +8274,10 @@
               "x": 320,
               "y": 1580
             },
-            "label": "Glória a Deus & Envio dos PDFs",
+            "label": "💬 Mensagem #6",
             "config": {
-              "text": "Glória a Deus! Em breve quero ouvir seu testemunho, irmã! Vou te enviar agora ⬇️"
+              "text": "Glória a Deus! Em breve quero ouvir seu testemunho, irmã! Vou te enviar agora ⬇️",
+              "messageText": "Glória a Deus! Em breve quero ouvir seu testemunho, irmã! Vou te enviar agora ⬇️"
             },
             "id": "node_flow_funil_13_12"
           },
@@ -8225,9 +8320,10 @@
               "x": 320,
               "y": 2000
             },
-            "label": "Link Acesso Direto Online",
+            "label": "💬 Mensagem #7",
             "config": {
-              "text": "Caso a senhora não consiga abrir pelo PDF, vou te mandar o link pra abrir direto 👇🏻\nhttps://cutt.ly/devocional-libertacao"
+              "text": "Caso a senhora não consiga abrir pelo PDF, vou te mandar o link pra abrir direto 👇🏻\nhttps://cutt.ly/devocional-libertacao",
+              "messageText": "Caso a senhora não consiga abrir pelo PDF, vou te mandar o link pra abrir direto 👇🏻\nhttps://cutt.ly/devocional-libertacao"
             },
             "id": "node_flow_funil_13_14"
           },
@@ -8269,7 +8365,7 @@
               "x": 320,
               "y": 2420
             },
-            "label": "💬 Instruções da Chave PIX",
+            "label": "💬 Mensagem #8",
             "config": {
               "text": "Agora eu conto com sua honestidade para manter esse projeto vivo 🙏🏻\n\nInformações para contribuição:\n📌 Chave Pix (telefone): 33999826417\n📌 Nome que aparece: *DAYZA LTDA*\n📌 Valor: *O que Deus tocar no seu coração*\n\nAqui é a chave PIX no número de celular separada para você só copiar e colar Irmã👇👇👇",
               "messageText": "Agora eu conto com sua honestidade para manter esse projeto vivo 🙏🏻\n\nInformações para contribuição:\n📌 Chave Pix (telefone): 33999826417\n📌 Nome que aparece: *DAYZA LTDA*\n📌 Valor: *O que Deus tocar no seu coração*\n\nAqui é a chave PIX no número de celular separada para você só copiar e colar Irmã👇👇👇"
@@ -8299,7 +8395,7 @@
               "x": 320,
               "y": 2700
             },
-            "label": "🔑 Chave PIX (Só a Chave)",
+            "label": "💬 Mensagem #9",
             "config": {
               "text": "33999826417",
               "messageText": "33999826417"
@@ -8327,9 +8423,10 @@
               "x": 320,
               "y": 2980
             },
-            "label": "Grupo de Oração no WhatsApp",
+            "label": "💬 Mensagem #10",
             "config": {
-              "text": "Me manda o comprovante, irmã, que eu já coloco a senhora no nosso grupo de oração do WhatsApp 🙏🏼"
+              "text": "Me manda o comprovante, irmã, que eu já coloco a senhora no nosso grupo de oração do WhatsApp 🙏🏼",
+              "messageText": "Me manda o comprovante, irmã, que eu já coloco a senhora no nosso grupo de oração do WhatsApp 🙏🏼"
             },
             "id": "node_flow_funil_13_19"
           },
@@ -8350,7 +8447,7 @@
           {
             "nodeId": "flow_funil_13_msg_rem1",
             "nodeType": "MESSAGE",
-            "label": "💬 Remarketing: ⏰ Lembrete: Conseguiu ver a oração pelos filhos? (20 min)",
+            "label": "💬 Mensagem #11",
             "config": {
               "text": "A paz do Senhor! Conseguiu ver a oração pelos filhos?\n\nFico no aguardo do comprovante para colocar o nome do seu filho em nosso altar de oração diário! 🙏❤️",
               "messageText": "A paz do Senhor! Conseguiu ver a oração pelos filhos?\n\nFico no aguardo do comprovante para colocar o nome do seu filho em nosso altar de oração diário! 🙏❤️"
@@ -8415,9 +8512,10 @@
               "x": 320,
               "y": 3600
             },
-            "label": "Agradecimento Final & Acesso Vitalício",
+            "label": "💬 Mensagem #12",
             "config": {
-              "text": "Deus abençoe, amada irmã! Pagamento confirmado. Todo o material do Devocional pelos Filhos está liberado para edificação do seu lar! 🙏🏼"
+              "text": "Deus abençoe, amada irmã! Pagamento confirmado. Todo o material do Devocional pelos Filhos está liberado para edificação do seu lar! 🙏🏼",
+              "messageText": "Deus abençoe, amada irmã! Pagamento confirmado. Todo o material do Devocional pelos Filhos está liberado para edificação do seu lar! 🙏🏼"
             }
           }
         ],

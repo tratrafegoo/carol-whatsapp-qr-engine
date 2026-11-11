@@ -485,7 +485,7 @@ Retorne EXCLUSIVAMENTE um objeto JSON válido no formato:
     return { isRefusal: false, transcript: '', refusalReason: null };
 }
 
-async function auditPixReceiptWithGemini(mediaBuffer, mimeType, expectedAmount = 19.90, beneficiary = 'Carol') {
+async function auditPixReceiptWithGemini(mediaBuffer, mimeType, expectedAmount = 19.90, beneficiary = '') {
     if (!GEMINI_API_KEY) {
         console.warn('[PIX Auditor] Nenhuma chave GEMINI_API_KEY configurada.');
         sendNtfyEmergencyAlert({
@@ -501,30 +501,42 @@ async function auditPixReceiptWithGemini(mediaBuffer, mimeType, expectedAmount =
 
     try {
         const base64Data = mediaBuffer.toString('base64');
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${GEMINI_API_KEY}`;
-        
-        const response = await axios.post(
-            url,
-            {
-                contents: [
+        const modelsToTry = ['gemini-2.0-flash', 'gemini-2.5-flash'];
+        let response = null;
+        let lastErr = null;
+
+        for (const modelName of modelsToTry) {
+            try {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`;
+                response = await axios.post(
+                    url,
                     {
-                        parts: [
-                            { text: AUDIT_PROMPT },
+                        contents: [
                             {
-                                inline_data: {
-                                    mime_type: (mimeType && mimeType.includes('pdf')) ? 'application/pdf' : 'image/jpeg',
-                                    data: base64Data,
-                                },
+                                parts: [
+                                    { text: AUDIT_PROMPT },
+                                    {
+                                        inline_data: {
+                                            mime_type: (mimeType && mimeType.includes('pdf')) ? 'application/pdf' : 'image/jpeg',
+                                            data: base64Data,
+                                        },
+                                    },
+                                ],
                             },
                         ],
+                        generationConfig: {
+                            response_mime_type: 'application/json',
+                        },
                     },
-                ],
-                generationConfig: {
-                    response_mime_type: 'application/json',
-                },
-            },
-            { headers: { 'Content-Type': 'application/json' }, timeout: 25000 }
-        );
+                    { headers: { 'Content-Type': 'application/json' }, timeout: 25000 }
+                );
+                if (response?.data?.candidates?.[0]?.content?.parts?.[0]?.text) break;
+            } catch (mErr) {
+                lastErr = mErr;
+            }
+        }
+
+        if (!response && lastErr) throw lastErr;
 
         const textOutput = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
         const parsed = JSON.parse(textOutput);
@@ -551,26 +563,47 @@ async function auditPixReceiptWithGemini(mediaBuffer, mimeType, expectedAmount =
 
         if (parsed.destinatario && typeof parsed.destinatario === 'string') {
             const destLower = parsed.destinatario.toLowerCase();
-            const benLower = (beneficiary || 'carol').toLowerCase();
             const isKnownUtility = ['celesc', 'enel', 'sabesp', 'copel', 'cemig', 'cpfl', 'claro', 'vivo', 'tim'].some(u => destLower.includes(u));
-            const isValidBeneficiary =
-                destLower.includes(benLower) ||
-                destLower.includes('gps') ||
-                destLower.includes('ebooks') ||
-                destLower.includes('digitais') ||
-                destLower.includes('67039217') ||
-                destLower.includes('carol') ||
-                destLower.includes('pagamento');
-            if (isKnownUtility || !isValidBeneficiary) {
+            if (isKnownUtility) {
                 return {
                     isValid: false,
-                    reason: `O destinatário do comprovante (${parsed.destinatario}) não corresponde ao pagamento correto (${beneficiary}).`,
+                    reason: `O destinatário do comprovante (${parsed.destinatario}) parece ser uma conta de consumo e não o PIX esperado.`,
                     details: parsed,
                 };
             }
+
+            const cleanBen = String(beneficiary || '').trim().toLowerCase();
+            if (cleanBen) {
+                const ignoredWords = new Set(['pastor', 'missionaria', 'missionário', 'missionario', 'igreja', 'projeto', 'editora', 'guia', 'ltda', 'digital', 'digitais']);
+                const benTokens = cleanBen
+                    .split(/[\s\-_()/,]+/)
+                    .map(t => t.trim())
+                    .filter(t => t.length >= 3 && !ignoredWords.has(t));
+
+                const matchesToken = benTokens.length === 0 || benTokens.some(tok => destLower.includes(tok));
+                const isKnownMerchant =
+                    destLower.includes(cleanBen) ||
+                    matchesToken ||
+                    destLower.includes('guilherme') ||
+                    destLower.includes('gps') ||
+                    destLower.includes('ebooks') ||
+                    destLower.includes('digitais') ||
+                    destLower.includes('67039217') ||
+                    destLower.includes('carol') ||
+                    destLower.includes('pagamento');
+
+                if (!isKnownMerchant) {
+                    return {
+                        isValid: false,
+                        reason: `O destinatário do comprovante (${parsed.destinatario}) não corresponde ao beneficiário esperado (${beneficiary}).`,
+                        details: parsed,
+                    };
+                }
+            }
         }
 
-        return { isValid: true, details: parsed };
+        const paidAmount = (typeof parsed.valor === 'number' && parsed.valor > 0) ? parsed.valor : Number(expectedAmount || 19.90);
+        return { isValid: true, paidAmount, details: parsed };
     } catch (err) {
         const errorDetail = err?.response?.data?.error?.message || err?.message;
         console.error('[PIX Auditor] Erro na API do Gemini:', err?.response?.data || err?.message);
@@ -5418,16 +5451,29 @@ async function handleIncomingMessage(botId, sock, msg) {
                 }
             }
 
-            // B) Lead enviou comprovante para auditoria (nó PIX_VERIFIER)
+            // B) Lead enviou comprovante para auditoria (nó PIX_VERIFIER ou durante/após Recuperação 'Se não pagar' / 'Recusado')
             const verifierNode = nodes.find(n => (n.nodeType || '').toUpperCase() === 'PIX_VERIFIER');
-            const isWaitingReceipt = session.waitingFor === 'PIX_RECEIPT' || (verifierNode && !session.paid);
+            const hasPixNode = nodes.some(n => (n.nodeType || '').toUpperCase() === 'PIX');
+            const isWaitingReceipt = !session.paid && (
+                session.waitingFor === 'PIX_RECEIPT' ||
+                session.hasReceivedPix ||
+                session.rejectedPayment ||
+                session.expired ||
+                Boolean(verifierNode) ||
+                Boolean(hasPixNode)
+            );
 
             if (isWaitingReceipt && hasMediaReceipt) {
-                console.log(`[Visual Flow] 🧾 Auditando comprovante com IA Gemini para ${userPhone}...`);
+                console.log(`[Visual Flow] 🧾 Auditando comprovante com IA Gemini para ${userPhone} (Recuperação=${Boolean(session.rejectedPayment || session.expired || session.wasInRecovery)})...`);
+                store.funnelStats.receiptReceivedCount = (store.funnelStats.receiptReceivedCount || 0) + 1;
+                saveStore(store);
+
                 const mediaBuffer = await getMediaBuffer(msg, sock);
                 let auditResult = { isValid: false, reason: 'Arquivo ilegível' };
-                const expectedAmount = Number(session.expectedAmount || verifierNode?.config?.expectedAmount || 19.90);
-                const beneficiary = session.beneficiary || verifierNode?.config?.beneficiary || '';
+                const verifierAmount = Number(verifierNode?.config?.expectedAmount || 0);
+                const latestAmount = Number(session.latestPixAmount || session.expectedAmount || verifierAmount || 19.90);
+                const expectedAmount = verifierAmount > 0 ? Math.min(verifierAmount, latestAmount) : latestAmount;
+                const beneficiary = String(verifierNode?.config?.beneficiaryName || verifierNode?.config?.beneficiary || '').trim();
 
                 if (mediaBuffer) {
                     const mime = msg.message.imageMessage ? 'image/jpeg' : 'application/pdf';
@@ -5435,28 +5481,47 @@ async function handleIncomingMessage(botId, sock, msg) {
                 }
 
                 if (auditResult && auditResult.isValid) {
-                    console.log(`[Visual Flow] ✅ Comprovante APROVADO para ${userPhone}!`);
+                    const paidValue = Number(auditResult.paidAmount || session.latestPixAmount || session.expectedAmount || expectedAmount || 19.90);
+                    console.log(`[Visual Flow] ✅ Comprovante APROVADO para ${userPhone}! Valor contabilizado: R$ ${paidValue.toFixed(2)}`);
                     cancelAllTimers();
                     if (store.scheduledJobs) {
                         store.scheduledJobs = store.scheduledJobs.filter(j => j.userPhone !== userPhone);
                     }
+                    session.wasInRecovery = Boolean(session.wasInRecovery || session.rejectedPayment || session.expired);
+                    session.paidAmount = paidValue;
+                    session.expectedAmount = paidValue;
+                    session.waitingFor = null;
+                    session.paid = true;
+                    session.rejectedPayment = false;
+                    session.expired = false;
+
                     const verifierNodeId = verifierNode ? verifierNode.nodeId : session.currentNodeId;
-                    const successEdge = edges.find(e => (e.sourceNodeId || e.source) === verifierNodeId && e.sourceHandle === 'success') ||
-                                        edges.find(e => (e.sourceNodeId || e.source) === verifierNodeId) ||
-                                        edges.find(e => (e.sourceNodeId || e.source) === session.currentNodeId);
+                    session.currentNodeId = verifierNodeId;
+                    saveStore(store);
+
+                    const successEdge =
+                        edges.find(e => (e.sourceNodeId || e.source) === verifierNodeId && e.sourceHandle === 'success') ||
+                        edges.find(e => (e.sourceNodeId || e.source) === verifierNodeId && (!e.sourceHandle || e.sourceHandle === 'default')) ||
+                        edges.find(e => (e.sourceNodeId || e.source) === session.currentNodeId);
+
                     if (successEdge) {
-                        session.waitingFor = null;
-                        session.paid = true;
-                        session.currentNodeId = verifierNodeId;
-                        saveStore(store);
                         await executeFromNode(botId, sock, remoteJid, session, successEdge.targetNodeId || successEdge.target, nodes, edges);
-                        return;
                     }
+
+                    // Garantia Dupla: se o fluxo (ou ramo de recuperação) não passou por um bloco META_CAPI,
+                    // dispara a conversão no Meta Ads (CAPI) e registra no Dashboard da Operação automaticamente!
+                    if (!session.capiFired) {
+                        await recordAndFireFunnelConversion(botId, session, paidValue, flow.name);
+                    }
+                    return;
                 } else {
                     console.warn(`[Visual Flow] ❌ Comprovante RECUSADO para ${userPhone}: ${auditResult?.reason}`);
                     const verifierNodeId = verifierNode ? verifierNode.nodeId : session.currentNodeId;
                     const failEdge = edges.find(e => (e.sourceNodeId || e.source) === verifierNodeId && e.sourceHandle === 'fail');
-                    if (failEdge) {
+                    if (failEdge && !session.rejectedPayment) {
+                        session.rejectedPayment = true;
+                        session.wasInRecovery = true;
+                        saveStore(store);
                         await executeFromNode(botId, sock, remoteJid, session, failEdge.targetNodeId || failEdge.target, nodes, edges);
                         return;
                     } else {
@@ -6641,8 +6706,19 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
                 );
             }
 
-            session.expectedAmount = Number(amount) || 19.90;
+            const numericAmount = Number(amount) || 19.90;
+            if (!session.originalExpectedAmount) {
+                session.originalExpectedAmount = numericAmount;
+            }
+            session.expectedAmount = numericAmount;
+            session.latestPixAmount = numericAmount;
             session.beneficiary = beneficiaryName;
+            session.hasReceivedPix = true;
+            // Se este bloco PIX está sendo executado dentro de um fluxo de recuperação
+            // (após vácuo/timeout ou após recusa/fail), reativa a escuta de comprovante!
+            if (!session.paid) {
+                session.waitingFor = 'PIX_RECEIPT';
+            }
             store.funnelStats.pixSentCount += 1;
             saveStore(store);
 
@@ -6653,6 +6729,7 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
         case 'PIX_VERIFIER': {
             const verifierNodeId = node.nodeId || node.id;
             session.waitingFor = 'PIX_RECEIPT';
+            session.hasReceivedPix = true;
             session.pixVerifierNodeId = verifierNodeId;
             session.pixVerifierStartedAt = Date.now();
             session.expectedAmount = Number(config.expectedAmount || session.expectedAmount || 19.90);
@@ -6671,6 +6748,8 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
                 const targetNodeId = timeoutEdge.targetNodeId || timeoutEdge.target;
                 const targetNode = nodes.find(n => (n.nodeId || n.id) === targetNodeId);
                 console.log(`[Visual Flow] ⏱️ Disparando esteira lateral de remarketing (saída 'timeout') ➔ ${targetNode?.label || targetNodeId}`);
+                session.wasInRecovery = true;
+                saveStore(store);
                 executeFromNode(botId, sock, remoteJid, session, targetNodeId, nodes, edges).catch(err => {
                     console.error(`[Visual Flow] Erro na esteira lateral de remarketing:`, err);
                 });
@@ -6706,44 +6785,11 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
         }
 
         case 'META_CAPI': {
-            const value = Number(config.value || config.eventValue || session.expectedAmount || 19.90);
+            const value = Number(session.paidAmount || session.latestPixAmount || config.value || config.eventValue || session.expectedAmount || 19.90);
             if (config.confirmationText) {
                 await sendRealisticText(botId, sock, remoteJid, session.userPhone, String(config.confirmationText));
             }
-
-            // Registro oficial da transação para o MetaHub e disparo no Meta Conversions API (CAPI)
-            const transactionRecord = {
-                id: `tx_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-                time: Date.now(),
-                dateFormatted: new Date().toLocaleDateString('pt-BR'),
-                timeFormatted: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-                userPhone: session.userPhone,
-                pushName: session.userName,
-                amount: value,
-                funnelId: session.flowId || 'funil_visual',
-                funnelName: session.flowName || node.label || 'Funil Visual',
-                campaignId: session.adData?.campaignId || undefined,
-                adId: session.adData?.adId || undefined,
-                ctwaClid: session.adData?.ctwaClid || undefined,
-                adTag: session.adData?.adTag || undefined,
-                isCtwa: Boolean(session.adData?.isCtwa || session.adData?.ctwaClid),
-                status: 'APROVADO_PIX',
-                capiStatus: 'PENDING'
-            };
-
-            try {
-                const capiRes = await sendMetaCapiConversion(transactionRecord);
-                transactionRecord.capiStatus = capiRes.success ? 'ENVIADO_CAPI_OK' : (capiRes.skipped ? 'CAPI_CONFIG_PENDENTE' : 'ERRO_CAPI: ' + capiRes.error);
-                console.log(`[Visual Flow META_CAPI] 🎯 Disparo CAPI: ${transactionRecord.capiStatus}`);
-            } catch (capiErr) {
-                transactionRecord.capiStatus = 'ERRO_CAPI: ' + capiErr.message;
-            }
-
-            store.funnelTransactions = store.funnelTransactions || [];
-            store.funnelTransactions.unshift(transactionRecord);
-            store.funnelStats.convertedCount = (store.funnelStats.convertedCount || 0) + 1;
-            store.funnelStats.totalRevenue = (store.funnelStats.totalRevenue || 0) + value;
-            saveStore(store);
+            await recordAndFireFunnelConversion(botId, session, value, node.label);
             break;
         }
 
@@ -6767,6 +6813,57 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
         await new Promise((r) => setTimeout(r, 900));
         await executeFromNode(botId, sock, remoteJid, session, nextEdge.target || nextEdge.targetNodeId, nodes, edges);
     }
+}
+
+async function recordAndFireFunnelConversion(botId, session, paidValue, customLabel = '') {
+    if (session.capiFired) {
+        console.log(`[Visual Flow CAPI] ℹ️ Conversão já registrada nesta sessão para ${session.userPhone}. Ignorando duplicidade.`);
+        return;
+    }
+    session.capiFired = true;
+    const value = Number(paidValue || session.paidAmount || session.latestPixAmount || session.expectedAmount || 19.90);
+    const now = new Date();
+    const transactionRecord = {
+        id: `tx_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        timestamp: now.toISOString(),
+        time: Date.now(),
+        dateFormatted: now.toLocaleDateString('pt-BR'),
+        timeFormatted: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        botId,
+        userPhone: session.userPhone,
+        pushName: session.userName || 'Cliente',
+        amount: value,
+        beneficiary: session.beneficiary || 'Pastor Guilherme',
+        funnelId: session.flowId || 'funil_visual',
+        funnelName: session.flowName || customLabel || 'Funil Visual',
+        campaignId: session.adData?.campaignId || undefined,
+        adId: session.adData?.adId || undefined,
+        ctwaClid: session.adData?.ctwaClid || undefined,
+        adTag: session.adData?.adTag || undefined,
+        isCtwa: Boolean(session.adData?.isCtwa || session.adData?.ctwaClid),
+        isRecovery: Boolean(session.wasInRecovery || session.rejectedPayment || session.expired),
+        status: 'APROVADO_PIX',
+        capiStatus: 'PENDING'
+    };
+
+    try {
+        const capiRes = await sendMetaCapiConversion(transactionRecord);
+        transactionRecord.capiStatus = capiRes.success
+            ? 'ENVIADO_CAPI_OK'
+            : (capiRes.skipped ? 'CAPI_CONFIG_PENDENTE' : 'ERRO_CAPI: ' + capiRes.error);
+        console.log(`[Visual Flow META_CAPI] 🎯 Disparo CAPI (${transactionRecord.isRecovery ? 'RECUPERAÇÃO' : 'DIRETO'} - R$ ${value.toFixed(2)}): ${transactionRecord.capiStatus}`);
+    } catch (capiErr) {
+        transactionRecord.capiStatus = 'ERRO_CAPI: ' + capiErr.message;
+    }
+
+    store.funnelTransactions = store.funnelTransactions || [];
+    store.funnelTransactions.unshift(transactionRecord);
+    store.funnelStats.convertedCount = (store.funnelStats.convertedCount || 0) + 1;
+    store.funnelStats.totalRevenue = Number(((store.funnelStats.totalRevenue || 0) + value).toFixed(2));
+    saveStore(store);
+
+    notifyFaceHubWebhook(transactionRecord).catch(() => {});
+    sendNtfyNotification(transactionRecord).catch(() => {});
 }
 
 async function sendRealisticText(botId, sock, remoteJid, userPhone, text, options = {}) {
