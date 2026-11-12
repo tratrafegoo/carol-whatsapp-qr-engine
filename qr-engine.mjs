@@ -1241,8 +1241,8 @@ function resolvePixKeyType(rawKey, configuredType = '') {
     return 'CPF';
 }
 
-function buildPixBizNodes(remoteJid = '') {
-    const nodes = [
+function buildPixBizNodes() {
+    return [
         {
             tag: 'biz',
             attrs: {
@@ -1264,12 +1264,6 @@ function buildPixBizNodes(remoteJid = '') {
             ]
         }
     ];
-
-    if (remoteJid && !/@(g\.us|newsletter|broadcast)$/.test(remoteJid)) {
-        nodes.push({ tag: 'bot', attrs: { biz_bot: '1' } });
-    }
-
-    return nodes;
 }
 
 async function sendUniversalPixCopyCard({
@@ -1291,19 +1285,9 @@ async function sendUniversalPixCopyCard({
 
     const cleanPixKey = String(pixKey || '').trim();
     const cleanCopyCode = String(copyCode || cleanPixKey).trim();
+    const cleanBeneficiary = String(beneficiaryName || 'Pastor Guilherme').trim();
     const resolvedKeyType = resolvePixKeyType(cleanCopyCode || cleanPixKey, configuredKeyType);
 
-    // 1. GARANTIA UNIVERSAL (100% de qualquer celular):
-    // Dispara primeiro uma mensagem de texto simples contendo estritamente a chave Pix isolada.
-    // No iPhone, segurar o balão dá "Copiar" imediato; no Android também, sem erro de seleção.
-    try {
-        await sendRealisticText(botId, activeSock, remoteJid, userPhone, cleanPixKey);
-        await new Promise((r) => setTimeout(r, 400));
-    } catch (textErr) {
-        console.warn(`[PIX Universal] Aviso ao enviar texto isolado da chave:`, textErr?.message);
-    }
-
-    // 2. BOTÃO INTERATIVO ENRIQUECIDO PARA iOS / ANDROID / WEB:
     const buttonParams = {
         display_text: 'Copiar chave Pix',
         id: 'copy_pix_key',
@@ -1317,42 +1301,45 @@ async function sendUniversalPixCopyCard({
         }
     ];
 
-    const templateId = crypto.randomUUID ? crypto.randomUUID() : `pix_${Date.now()}`;
-
-    // Formato com messageParamsJson e messageSecret para reconhecimento de interface no iPhone
     const interactiveMessage = proto.Message?.InteractiveMessage?.create
         ? proto.Message.InteractiveMessage.create({
               body: proto.Message.InteractiveMessage.Body?.create
-                  ? proto.Message.InteractiveMessage.Body.create({ text: cleanPixKey })
-                  : { text: cleanPixKey },
-              nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage?.create
-                  ? proto.Message.InteractiveMessage.NativeFlowMessage.create({
-                        buttons,
-                        messageParamsJson: JSON.stringify({
-                            from: 'api',
-                            templateId
-                        })
+                  ? proto.Message.InteractiveMessage.Body.create({ text: `💰 *Valor:* R$ ${amount || '20.00'}` })
+                  : { text: `💰 *Valor:* R$ ${amount || '20.00'}` },
+              footer: proto.Message.InteractiveMessage.Footer?.create
+                  ? proto.Message.InteractiveMessage.Footer.create({ text: String(footerText || 'Toque no botão abaixo para copiar') })
+                  : { text: String(footerText || 'Toque no botão abaixo para copiar') },
+              header: proto.Message.InteractiveMessage.Header?.create
+                  ? proto.Message.InteractiveMessage.Header.create({
+                        title: cleanBeneficiary,
+                        subtitle: `Chave: ${cleanPixKey}`,
+                        hasMediaAttachment: false
                     })
                   : {
-                        buttons,
-                        messageParamsJson: JSON.stringify({
-                            from: 'api',
-                            templateId
-                        })
+                        title: cleanBeneficiary,
+                        subtitle: `Chave: ${cleanPixKey}`,
+                        hasMediaAttachment: false
+                    },
+              nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage?.create
+                  ? proto.Message.InteractiveMessage.NativeFlowMessage.create({
+                        buttons
+                    })
+                  : {
+                        buttons
                     }
           })
         : {
-              body: { text: cleanPixKey },
+              body: { text: `💰 *Valor:* R$ ${amount || '20.00'}` },
+              footer: { text: String(footerText || 'Toque no botão abaixo para copiar') },
+              header: {
+                  title: cleanBeneficiary,
+                  subtitle: `Chave: ${cleanPixKey}`,
+                  hasMediaAttachment: false
+              },
               nativeFlowMessage: {
-                  buttons,
-                  messageParamsJson: JSON.stringify({
-                      from: 'api',
-                      templateId
-                  })
+                  buttons
               }
           };
-
-    const messageSecret = crypto.randomBytes ? crypto.randomBytes(32) : Buffer.from(Array.from({ length: 32 }, () => Math.floor(Math.random() * 256)));
 
     return safeDispatchBlock({
         sock: activeSock,
@@ -1367,7 +1354,6 @@ async function sendUniversalPixCopyCard({
                 remoteJid,
                 {
                     messageContextInfo: {
-                        messageSecret,
                         deviceListMetadata: {},
                         deviceListMetadataVersion: 2
                     },
@@ -1380,10 +1366,10 @@ async function sendUniversalPixCopyCard({
 
             await targetSock.relayMessage(remoteJid, waMessage.message, {
                 messageId: waMessage.key.id,
-                additionalNodes: buildPixBizNodes(remoteJid)
+                additionalNodes: buildPixBizNodes()
             });
 
-            console.log(`[PIX Card Universal] ✅ Cartão PIX híbrido (texto isolado + cta_copy | key=${cleanPixKey} | type=${resolvedKeyType}) enviado para ${remoteJid}`);
+            console.log(`[PIX Card Universal] ✅ Cartão PIX nativo oficial (cta_copy | key=${cleanPixKey} | type=${resolvedKeyType}) enviado para ${remoteJid}`);
             return true;
         }
     });
@@ -1611,7 +1597,7 @@ async function startQrSession(botId = 'bot_whatsapp_principal', forceNewQr = fal
                 cacheSentMessage(opts.messageId, message);
             }
             if (message?.interactiveMessage && (!opts?.additionalNodes || opts.additionalNodes.length === 0)) {
-                opts = { ...opts, additionalNodes: buildPixBizNodes(jid) };
+                opts = { ...opts, additionalNodes: buildPixBizNodes() };
             }
             return origRelayMessage(jid, message, opts);
         };
