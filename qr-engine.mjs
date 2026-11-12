@@ -930,6 +930,39 @@ async function restoreFlowsFromCloudKv(botId = 'bot_whatsapp_principal') {
     return false;
 }
 
+let funnelModeLocalChanged = false;
+async function backupFunnelModeToCloudKv(botId = 'bot_whatsapp_principal') {
+    try {
+        await axios.post(
+            `${CLOUD_WORKER_URL}/api/cloud-kv/mode?botId=${encodeURIComponent(botId)}`,
+            {
+                singleFunnelMode: Boolean(store.singleFunnelMode),
+                activeFunnelId: store.activeFunnelId || 'flow_1794362249148',
+                activeFunnelName: store.activeFunnelName || 'Funil 4: Jornada da Bíblia (Cópia)',
+            },
+            { timeout: 6000 }
+        );
+    } catch {}
+}
+
+async function restoreFunnelModeFromCloudKv(botId = 'bot_whatsapp_principal') {
+    try {
+        const res = await axios.get(`${CLOUD_WORKER_URL}/api/cloud-kv/mode?botId=${encodeURIComponent(botId)}`, {
+            timeout: 6000,
+        });
+        const kvMode = res.data?.mode;
+        if (kvMode && typeof kvMode === 'object' && !funnelModeLocalChanged) {
+            store.singleFunnelMode = Boolean(kvMode.singleFunnelMode);
+            if (kvMode.activeFunnelId) store.activeFunnelId = kvMode.activeFunnelId;
+            if (kvMode.activeFunnelName) store.activeFunnelName = kvMode.activeFunnelName;
+            saveStore(store);
+            console.log(`[Cloud KV Mode] 🎯 Modo Funil Único restaurado: ${store.singleFunnelMode ? 'ATIVO' : 'DESATIVADO'} -> ${store.activeFunnelId}`);
+            return true;
+        }
+    } catch {}
+    return false;
+}
+
 // Carregar automaticamente os funis visuais ricos preservando sempre a versão mais recente/completa
 try {
     const defFlowsPath = path.join(__dirname, 'default_flows.json');
@@ -956,10 +989,16 @@ try {
             }
         }
         store.flows['bot_whatsapp_principal'] = mergedFlows;
-        store.flows_schema_version = 'v11_preserved_89nodes_20261111';
+        store.flows_schema_version = 'v12_preserved_live_20261112';
+        if (typeof store.singleFunnelMode === 'undefined') {
+            store.singleFunnelMode = true;
+            store.activeFunnelId = store.activeFunnelId || 'flow_1794362249148';
+            store.activeFunnelName = store.activeFunnelName || 'Funil 4: Jornada da Bíblia - João Antônio (Gatilho: teste4_copia) - 82 99689-8259 (Cópia)';
+        }
         saveStore(store);
-        console.log(`[Store Init] 🚀 Funis Visuais V11 Carregados com Preservação Anti-Perda (Total: ${store.flows['bot_whatsapp_principal'].length} funis)!`);
+        console.log(`[Store Init] 🚀 Funis Visuais V12 Carregados com Preservação Anti-Perda (Total: ${store.flows['bot_whatsapp_principal'].length} funis)!`);
     }
+    restoreFunnelModeFromCloudKv('bot_whatsapp_principal').catch(() => {});
     restoreFlowsFromCloudKv('bot_whatsapp_principal').then(() => {
         scheduleCloudKvFlowsBackup('bot_whatsapp_principal');
     }).catch(() => {});
@@ -5695,11 +5734,17 @@ function ensureBotVisualFlowsLoaded(botId) {
     return flows;
 }
 
+function normalizeVisualFlowId(flowId) {
+    const raw = String(flowId || '').trim();
+    if (!raw) return '';
+    if (raw.startsWith('flow_')) return raw;
+    if (/^funil\d+$/i.test(raw)) return raw.replace(/^funil(\d+)$/i, 'flow_funil_$1');
+    return 'flow_' + raw;
+}
+
 function getVisualFlowById(botId, flowId) {
     const flows = ensureBotVisualFlowsLoaded(botId);
-    const normalizedFid = String(flowId || '').startsWith('flow_')
-        ? String(flowId)
-        : String(flowId || '').replace(/^funil(\d+)$/i, 'flow_funil_$1');
+    const normalizedFid = normalizeVisualFlowId(flowId);
     const flow = flows.find(f => f._id === normalizedFid || f._id === flowId);
     if (flow && flow.isDeployed !== false && flow.draftVersion?.flowData?.nodes?.length > 2) {
         const nodes = flow.draftVersion.flowData.nodes;
@@ -5710,13 +5755,7 @@ function getVisualFlowById(botId, flowId) {
     return null;
 }
 
-function findDeployedFlowForTrigger(botId, text) {
-    const flows = ensureBotVisualFlowsLoaded(botId);
-    const cleanText = String(text || '').trim().toLowerCase();
-    const bareText = cleanText.replace(/^[#!/]+/, '').trim();
-
-    // ─── 1º LUGAR ABSOLUTO: Verificar os gatilhos reais (config.trigger / label) de TODOS os fluxos do painel ───
-    // Ordena por tamanho do gatilho (decrescente) para que 'teste4_copia' ou 'teste10' tenham prioridade sobre 'teste4' ou 'teste1'
+function collectCandidateFlowTriggers(flows = []) {
     const candidateTriggers = [];
     for (const flow of flows) {
         if (flow.isDeployed === false) continue;
@@ -5740,25 +5779,40 @@ function findDeployedFlowForTrigger(botId, text) {
             candidateTriggers.push({ trig, flow, startNode, nodes, edges });
         }
     }
-
     candidateTriggers.sort((a, b) => b.trig.length - a.trig.length);
+    return candidateTriggers;
+}
 
+function isExplicitTriggerMatch(text, trig) {
+    if (!trig) return false;
+    const cleanText = String(text || '').trim().toLowerCase();
+    const bareText = cleanText.replace(/^[#!/]+/, '').trim();
+    const spacedVariant = /^teste\d+$/.test(trig) ? trig.replace(/^teste(\d+)$/, 'teste $1') : null;
+    return Boolean(
+        cleanText === trig ||
+        bareText === trig ||
+        cleanText.startsWith(trig + ' ') ||
+        bareText.startsWith(trig + ' ') ||
+        (spacedVariant && (cleanText === spacedVariant || bareText === spacedVariant || cleanText.startsWith(spacedVariant + ' ')))
+    );
+}
+
+function findDeployedFlowForTrigger(botId, text) {
+    const flows = ensureBotVisualFlowsLoaded(botId);
+    const cleanText = String(text || '').trim().toLowerCase();
+    const bareText = cleanText.replace(/^[#!/]+/, '').trim();
+
+    // ─── 1º LUGAR ABSOLUTO: Verificar os gatilhos explícitos reais (config.trigger / label) de TODOS os fluxos do painel ───
+    // Ordena por tamanho do gatilho (decrescente) para que 'teste4_copia' ou 'teste10' tenham prioridade sobre 'teste4' ou 'teste1'
+    const candidateTriggers = collectCandidateFlowTriggers(flows);
     for (const item of candidateTriggers) {
-        const t = item.trig;
-        const spacedVariant = /^teste\d+$/.test(t) ? t.replace(/^teste(\d+)$/, 'teste $1') : null;
-        if (
-            cleanText === t ||
-            bareText === t ||
-            cleanText.startsWith(t + ' ') ||
-            bareText.startsWith(t + ' ') ||
-            (spacedVariant && (cleanText === spacedVariant || bareText === spacedVariant || cleanText.startsWith(spacedVariant + ' ')))
-        ) {
-            console.log(`[Visual Flow Router] 🎯 Gatilho exato do fluxograma encontrado: "${t}" ➔ "${item.flow.name}" (${item.flow._id})`);
+        if (isExplicitTriggerMatch(cleanText, item.trig)) {
+            console.log(`[Visual Flow Router] 🎯 Gatilho exato do fluxograma encontrado: "${item.trig}" ➔ "${item.flow.name}" (${item.flow._id})`);
             return { flow: item.flow, startNode: item.startNode, nodes: item.nodes, edges: item.edges };
         }
     }
 
-    // ─── 2º LUGAR: Mapa canônico de teste1 a teste13 (ordenado do maior para o menor) ───
+    // ─── 2º LUGAR: Mapa canônico explícito de teste1 a teste13 (ordenado do maior para o menor) ───
     const triggerMap = [
         ['teste13', 'flow_funil_13'],
         ['teste12', 'flow_funil_12'],
@@ -5783,8 +5837,23 @@ function findDeployedFlowForTrigger(botId, text) {
             break;
         }
     }
+    if (matchedFlowId) {
+        const resolvedTest = getVisualFlowById(botId, matchedFlowId);
+        if (resolvedTest) return resolvedTest;
+    }
 
-    // ─── 3º LUGAR: Palavras-chave de anúncios CTWA (apenas se não for comando de teste) ───
+    // ─── 3º LUGAR PRIORITÁRIO: MODO FUNIL ÚNICO BLINDADO (Executa ANTES do keywordMap!) ───
+    // Qualquer lead que não enviou um gatilho explícito de teste (ex: "Oi", "Olá! Gostaria de receber a Jornada da Bíblia",
+    // mensagem padrão de anúncio com "Pastor Guilherme" ou "Parábolas", etc.) vai OBRIGATORIAMENTE para o funil único selecionado.
+    if (store.singleFunnelMode && store.activeFunnelId) {
+        const singleResolved = getVisualFlowById(botId, store.activeFunnelId);
+        if (singleResolved) {
+            console.log(`[Visual Flow] 🛡️ Modo Funil Único ATIVO (Blindado): roteando automaticamente para "${singleResolved.flow.name}" (${singleResolved.flow._id})`);
+            return singleResolved;
+        }
+    }
+
+    // ─── 4º LUGAR (somente no Modo Multi-Funil): Palavras-chave de anúncios CTWA ───
     if (!matchedFlowId && !bareText.startsWith('teste')) {
         const keywordMap = {
             'flow_funil_1': ['parábolas', 'parabolas', 'maria gps'],
@@ -5809,20 +5878,118 @@ function findDeployedFlowForTrigger(botId, text) {
         }
     }
 
-    // ─── 4º LUGAR (Fallback): Modo Funil Único (apenas para leads reais sem comando de teste) ───
-    if (!matchedFlowId && store.singleFunnelMode && store.activeFunnelId && !bareText.startsWith('teste')) {
-        const rawFid = store.activeFunnelId;
-        const normalizedFid = rawFid.startsWith('flow_') ? rawFid : rawFid.replace(/^funil(\d+)$/i, 'flow_funil_$1');
-        matchedFlowId = normalizedFid.startsWith('flow_') ? normalizedFid : ('flow_' + normalizedFid);
-        console.log(`[Visual Flow] 🎯 Modo Funil Único Ativo: roteando lead automaticamente para ${matchedFlowId}`);
-    }
-
     if (matchedFlowId) {
         const resolved = getVisualFlowById(botId, matchedFlowId);
         if (resolved) return resolved;
     }
 
     return null;
+}
+
+function getBrazilianPhoneVariants(digits) {
+    const clean = String(digits || '').replace(/\D/g, '');
+    const set = new Set();
+    if (clean) set.add(clean);
+    if (clean.startsWith('55') && clean.length === 13 && clean[4] === '9') {
+        set.add(clean.slice(0, 4) + clean.slice(5));
+    } else if (clean.startsWith('55') && clean.length === 12) {
+        set.add(clean.slice(0, 4) + '9' + clean.slice(4));
+    }
+    return Array.from(set);
+}
+
+async function resolveBrazilianWhatsAppJid(sock, rawPhone) {
+    const cleanPhone = String(rawPhone || '').replace(/\D/g, '');
+    const variants = getBrazilianPhoneVariants(cleanPhone);
+    let resolvedJid = `${cleanPhone}@s.whatsapp.net`;
+    let resolvedPhone = cleanPhone;
+    let resolvedLid = '';
+    let exists = null;
+
+    if (sock && typeof sock.onWhatsApp === 'function' && variants.length > 0) {
+        try {
+            const lookupResults = await Promise.race([
+                sock.onWhatsApp(...variants),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('onWhatsApp timeout')), 6000))
+            ]);
+            const valid = Array.isArray(lookupResults)
+                ? (lookupResults.find(r => r?.exists && r?.jid === `${cleanPhone}@s.whatsapp.net`) || lookupResults.find(r => r?.exists && r?.jid))
+                : null;
+            if (valid && valid.jid) {
+                resolvedJid = valid.jid;
+                resolvedPhone = String(valid.jid).split('@')[0].split(':')[0].replace(/\D/g, '') || cleanPhone;
+                if (valid.lid) resolvedLid = String(valid.lid);
+                exists = true;
+            } else if (Array.isArray(lookupResults) && lookupResults.length > 0) {
+                exists = false;
+            }
+        } catch (err) {
+            console.warn(`[JID Resolver] Aviso ao consultar onWhatsApp para ${cleanPhone}:`, err?.message);
+        }
+    }
+
+    if (!resolvedLid && sock?.signalRepository?.lidMapping?.getLIDForPN) {
+        try {
+            const lid = await sock.signalRepository.lidMapping.getLIDForPN(resolvedJid);
+            if (lid) resolvedLid = String(lid);
+        } catch {}
+    }
+
+    return {
+        exists,
+        jid: resolvedJid,
+        phoneDigits: resolvedPhone,
+        lid: resolvedLid,
+        allVariants: Array.from(new Set([...variants, resolvedPhone, resolvedLid ? resolvedLid.split('@')[0].split(':')[0].replace(/\D/g, '') : ''].filter(Boolean)))
+    };
+}
+
+async function resolveIncomingSession(botId, sock, remoteJid, msg) {
+    const primaryPhone = remoteJid.split('@')[0].split(':')[0].replace(/\D/g, '');
+    const altPhones = new Set(getBrazilianPhoneVariants(primaryPhone));
+
+    const keyAlt = msg?.key?.senderPn || msg?.key?.participantPn || msg?.key?.remoteJidAlt || '';
+    if (keyAlt) {
+        const altDigits = String(keyAlt).split('@')[0].split(':')[0].replace(/\D/g, '');
+        getBrazilianPhoneVariants(altDigits).forEach(p => altPhones.add(p));
+    }
+
+    const lidMapping = sock?.signalRepository?.lidMapping;
+    try {
+        if (lidMapping && remoteJid.endsWith('@lid') && typeof lidMapping.getPNForLID === 'function') {
+            const pn = await lidMapping.getPNForLID(remoteJid);
+            if (pn) {
+                const pnDigits = String(pn).split('@')[0].split(':')[0].replace(/\D/g, '');
+                getBrazilianPhoneVariants(pnDigits).forEach(p => altPhones.add(p));
+            }
+        } else if (lidMapping && remoteJid.endsWith('@s.whatsapp.net') && typeof lidMapping.getLIDForPN === 'function') {
+            const lid = await lidMapping.getLIDForPN(remoteJid);
+            if (lid) {
+                altPhones.add(String(lid).split('@')[0].split(':')[0].replace(/\D/g, ''));
+            }
+        }
+    } catch {}
+
+    const primaryKey = `${botId}:${primaryPhone}`;
+    if (store.userSessions[primaryKey]) {
+        return { userPhone: primaryPhone, sessionKey: primaryKey, session: store.userSessions[primaryKey], altPhones: Array.from(altPhones) };
+    }
+
+    for (const candidatePhone of altPhones) {
+        const candidateKey = `${botId}:${candidatePhone}`;
+        if (store.userSessions[candidateKey]) {
+            const found = store.userSessions[candidateKey];
+            // Sincroniza alias para o JID/telefone atual mantendo o mesmo estado sem reiniciar conversa
+            found.userJid = remoteJid;
+            found.userPhone = primaryPhone;
+            store.userSessions[primaryKey] = found;
+            saveStore(store);
+            console.log(`[Session Alias] 🔗 Sessão localizada via alias (${candidatePhone} -> ${primaryPhone})`);
+            return { userPhone: primaryPhone, sessionKey: primaryKey, session: found, altPhones: Array.from(altPhones) };
+        }
+    }
+
+    return { userPhone: primaryPhone, sessionKey: primaryKey, session: null, altPhones: Array.from(altPhones) };
 }
 
 async function handleIncomingMessage(botId, sock, msg) {
@@ -5838,7 +6005,8 @@ async function handleIncomingMessage(botId, sock, msg) {
         return;
     }
 
-    const userPhone = remoteJid.split('@')[0].split(':')[0];
+    const identity = await resolveIncomingSession(botId, sock, remoteJid, msg);
+    const userPhone = identity.userPhone;
     const pushName = msg.pushName || 'Cliente';
 
     // Desempacotamento recursivo de mensagens temporárias e mídias de visualização única
@@ -5873,8 +6041,8 @@ async function handleIncomingMessage(botId, sock, msg) {
         pushName
     );
 
-    const sessionKey = `${botId}:${userPhone}`;
-    let session = store.userSessions[sessionKey];
+    const sessionKey = identity.sessionKey;
+    let session = identity.session;
 
     // Capturar contexto de anúncio (CTWA ou tags dinâmicas no texto)
     const detectedAd = extractAdContext(msg, textContent);
@@ -5898,7 +6066,12 @@ async function handleIncomingMessage(botId, sock, msg) {
     const normalizedText = textContent.trim().toLowerCase();
 
     // ─── Função de Cancelamento Universal de Timers (Hoisted e Segura) ───
-    const cancelAllTimers = () => cancelAllUserTimers(botId, userPhone);
+    const cancelAllTimers = () => {
+        cancelAllUserTimers(botId, userPhone);
+        for (const altP of (identity.altPhones || [])) {
+            if (altP !== userPhone) cancelAllUserTimers(botId, altP);
+        }
+    };
 
     // ─── Sistema Universal de Reações Humanizadas para TODOS os Funis (Atuais e Futuros) ───
     const isNegative = ['não', 'nao', 'agora não', 'agora nao', 'depois', 'nop', 'cancelar', 'não quero', 'nao quero'].some(w => normalizedText === w || normalizedText.startsWith(w + ' '));
@@ -5907,8 +6080,8 @@ async function handleIncomingMessage(botId, sock, msg) {
     // Dispara a reação humanizada imediatamente na mensagem do lead
     reactToMessage(sock, remoteJid, msg.key, autoEmoji).catch(() => {});
 
-    // Roteador Multi-Funil por Gatilhos de Teste (teste1 a teste13):
-    const isTest1 = ['teste1', 'teste 1', '#teste1', '!teste1', '/teste1', 'teste', 'test', '#teste', '!teste', '/teste'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
+    // Roteador Multi-Funil por Gatilhos de Teste explícitos (teste1 a teste13 + triggers custom dos fluxos):
+    const isTest1 = ['teste1', 'teste 1', '#teste1', '!teste1', '/teste1'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
     const isTest2 = ['teste2', 'teste 2', '#teste2', '!teste2', '/teste2'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
     const isTest3 = ['teste3', 'teste 3', '#teste3', '!teste3', '/teste3'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
     const isTest4 = ['teste4', 'teste 4', '#teste4', '!teste4', '/teste4'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
@@ -5922,16 +6095,44 @@ async function handleIncomingMessage(botId, sock, msg) {
     const isTest12 = ['teste12', 'teste 12', '#teste12', '!teste12', '/teste12'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
     const isTest13 = ['teste13', 'teste 13', '#teste13', '!teste13', '/teste13'].some(k => normalizedText === k || normalizedText.startsWith(k + ' '));
 
-    const isAnyTestTrigger = isTest1 || isTest2 || isTest3 || isTest4 || isTest5 || isTest6 || isTest7 || isTest8 || isTest9 || isTest10 || isTest11 || isTest12 || isTest13 || normalizedText.startsWith('teste');
+    const customTriggerCandidates = collectCandidateFlowTriggers(store.flows[botId] || []);
+    const isCustomFlowTrigger = customTriggerCandidates.some(item => isExplicitTriggerMatch(normalizedText, item.trig));
+    const isAnyTestTrigger = isCustomFlowTrigger || isTest1 || isTest2 || isTest3 || isTest4 || isTest5 || isTest6 || isTest7 || isTest8 || isTest9 || isTest10 || isTest11 || isTest12 || isTest13;
 
-    // Se o lead enviou qualquer gatilho de teste ou comando de início, LIMPA QUALQUER SESSÃO ANTERIOR IMEDIATAMENTE!
-    // Garante que o testador nunca fique preso na etapa de comprovante ou com sessão travada
+    // Se o lead enviou qualquer gatilho de teste explícito, LIMPA QUALQUER SESSÃO ANTERIOR IMEDIATAMENTE!
     if (isAnyTestTrigger) {
-        console.log(`[Universal Trigger Reset] 🔄 Gatilho de teste "${normalizedText}" recebido de ${pushName} (${userPhone}). Resetando sessão presa e timers!`);
+        console.log(`[Universal Trigger Reset] 🔄 Gatilho explícito "${normalizedText}" recebido de ${pushName} (${userPhone}). Resetando sessão presa e timers!`);
         cancelAllTimers();
         session = null;
         delete store.userSessions[sessionKey];
+        for (const altP of (identity.altPhones || [])) {
+            delete store.userSessions[`${botId}:${altP}`];
+        }
         saveStore(store);
+    }
+
+    // Se o Modo Funil Único está ativo e o usuário tinha sessão antiga (de outro funil ou legado) que ainda nem recebeu PIX nem pagou, libera para entrar no funil único ativo
+    const activeSingleFlowIdNormalized = store.activeFunnelId ? normalizeVisualFlowId(store.activeFunnelId) : '';
+    if (
+        store.singleFunnelMode &&
+        activeSingleFlowIdNormalized &&
+        session &&
+        (!session.flowId || session.flowId !== activeSingleFlowIdNormalized) &&
+        !session.hasReceivedPix &&
+        !session.paid &&
+        session.waitingFor !== 'PIX_RECEIPT'
+    ) {
+        const updatedMs = new Date(session.updatedAt || 0).getTime();
+        if (session.waitingFor !== 'USER_REPLY' || (Date.now() - updatedMs > 60 * 60 * 1000)) {
+            console.log(`[Modo Funil Único] 🔄 Sessão antiga (${session.flowId || 'legado'}) encerrada para iniciar funil ativo ${activeSingleFlowIdNormalized}`);
+            cancelAllTimers();
+            session = null;
+            delete store.userSessions[sessionKey];
+            for (const altP of (identity.altPhones || [])) {
+                delete store.userSessions[`${botId}:${altP}`];
+            }
+            saveStore(store);
+        }
     }
 
     // ─── 0. Verificação de Sessão Ativa em Fluxo Visual Deployed (INPUT / PIX_VERIFIER) ───
@@ -5965,16 +6166,13 @@ async function handleIncomingMessage(botId, sock, msg) {
                 }
             }
 
-            // B) Lead enviou comprovante para auditoria (nó PIX_VERIFIER ou durante/após Recuperação 'Se não pagar' / 'Recusado')
+            // B) Lead enviou comprovante para auditoria (somente se já recebeu PIX / entrou em espera de comprovante)
             const verifierNode = nodes.find(n => (n.nodeType || '').toUpperCase() === 'PIX_VERIFIER');
-            const hasPixNode = nodes.some(n => (n.nodeType || '').toUpperCase() === 'PIX');
             const isWaitingReceipt = !session.paid && (
                 session.waitingFor === 'PIX_RECEIPT' ||
                 session.hasReceivedPix ||
                 session.rejectedPayment ||
-                session.expired ||
-                Boolean(verifierNode) ||
-                Boolean(hasPixNode)
+                session.expired
             );
 
             if (isWaitingReceipt && hasMediaReceipt) {
@@ -6128,6 +6326,15 @@ async function handleIncomingMessage(botId, sock, msg) {
                 // mantém a sessão ativa aguardando a imagem/PDF sem reiniciar o funil!
                 return;
             }
+            // D) Evitar re-disparar funil para quem já pagou ou está recebendo as primeiras mensagens neste exato momento
+            if (session.paid && !isAnyTestTrigger) {
+                console.log(`[Visual Flow] ✅ Lead ${userPhone} já concluiu o pagamento. Mantendo pós-venda sem reiniciar funil.`);
+                return;
+            }
+            if (session.inFlightStartedAt && (Date.now() - session.inFlightStartedAt < 90000) && !session.waitingFor && !isAnyTestTrigger) {
+                console.log(`[Visual Flow] ⏳ Fase inicial em envio para ${userPhone}. Ignorando mensagem simultânea para evitar duplicação.`);
+                return;
+            }
         }
     }
 
@@ -6158,6 +6365,7 @@ async function handleIncomingMessage(botId, sock, msg) {
             flowName: visualFlowMatch.flow.name,
             currentNodeId: visualFlowMatch.startNode.nodeId,
             adData: session?.adData || detectedAd || undefined,
+            inFlightStartedAt: Date.now(),
             updatedAt: new Date().toISOString()
         };
         store.userSessions[sessionKey] = session;
@@ -6165,9 +6373,16 @@ async function handleIncomingMessage(botId, sock, msg) {
 
         const firstEdge = visualFlowMatch.edges.find(e => (e.sourceNodeId || e.source) === visualFlowMatch.startNode.nodeId);
         if (firstEdge) {
-            await executeFromNode(botId, sock, remoteJid, session, firstEdge.targetNodeId || firstEdge.target, visualFlowMatch.nodes, visualFlowMatch.edges);
+            try {
+                await executeFromNode(botId, sock, remoteJid, session, firstEdge.targetNodeId || firstEdge.target, visualFlowMatch.nodes, visualFlowMatch.edges);
+            } finally {
+                delete session.inFlightStartedAt;
+                saveStore(store);
+            }
             return;
         }
+        delete session.inFlightStartedAt;
+        saveStore(store);
     }
 
     // DISPARO FUNIL 1: As 40 Parábolas de Jesus
@@ -6348,8 +6563,38 @@ async function handleIncomingMessage(botId, sock, msg) {
     }
 
     // Se NÃO tem sessão ativa ou NÃO está aguardando ação do funil:
-    // Modo Anti-Refugo 100%: como o chip está operando o Funil 4 (Pastor Guilherme), qualquer nova mensagem ativa a Fase 1!
+    // Respeita o Modo Funil Único (ou fallback visual) antes de recorrer ao Funil 4 legado
     if (!session || !session.waitingFor) {
+        const targetFlowId = (store.singleFunnelMode && store.activeFunnelId) ? store.activeFunnelId : 'flow_funil_4';
+        const fallbackVisual = getVisualFlowById(botId, targetFlowId) || getVisualFlowById(botId, 'flow_funil_4');
+        if (fallbackVisual) {
+            const firstEdge = fallbackVisual.edges.find(e => (e.sourceNodeId || e.source) === fallbackVisual.startNode.nodeId);
+            if (firstEdge) {
+                console.log(`[Fallback Visual] 🎯 Disparando "${fallbackVisual.flow.name}" (${fallbackVisual.flow._id}) para ${pushName} (${userPhone})`);
+                cancelAllTimers();
+                session = {
+                    botId,
+                    userJid: remoteJid,
+                    userPhone,
+                    userName: pushName,
+                    flowId: fallbackVisual.flow._id,
+                    flowName: fallbackVisual.flow.name,
+                    currentNodeId: fallbackVisual.startNode.nodeId,
+                    adData: detectedAd || undefined,
+                    inFlightStartedAt: Date.now(),
+                    updatedAt: new Date().toISOString()
+                };
+                store.userSessions[sessionKey] = session;
+                saveStore(store);
+                try {
+                    await executeFromNode(botId, sock, remoteJid, session, firstEdge.targetNodeId || firstEdge.target, fallbackVisual.nodes, fallbackVisual.edges);
+                } finally {
+                    delete session.inFlightStartedAt;
+                    saveStore(store);
+                }
+                return;
+            }
+        }
         console.log(`[Funil 4 - Anti-Refugo 100%] 🎯 Novo lead capturado: ${pushName} (${userPhone}): "${textContent}" -> Disparando Funil 4`);
         cancelAllTimers();
         session = null;
@@ -7767,44 +8012,113 @@ app.post(['/api/bots/:botId/flows/:flowId/deploy', '/bots/:botId/flows/:flowId/d
 });
 
 
-// ─── ROTA DE RECUPERAÇÃO ATIVA DE LEADS (DISPARO DO FUNIL 4) ───
+// ─── ROTA DE RECUPERAÇÃO ATIVA DE LEADS (DISPARO DE FLUXO VISUAL / FUNIL 4) ───
 app.post('/api/funnels/recover-lead', async (req, res) => {
     try {
         const botId = String(req.body.botId || 'bot_whatsapp_principal');
-        const phone = String(req.body.phone || '').replace(/\D/g, '');
-        const pushName = req.body.name || 'Cliente';
-        const funnel = req.body.funnel || 'funil4';
+        const rawPhone = String(req.body.phone || '').replace(/\D/g, '');
+        const pushName = String(req.body.name || 'Cliente').trim() || 'Cliente';
+        const funnel = String(req.body.funnel || 'funil4').trim();
+        const hasExplicitLegacyFunnel = req.body.funnel && req.body.funnel !== 'funil4' && req.body.funnel !== 'active' && !String(req.body.funnel).startsWith('flow_');
+        const requestedFlowId = String(
+            req.body.flowId ||
+            (funnel.startsWith('flow_') ? funnel : '') ||
+            (req.body.useActiveSingleFunnel || funnel === 'active' || (!hasExplicitLegacyFunnel && store.singleFunnelMode && store.activeFunnelId) ? (store.activeFunnelId || 'flow_funil_4') : '')
+        ).trim();
 
-        if (!phone || phone.length < 10) {
+        if (!rawPhone || rawPhone.length < 10) {
             return res.status(400).json({ success: false, error: 'Número de telefone inválido' });
         }
 
         const sock = activeSockets.get(botId);
-        if (!sock) {
+        if (!sock || !sock.user) {
             return res.status(400).json({ success: false, error: 'WhatsApp não está conectado no servidor' });
         }
 
-        const remoteJid = `${phone}@s.whatsapp.net`;
-        const sessionKey = `${botId}:${phone}`;
+        const jidInfo = await resolveBrazilianWhatsAppJid(sock, rawPhone);
+        const canonicalPhone = jidInfo.phoneDigits || rawPhone;
+        const remoteJid = jidInfo.jid || `${canonicalPhone}@s.whatsapp.net`;
+        const sessionKey = `${botId}:${canonicalPhone}`;
 
-        console.log(`[Lead Recovery] 🚀 Disparando recuperação da Fase 1 (${funnel}) para ${pushName} (${phone})`);
+        console.log(`[Lead Recovery] 🚀 Disparando recuperação para ${pushName} (${rawPhone} -> JID: ${remoteJid}, Verified: ${jidInfo.exists}, Flow: ${requestedFlowId || funnel})`);
 
-        // Cancelar timers antigos e limpar sessão travada
-        cancelFunil4Reminder(botId, phone);
+        // Cancelar timers antigos e limpar sessões antigas em todas as variantes do número/@lid
+        for (const variant of jidInfo.allVariants) {
+            cancelFunil4Reminder(botId, variant);
+            delete store.userSessions[`${botId}:${variant}`];
+        }
         delete store.userSessions[sessionKey];
+        if (store.scheduledJobs) {
+            const variantSet = new Set(jidInfo.allVariants);
+            store.scheduledJobs = store.scheduledJobs.filter(j => !variantSet.has(String(j.userPhone || '')));
+        }
         saveStore(store);
 
-        if (funnel === 'funil4') {
-            console.log(`[Lead Recovery] ⏳ Aguardando espaçamento de conexão para ${phone}...`);
-            await new Promise((r) => setTimeout(r, 1500));
-            await sendFunil4Phase1(botId, sock, remoteJid, phone, pushName);
-        } else if (funnel === 'funil1') {
-            console.log(`[Lead Recovery] ⏳ Aguardando espaçamento de conexão para ${phone}...`);
-            await new Promise((r) => setTimeout(r, 1500));
-            await sendParabolasPhase1(botId, sock, remoteJid, phone, pushName);
+        if (requestedFlowId || funnel === 'funil4') {
+            const targetFlowId = requestedFlowId || 'flow_funil_4';
+            const visualFlow = getVisualFlowById(botId, targetFlowId) || (store.activeFunnelId ? getVisualFlowById(botId, store.activeFunnelId) : null);
+            const firstEdge = visualFlow ? visualFlow.edges.find(e => (e.sourceNodeId || e.source) === visualFlow.startNode.nodeId) : null;
+
+            if (visualFlow && firstEdge) {
+                const session = {
+                    botId,
+                    userJid: remoteJid,
+                    userPhone: canonicalPhone,
+                    userName: pushName,
+                    flowId: visualFlow.flow._id,
+                    flowName: visualFlow.flow.name,
+                    currentNodeId: visualFlow.startNode.nodeId,
+                    adData: req.body.adData || { source: 'manual_recovery', originalPhone: rawPhone },
+                    inFlightStartedAt: Date.now(),
+                    updatedAt: new Date().toISOString()
+                };
+                store.userSessions[sessionKey] = session;
+                if (jidInfo.lid) {
+                    const lidDigits = jidInfo.lid.split('@')[0].split(':')[0].replace(/\D/g, '');
+                    if (lidDigits) store.userSessions[`${botId}:${lidDigits}`] = session;
+                }
+                saveStore(store);
+
+                console.log(`[Lead Recovery] ⏳ Executando fluxo visual "${visualFlow.flow.name}" (${visualFlow.flow._id}) para ${canonicalPhone}...`);
+                try {
+                    await executeFromNode(botId, sock, remoteJid, session, firstEdge.targetNodeId || firstEdge.target, visualFlow.nodes, visualFlow.edges);
+                } finally {
+                    delete session.inFlightStartedAt;
+                    saveStore(store);
+                }
+
+                return res.json({
+                    success: true,
+                    message: `Fluxo "${visualFlow.flow.name}" disparado com sucesso para ${canonicalPhone}!`,
+                    flowId: visualFlow.flow._id,
+                    flowName: visualFlow.flow.name,
+                    jid: remoteJid,
+                    resolvedPhone: canonicalPhone,
+                    lid: jidInfo.lid || null,
+                    onWhatsAppVerified: jidInfo.exists
+                });
+            }
         }
 
-        res.json({ success: true, message: `Fase 1 do ${funnel} disparada com sucesso para ${phone}!` });
+        if (funnel === 'funil4') {
+            console.log(`[Lead Recovery] ⏳ Aguardando espaçamento de conexão (legado funil4) para ${canonicalPhone}...`);
+            await new Promise((r) => setTimeout(r, 1500));
+            await sendFunil4Phase1(botId, sock, remoteJid, canonicalPhone, pushName);
+        } else if (funnel === 'funil1') {
+            console.log(`[Lead Recovery] ⏳ Aguardando espaçamento de conexão (funil1) para ${canonicalPhone}...`);
+            await new Promise((r) => setTimeout(r, 1500));
+            await sendParabolasPhase1(botId, sock, remoteJid, canonicalPhone, pushName);
+        } else {
+            return res.status(404).json({ success: false, error: `Funil "${requestedFlowId || funnel}" não encontrado ou sem fluxo válido` });
+        }
+
+        res.json({
+            success: true,
+            message: `Fase 1 do ${funnel} disparada com sucesso para ${canonicalPhone}!`,
+            jid: remoteJid,
+            resolvedPhone: canonicalPhone,
+            onWhatsAppVerified: jidInfo.exists
+        });
     } catch (err) {
         console.error('[Lead Recovery Error]:', err);
         res.status(500).json({ success: false, error: err?.message || 'Erro ao recuperar lead' });
@@ -7851,7 +8165,8 @@ app.get('/api/funnels', (_req, res) => {
             const startNode = nodes.find(n => (n.nodeType || '').toUpperCase() === 'START');
             const pixNode = nodes.find(n => (n.nodeType || '').toUpperCase() === 'PIX' || (n.nodeType || '').toUpperCase() === 'PIX_VERIFIER');
 
-            const trigger = (startNode?.config?.trigger || `teste${index + 1}`).trim();
+            const nameTrigMatch = String(flow.name || '').match(/gatilho:\s*([^\)\]]+)/i);
+            const trigger = (startNode?.config?.trigger || (nameTrigMatch ? nameTrigMatch[1] : '') || `teste${index + 1}`).trim();
             const expectedAmount = Number(pixNode?.config?.amount || pixNode?.config?.expectedAmount || 19.90);
             const beneficiary = pixNode?.config?.pixKeyName || pixNode?.config?.beneficiary || 'Pastor Guilherme';
 
@@ -7896,8 +8211,8 @@ app.get('/api/funnels', (_req, res) => {
             success: true,
             count: funnelsList.length,
             singleFunnelMode: Boolean(store.singleFunnelMode),
-            activeFunnelId: store.activeFunnelId || 'funil4',
-            activeFunnelName: store.activeFunnelName || 'Funil 4: Jornada da Bíblia (Pastor Guilherme)',
+            activeFunnelId: store.activeFunnelId || 'flow_1794362249148',
+            activeFunnelName: store.activeFunnelName || 'Funil 4: Jornada da Bíblia - João Antônio (Gatilho: teste4_copia) - 82 99689-8259 (Cópia)',
             funnels: funnelsList
         });
     } catch (err) {
@@ -7909,11 +8224,13 @@ app.get('/api/funnels', (_req, res) => {
 app.post('/api/funnels/mode', (req, res) => {
     try {
         const { singleFunnelMode, activeFunnelId, activeFunnelName } = req.body || {};
+        funnelModeLocalChanged = true;
         store.singleFunnelMode = Boolean(singleFunnelMode);
-        if (activeFunnelId) store.activeFunnelId = activeFunnelId;
-        if (activeFunnelName) store.activeFunnelName = activeFunnelName;
+        if (activeFunnelId) store.activeFunnelId = String(activeFunnelId).trim();
+        if (activeFunnelName) store.activeFunnelName = String(activeFunnelName).trim();
         saveStore(store);
-        console.log(`[MetaHub] Modo Funil Único atualizado: ${store.singleFunnelMode ? 'ATIVO' : 'DESATIVADO'} -> ${store.activeFunnelName}`);
+        backupFunnelModeToCloudKv('bot_whatsapp_principal').catch(() => {});
+        console.log(`[MetaHub] Modo Funil Único atualizado: ${store.singleFunnelMode ? 'ATIVO' : 'DESATIVADO'} -> ${store.activeFunnelName} (${store.activeFunnelId})`);
         res.json({
             success: true,
             singleFunnelMode: store.singleFunnelMode,
@@ -7929,8 +8246,8 @@ app.get('/api/funnels/mode', (_req, res) => {
     res.json({
         success: true,
         singleFunnelMode: Boolean(store.singleFunnelMode),
-        activeFunnelId: store.activeFunnelId || 'funil4',
-        activeFunnelName: store.activeFunnelName || 'Funil 4: Jornada da Bíblia (Pastor Guilherme)'
+        activeFunnelId: store.activeFunnelId || 'flow_1794362249148',
+        activeFunnelName: store.activeFunnelName || 'Funil 4: Jornada da Bíblia - João Antônio (Gatilho: teste4_copia) - 82 99689-8259 (Cópia)'
     });
 });
 
@@ -8046,6 +8363,16 @@ const META_PERIOD_PRESET_MAP = {
     'MAX': 'maximum'
 };
 
+const META_ZERO_DECIMAL_CURRENCIES = new Set(['BIF', 'CLP', 'COP', 'DJF', 'GNF', 'HUF', 'ISK', 'IDR', 'JPY', 'KMF', 'KRW', 'MGA', 'PYG', 'RWF', 'TWD', 'UGX', 'VND', 'VUV', 'XAF', 'XOF', 'XPF']);
+const META_THREE_DECIMAL_CURRENCIES = new Set(['BHD', 'IQD', 'JOD', 'KWD', 'LYD', 'OMR', 'TND']);
+
+function getMetaCurrencyOffset(currency = 'BRL') {
+    const code = String(currency || 'BRL').trim().toUpperCase();
+    if (META_ZERO_DECIMAL_CURRENCIES.has(code)) return 1;
+    if (META_THREE_DECIMAL_CURRENCIES.has(code)) return 1000;
+    return 100;
+}
+
 function parseMetaInsightRow(row) {
     const msgAction = (row.actions || []).find(a =>
         a.action_type === 'onsite_conversion.messaging_conversation_started_7d' ||
@@ -8069,8 +8396,9 @@ function parseMetaInsightRow(row) {
     const spend = parseFloat(row.spend || 0);
     const impressions = parseInt(row.impressions || 0, 10);
     const clicks = parseInt(row.clicks || 0, 10);
-    const cpm = parseFloat(row.cpm || 0);
-    const ctr = parseFloat(row.ctr || 0);
+    const cpm = parseFloat(row.cpm || 0) || (impressions > 0 ? (spend / impressions) * 1000 : 0);
+    const ctr = parseFloat(row.ctr || 0) || (impressions > 0 ? (clicks / impressions) * 100 : 0);
+    const cpc = parseFloat(row.cpc || 0) || (clicks > 0 ? spend / clicks : 0);
 
     const cplAction = (row.cost_per_action_type || []).find(a =>
         a.action_type === 'onsite_conversion.messaging_conversation_started_7d' ||
@@ -8088,6 +8416,7 @@ function parseMetaInsightRow(row) {
         spend,
         cpm,
         ctr,
+        cpc,
         impressions,
         clicks,
         leads,
@@ -8123,7 +8452,10 @@ async function fetchMetaAccountsFromApi() {
         if (res.status === 'fulfilled' && Array.isArray(res.value)) {
             res.value.forEach(acc => {
                 const cleanId = acc.account_id || acc.id.replace('act_', '');
-                accountsMap.set(cleanId, acc);
+                accountsMap.set(cleanId, {
+                    ...acc,
+                    currency_offset: getMetaCurrencyOffset(acc.currency)
+                });
             });
         }
     });
@@ -8169,17 +8501,104 @@ app.get('/api/meta/insights', async (req, res) => {
         }
 
         const accountsInsights = {};
-        const fields = 'campaign_id,campaign_name,objective,spend,cpm,ctr,impressions,clicks,actions,action_values,cost_per_action_type,purchase_roas';
+        const insightFields = 'campaign_id,campaign_name,objective,spend,cpm,ctr,cpc,impressions,clicks,actions,action_values,cost_per_action_type,purchase_roas';
+        const campaignFields = 'id,name,status,effective_status,objective,daily_budget,lifetime_budget,adsets.limit(50){id,status,effective_status,daily_budget,lifetime_budget}';
 
         await Promise.allSettled(
             accounts.map(async (acc) => {
                 const cleanId = acc.account_id || (acc.id ? acc.id.replace('act_', '') : '');
-                const url = `https://graph.facebook.com/v21.0/act_${cleanId}/insights?level=campaign&fields=${fields}&date_preset=${metaPreset}&limit=100&access_token=${token}`;
+                const accCurrency = acc.currency || 'BRL';
+                const currencyOffset = getMetaCurrencyOffset(accCurrency);
+                const insightsUrl = `https://graph.facebook.com/v21.0/act_${cleanId}/insights?level=campaign&fields=${insightFields}&date_preset=${metaPreset}&limit=100&access_token=${token}`;
+                const campaignsUrl = `https://graph.facebook.com/v21.0/act_${cleanId}/campaigns?fields=${campaignFields}&limit=100&access_token=${token}`;
                 try {
-                    const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
-                    const json = await r.json();
-                    const rows = Array.isArray(json.data) ? json.data : [];
-                    const campaigns = rows.map(row => parseMetaInsightRow(row));
+                    const [insRes, campRes] = await Promise.allSettled([
+                        fetch(insightsUrl, { signal: AbortSignal.timeout(9000) }).then(r => r.json()),
+                        fetch(campaignsUrl, { signal: AbortSignal.timeout(9000) }).then(r => r.json())
+                    ]);
+
+                    const campaignMap = new Map();
+                    const rawCampaigns = (campRes.status === 'fulfilled' && Array.isArray(campRes.value?.data)) ? campRes.value.data : [];
+                    for (const camp of rawCampaigns) {
+                        const adsets = Array.isArray(camp.adsets?.data) ? camp.adsets.data : [];
+                        const activeAdsets = adsets.filter(a => a.effective_status === 'ACTIVE' || a.status === 'ACTIVE');
+                        const budgetAdsets = activeAdsets.length > 0
+                            ? activeAdsets
+                            : adsets.filter(a => a.effective_status !== 'DELETED' && a.effective_status !== 'ARCHIVED');
+
+                        const adsetsDailyBudget = budgetAdsets.reduce((s, a) => s + Number(a.daily_budget || 0), 0);
+                        const adsetsLifetimeBudget = budgetAdsets.reduce((s, a) => s + Number(a.lifetime_budget || 0), 0);
+                        const campDailyBudget = Number(camp.daily_budget || 0);
+                        const campLifetimeBudget = Number(camp.lifetime_budget || 0);
+                        const budgetLevel = (campDailyBudget > 0 || campLifetimeBudget > 0)
+                            ? 'CBO'
+                            : ((adsetsDailyBudget > 0 || adsetsLifetimeBudget > 0) ? 'ABO' : null);
+
+                        campaignMap.set(String(camp.id), {
+                            campaignId: String(camp.id),
+                            id: String(camp.id),
+                            campaignName: camp.name || '',
+                            name: camp.name || '',
+                            status: camp.status || 'PAUSED',
+                            effective_status: camp.effective_status || camp.status || 'PAUSED',
+                            objective: camp.objective || '',
+                            daily_budget: campDailyBudget > 0 ? String(campDailyBudget) : null,
+                            lifetime_budget: campLifetimeBudget > 0 ? String(campLifetimeBudget) : null,
+                            adsets_daily_budget: adsetsDailyBudget > 0 ? adsetsDailyBudget : 0,
+                            adsets_lifetime_budget: adsetsLifetimeBudget > 0 ? adsetsLifetimeBudget : 0,
+                            budget_level: budgetLevel,
+                            currency: accCurrency,
+                            currency_offset: currencyOffset,
+                            spend: 0,
+                            cpm: 0,
+                            ctr: 0,
+                            cpc: 0,
+                            impressions: 0,
+                            clicks: 0,
+                            leads: 0,
+                            cpl: 0,
+                            purchases: 0,
+                            revenue: 0,
+                            roas: 0
+                        });
+                    }
+
+                    const rows = (insRes.status === 'fulfilled' && Array.isArray(insRes.value?.data)) ? insRes.value.data : [];
+                    for (const row of rows) {
+                        const parsed = parseMetaInsightRow(row);
+                        const cid = String(parsed.campaignId || '');
+                        const existing = cid ? campaignMap.get(cid) : null;
+                        if (existing) {
+                            Object.assign(existing, parsed, {
+                                name: existing.name || parsed.campaignName,
+                                campaignName: existing.campaignName || parsed.campaignName,
+                                objective: existing.objective || parsed.objective
+                            });
+                        } else if (cid) {
+                            campaignMap.set(cid, {
+                                ...parsed,
+                                id: cid,
+                                name: parsed.campaignName,
+                                status: 'PAUSED',
+                                effective_status: 'PAUSED',
+                                daily_budget: null,
+                                lifetime_budget: null,
+                                adsets_daily_budget: 0,
+                                adsets_lifetime_budget: 0,
+                                budget_level: null,
+                                currency: accCurrency,
+                                currency_offset: currencyOffset
+                            });
+                        }
+                    }
+
+                    const campaigns = Array.from(campaignMap.values()).sort((a, b) => {
+                        const aActive = (a.effective_status === 'ACTIVE' || a.status === 'ACTIVE') ? 1 : 0;
+                        const bActive = (b.effective_status === 'ACTIVE' || b.status === 'ACTIVE') ? 1 : 0;
+                        if (aActive !== bActive) return bActive - aActive;
+                        if (b.spend !== a.spend) return b.spend - a.spend;
+                        return Number(b.daily_budget || b.adsets_daily_budget || 0) - Number(a.daily_budget || a.adsets_daily_budget || 0);
+                    });
 
                     let spend = 0, impressions = 0, clicks = 0, leads = 0, purchases = 0, revenue = 0;
                     campaigns.forEach(c => {
@@ -8192,6 +8611,7 @@ app.get('/api/meta/insights', async (req, res) => {
                     });
                     const cpm = impressions > 0 ? spend / (impressions / 1000) : 0;
                     const ctr = impressions > 0 ? (clicks / impressions) * 100 : 0;
+                    const cpc = clicks > 0 ? spend / clicks : 0;
                     const cpl = leads > 0 ? spend / leads : 0;
                     const roas = spend > 0 && revenue > 0 ? revenue / spend : 0;
 
@@ -8200,19 +8620,22 @@ app.get('/api/meta/insights', async (req, res) => {
                             spend: +spend.toFixed(2),
                             cpm: +cpm.toFixed(2),
                             ctr: +ctr.toFixed(2),
+                            cpc: +cpc.toFixed(2),
                             impressions,
                             clicks,
                             leads,
                             cpl: +cpl.toFixed(2),
                             purchases,
                             revenue: +revenue.toFixed(2),
-                            roas: +roas.toFixed(2)
+                            roas: +roas.toFixed(2),
+                            currency: accCurrency,
+                            currency_offset: currencyOffset
                         },
                         campaigns
                     };
                 } catch (e) {
                     accountsInsights[cleanId] = {
-                        metrics: { spend: 0, cpm: 0, ctr: 0, impressions: 0, clicks: 0, leads: 0, cpl: 0, purchases: 0, revenue: 0, roas: 0 },
+                        metrics: { spend: 0, cpm: 0, ctr: 0, cpc: 0, impressions: 0, clicks: 0, leads: 0, cpl: 0, purchases: 0, revenue: 0, roas: 0, currency: accCurrency, currency_offset: currencyOffset },
                         campaigns: []
                     };
                 }
