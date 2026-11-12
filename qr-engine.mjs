@@ -1197,6 +1197,36 @@ function cacheSentMessage(msgId, messageObj) {
 }
 
 const pixDeliveryTracker = new Map();
+const recentReceiptEvents = [];
+function pushReceiptEvent(event) {
+    recentReceiptEvents.push({
+        at: new Date().toISOString(),
+        ...event
+    });
+    if (recentReceiptEvents.length > 60) {
+        recentReceiptEvents.shift();
+    }
+}
+
+function collectReceiptItemIds(node) {
+    const attrs = node?.attrs || {};
+    const ids = new Set();
+    if (attrs.id) ids.add(String(attrs.id));
+    const walk = (children) => {
+        if (!Array.isArray(children)) return;
+        for (const child of children) {
+            if (child?.tag === 'item' && child?.attrs?.id) {
+                ids.add(String(child.attrs.id));
+            }
+            if (Array.isArray(child?.content)) {
+                walk(child.content);
+            }
+        }
+    };
+    walk(node?.content);
+    return Array.from(ids);
+}
+
 function trackPixMessage(msgId, meta = {}) {
     if (!msgId) return;
     pixDeliveryTracker.set(msgId, {
@@ -1236,6 +1266,33 @@ function updateTrackedPixStatus(msgId, statusCode, stubParams = []) {
     entry.updatedAt = new Date().toISOString();
     const logFn = statusCode === 0 ? console.error : console.log;
     logFn(`[PIX Delivery Tracker] 📡 msg=${msgId} para ${entry.remoteJid} -> ${entry.status}${entry.error ? ` (erro: ${entry.error})` : ''}`);
+}
+
+function updateTrackedPixFromReceipt(msgId, receipt = {}) {
+    if (!msgId || !pixDeliveryTracker.has(msgId)) return;
+    const entry = pixDeliveryTracker.get(msgId);
+    const nextCode = receipt.playedTimestamp
+        ? 5
+        : receipt.readTimestamp
+          ? 4
+          : receipt.receiptTimestamp
+            ? 3
+            : null;
+    if (nextCode !== null && (entry.statusCode == null || entry.statusCode < nextCode)) {
+        entry.statusCode = nextCode;
+        entry.status = WA_STATUS_LABELS[nextCode] || `STATUS_${nextCode}`;
+    }
+    entry.receipts.push({
+        at: new Date().toISOString(),
+        source: 'message-receipt.update',
+        userJid: receipt.userJid || null,
+        receiptTimestamp: receipt.receiptTimestamp || null,
+        readTimestamp: receipt.readTimestamp || null,
+        playedTimestamp: receipt.playedTimestamp || null,
+        pendingDeviceJid: receipt.pendingDeviceJid || null
+    });
+    entry.updatedAt = new Date().toISOString();
+    console.log(`[PIX Receipt Update] 📬 msg=${msgId} para ${entry.remoteJid} -> ${entry.status} (${JSON.stringify(receipt)})`);
 }
 
 function recordPixStanzaEvent(msgId, kind, attrs = {}) {
@@ -1322,8 +1379,18 @@ function resolvePixKeyType(rawKey, configuredType = '') {
     return 'CPF';
 }
 
-function buildPixBizNodes(remoteJid = '', variant = 'default') {
-    const bizNode = variant === 'attr_only'
+function parsePixVariant(variant = 'default', noBotOverride = undefined) {
+    const raw = String(variant || 'default').trim().toLowerCase();
+    const baseVariant = raw.replace(/_(no_bot|with_bot)$/, '') || 'default';
+    const noBotByVariant = raw.endsWith('_no_bot') || (['zapo', 'minimal'].includes(baseVariant) && !raw.endsWith('_with_bot'));
+    const noBot = typeof noBotOverride === 'boolean' ? noBotOverride : noBotByVariant;
+    const useAttrOnlyBiz = ['attr_only', 'zapo', 'minimal'].includes(baseVariant);
+    return { rawVariant: raw, baseVariant, noBot, useAttrOnlyBiz };
+}
+
+function buildPixBizNodes(remoteJid = '', variant = 'default', noBotOverride = undefined) {
+    const { useAttrOnlyBiz, noBot } = parsePixVariant(variant, noBotOverride);
+    const bizNode = useAttrOnlyBiz
         ? {
             tag: 'biz',
             attrs: { native_flow_name: 'payment_info' }
@@ -1341,7 +1408,7 @@ function buildPixBizNodes(remoteJid = '', variant = 'default') {
         };
 
     const nodes = [bizNode];
-    if (remoteJid && !/@(g\.us|newsletter|broadcast)$/.test(String(remoteJid))) {
+    if (!noBot && remoteJid && !/@(g\.us|newsletter|broadcast)$/.test(String(remoteJid))) {
         nodes.push({ tag: 'bot', attrs: { biz_bot: '1' } });
     }
     return nodes;
@@ -1356,6 +1423,7 @@ function buildPixInteractiveMessage({
     configuredKeyType = '',
     variant = 'default'
 }) {
+    const { baseVariant } = parsePixVariant(variant);
     const cleanPixKey = String(pixKey || '').trim();
     const cleanCopyCode = String(copyCode || cleanPixKey).trim();
     const cleanBeneficiary = String(beneficiaryName || 'Pastor Guilherme').trim();
@@ -1367,48 +1435,79 @@ function buildPixInteractiveMessage({
         referenceId += chars.charAt(Math.floor(Math.random() * chars.length));
     }
 
-    const useWaJsOrder = variant === 'wa_js';
-    const paymentPayload = {
-        currency: 'BRL',
-        total_amount: { value: 0, offset: useWaJsOrder ? 1 : 100 },
-        reference_id: referenceId,
-        type: 'physical-goods',
-        order: {
-            status: useWaJsOrder ? 'payment_requested' : 'pending',
-            subtotal: { value: 0, offset: useWaJsOrder ? 1 : 100 },
-            order_type: useWaJsOrder ? 'ORDER_WITHOUT_AMOUNT' : 'ORDER',
-            items: [
-                {
-                    name: '',
-                    ...(useWaJsOrder ? { retailer_id: `custom-item-${referenceId}` } : { sale_amount: { value: 0, offset: 100 } }),
-                    amount: { value: 0, offset: useWaJsOrder ? 1 : 100 },
-                    quantity: 0
-                }
-            ]
-        },
-        payment_settings: [
+    const useWaJsOrder = baseVariant === 'wa_js';
+    const isMinimal = baseVariant === 'minimal';
+    const isZapo = baseVariant === 'zapo';
+    const paymentPayload = isMinimal
+        ? {
+              payment_settings: [
+                  {
+                      type: 'pix_static_code',
+                      pix_static_code: {
+                          merchant_name: cleanBeneficiary,
+                          key: cleanCopyCode,
+                          key_type: resolvedKeyType
+                      }
+                  }
+              ]
+          }
+        : {
+              currency: 'BRL',
+              total_amount: { value: 0, offset: useWaJsOrder ? 1 : 100 },
+              reference_id: referenceId,
+              type: 'physical-goods',
+              order: {
+                  status: useWaJsOrder ? 'payment_requested' : 'pending',
+                  subtotal: { value: 0, offset: useWaJsOrder ? 1 : 100 },
+                  order_type: useWaJsOrder ? 'ORDER_WITHOUT_AMOUNT' : 'ORDER',
+                  items: [
+                      {
+                          name: '',
+                          ...(useWaJsOrder ? { retailer_id: `custom-item-${referenceId}` } : { sale_amount: { value: 0, offset: 100 } }),
+                          amount: { value: 0, offset: useWaJsOrder ? 1 : 100 },
+                          quantity: 0
+                      }
+                  ]
+              },
+              payment_settings: [
+                  {
+                      type: 'pix_static_code',
+                      pix_static_code: {
+                          merchant_name: cleanBeneficiary,
+                          key: cleanCopyCode,
+                          key_type: resolvedKeyType
+                      }
+                  },
+                  ...(useWaJsOrder ? [{ type: 'cards', cards: { enabled: false } }] : [])
+              ],
+              ...(useWaJsOrder
+                  ? {
+                        external_payment_configurations: [
+                            { payment_instruction: String(footerText || ''), type: 'payment_instruction' }
+                        ],
+                        additional_note: ''
+                    }
+                  : {
+                        share_payment_status: false,
+                        ...(isZapo ? { is_soft_deleted: false, referral: 'chat_attachment' } : {})
+                    })
+          };
+
+    const nativeFlowMessage = {
+        buttons: [
             {
-                type: 'pix_static_code',
-                pix_static_code: {
-                    merchant_name: cleanBeneficiary,
-                    key: cleanCopyCode,
-                    key_type: resolvedKeyType
-                }
-            },
-            ...(useWaJsOrder ? [{ type: 'cards', cards: { enabled: false } }] : [])
+                name: 'payment_info',
+                buttonParamsJson: JSON.stringify(paymentPayload)
+            }
         ],
-        ...(useWaJsOrder
-            ? {
-                  external_payment_configurations: [
-                      { payment_instruction: String(footerText || ''), type: 'payment_instruction' }
-                  ],
-                  additional_note: ''
-              }
-            : { share_payment_status: false })
+        ...(!isZapo && !isMinimal
+            ? { messageParamsJson: JSON.stringify({ native_flow_name: 'order_details', version: 1 }) }
+            : {}),
+        messageVersion: 1
     };
 
     const interactiveMessage = {
-        ...(variant === 'with_body' && cleanBeneficiary
+        ...(baseVariant === 'with_body' && cleanBeneficiary
             ? {
                   body: {
                       text: amount
@@ -1416,17 +1515,10 @@ function buildPixInteractiveMessage({
                           : `*${cleanBeneficiary}*\nChave: ${cleanPixKey}`
                   }
               }
-            : {}),
-        nativeFlowMessage: {
-            buttons: [
-                {
-                    name: 'payment_info',
-                    buttonParamsJson: JSON.stringify(paymentPayload)
-                }
-            ],
-            messageParamsJson: JSON.stringify({ native_flow_name: 'order_details', version: 1 }),
-            messageVersion: 1
-        }
+            : isMinimal
+              ? { body: { text: '' } }
+              : {}),
+        nativeFlowMessage
     };
 
     const message = {
@@ -1450,13 +1542,15 @@ async function sendUniversalPixCopyCard({
     configuredKeyType = '',
     botId = 'bot_whatsapp_principal',
     userPhone = '',
-    variant = 'default'
+    variant = 'default',
+    noBot = undefined
 }) {
     const activeSock = activeSockets.get(botId) || sock;
     if (!activeSock || typeof activeSock.relayMessage !== 'function' || !proto || !generateWAMessageFromContent) {
         return false;
     }
 
+    const { noBot: effectiveNoBot } = parsePixVariant(variant, noBot);
     const { message, cleanBeneficiary, cleanPixKey, resolvedKeyType } = buildPixInteractiveMessage({
         beneficiaryName,
         pixKey,
@@ -1488,22 +1582,25 @@ async function sendUniversalPixCopyCard({
                 }
             );
 
+            const bizNodes = buildPixBizNodes(remoteJid, variant, noBot);
             cacheSentMessage(waMessage.key.id, waMessage.message);
             trackPixMessage(waMessage.key.id, {
                 remoteJid,
                 keyType: resolvedKeyType,
                 pixKey: cleanPixKey,
                 beneficiary: cleanBeneficiary,
-                variant
+                variant,
+                noBot: effectiveNoBot,
+                bizNodes
             });
 
             await targetSock.relayMessage(remoteJid, waMessage.message, {
                 messageId: waMessage.key.id,
-                additionalNodes: buildPixBizNodes(remoteJid, variant)
+                additionalNodes: bizNodes
             });
 
-            console.log(`[PIX Card Universal] ✅ Cartão Pix Nativo Oficial (payment_info | variant=${variant} | ${cleanBeneficiary} | ${cleanPixKey} | ${resolvedKeyType} | msg=${waMessage.key.id}) enviado para ${remoteJid}`);
-            return { messageId: waMessage.key.id, keyType: resolvedKeyType, variant, remoteJid };
+            console.log(`[PIX Card Universal] ✅ Cartão Pix Nativo Oficial (payment_info | variant=${variant} | noBot=${effectiveNoBot} | ${cleanBeneficiary} | ${cleanPixKey} | ${resolvedKeyType} | msg=${waMessage.key.id}) enviado para ${remoteJid}`);
+            return { messageId: waMessage.key.id, keyType: resolvedKeyType, variant, noBot: effectiveNoBot, remoteJid };
         }
     });
 }
@@ -1843,6 +1940,16 @@ async function startQrSession(botId = 'bot_whatsapp_principal', forceNewQr = fal
                 const attrs = node?.attrs || {};
                 if (attrs.id) {
                     recordPixStanzaEvent(attrs.id, 'ack', attrs);
+                    if (attrs.error || pixDeliveryTracker.has(attrs.id)) {
+                        pushReceiptEvent({
+                            source: 'CB:ack',
+                            msgId: attrs.id,
+                            from: attrs.from || null,
+                            type: attrs.type || null,
+                            error: attrs.error || null,
+                            tracked: pixDeliveryTracker.has(attrs.id)
+                        });
+                    }
                     if (attrs.error) {
                         console.error(`[WA STANZA ACK ERROR] msg=${attrs.id} from=${attrs.from} error=${attrs.error}`);
                     }
@@ -1853,14 +1960,44 @@ async function startQrSession(botId = 'bot_whatsapp_principal', forceNewQr = fal
         sock.ws?.on('CB:receipt', (node) => {
             try {
                 const attrs = node?.attrs || {};
-                const ids = attrs.id ? [attrs.id] : [];
-                if (Array.isArray(node?.content) && Array.isArray(node.content[0]?.content)) {
-                    for (const child of node.content[0].content) {
-                        if (child?.tag === 'item' && child?.attrs?.id) ids.push(child.attrs.id);
-                    }
-                }
+                const ids = collectReceiptItemIds(node);
+                pushReceiptEvent({
+                    source: 'CB:receipt',
+                    msgIds: ids,
+                    from: attrs.from || null,
+                    participant: attrs.participant || null,
+                    type: attrs.type || null,
+                    error: attrs.error || null,
+                    tracked: ids.some((id) => pixDeliveryTracker.has(id))
+                });
                 for (const id of ids) {
                     recordPixStanzaEvent(id, 'receipt', attrs);
+                }
+            } catch {}
+        });
+
+        sock.ev.on('message-receipt.update', (updates) => {
+            try {
+                for (const u of updates || []) {
+                    const msgId = u?.key?.id || null;
+                    const remoteJid = u?.key?.remoteJid || null;
+                    const receipt = u?.receipt || {};
+                    const isTracked = Boolean(msgId && pixDeliveryTracker.has(msgId));
+                    pushReceiptEvent({
+                        source: 'message-receipt.update',
+                        msgId,
+                        remoteJid,
+                        fromMe: Boolean(u?.key?.fromMe),
+                        userJid: receipt.userJid || null,
+                        receiptTimestamp: receipt.receiptTimestamp || null,
+                        readTimestamp: receipt.readTimestamp || null,
+                        playedTimestamp: receipt.playedTimestamp || null,
+                        pendingDeviceJid: receipt.pendingDeviceJid || null,
+                        tracked: isTracked
+                    });
+                    if (isTracked) {
+                        updateTrackedPixFromReceipt(msgId, receipt);
+                    }
                 }
             } catch {}
         });
@@ -1871,8 +2008,21 @@ async function startQrSession(botId = 'bot_whatsapp_principal', forceNewQr = fal
                     const msgId = u?.key?.id;
                     const statusCode = u?.update?.status;
                     const stubParams = u?.update?.messageStubParameters;
+                    const isTracked = Boolean(msgId && pixDeliveryTracker.has(msgId));
                     if (msgId && typeof statusCode === 'number') {
                         updateTrackedPixStatus(msgId, statusCode, stubParams);
+                        if (isTracked || statusCode === 0 || statusCode >= 3) {
+                            pushReceiptEvent({
+                                source: 'messages.update',
+                                msgId,
+                                remoteJid: u?.key?.remoteJid || null,
+                                fromMe: Boolean(u?.key?.fromMe),
+                                statusCode,
+                                status: WA_STATUS_LABELS[statusCode] || `STATUS_${statusCode}`,
+                                error: Array.isArray(stubParams) && stubParams.length > 0 ? stubParams.join(' | ') : null,
+                                tracked: isTracked
+                            });
+                        }
                     }
                     if (statusCode === 0 && msgId && !pixDeliveryTracker.has(msgId)) {
                         console.warn(`[WA ACK ERROR] msg=${msgId} para ${u?.key?.remoteJid} -> erro: ${(stubParams || []).join(' | ')}`);
@@ -8209,7 +8359,10 @@ app.post('/api/test/send-pix-card', async (req, res) => {
             amount = '20,00',
             footerText = 'Toque no botão abaixo para copiar',
             keyType = '',
-            variant = 'default'
+            variant = 'default',
+            noBot = undefined,
+            preferPn = false,
+            waitMs = 2500
         } = req.body || {};
 
         if (!to) {
@@ -8221,7 +8374,20 @@ app.post('/api/test/send-pix-card', async (req, res) => {
             return res.status(400).json({ success: false, error: `Socket do bot ${botId} não está conectado` });
         }
 
-        const remoteJid = toWhatsAppJid(String(to).trim());
+        const initialJid = toWhatsAppJid(String(to).trim());
+        const lidMapping = sock.signalRepository?.lidMapping;
+        let pnForLid = null;
+        let lidForPn = null;
+        try {
+            if (lidMapping && initialJid.endsWith('@lid') && typeof lidMapping.getPNForLID === 'function') {
+                pnForLid = (await lidMapping.getPNForLID(initialJid)) || null;
+            }
+            if (lidMapping && initialJid.endsWith('@s.whatsapp.net') && typeof lidMapping.getLIDForPN === 'function') {
+                lidForPn = (await lidMapping.getLIDForPN(initialJid)) || null;
+            }
+        } catch {}
+
+        const remoteJid = preferPn && pnForLid ? toWhatsAppJid(pnForLid) : initialJid;
         const result = await sendUniversalPixCopyCard({
             sock,
             remoteJid,
@@ -8233,15 +8399,20 @@ app.post('/api/test/send-pix-card', async (req, res) => {
             configuredKeyType: keyType,
             botId,
             userPhone: String(to).trim(),
-            variant
+            variant,
+            noBot
         });
 
-        await new Promise((r) => setTimeout(r, 1500));
+        const delayMs = Math.min(Math.max(Number(waitMs) || 2500, 0), 10000);
+        if (delayMs > 0) {
+            await new Promise((r) => setTimeout(r, delayMs));
+        }
         const tracked = result?.messageId ? pixDeliveryTracker.get(result.messageId) || null : null;
 
         res.json({
             success: Boolean(result),
             remoteJid,
+            jidDiagnostics: { inputTo: String(to).trim(), initialJid, pnForLid, lidForPn, usedPreferPn: Boolean(preferPn && pnForLid) },
             result,
             deliveryStatus: tracked
         });
@@ -8252,11 +8423,16 @@ app.post('/api/test/send-pix-card', async (req, res) => {
 
 app.get('/api/test/pix-status', (req, res) => {
     const msgId = String(req.query.messageId || '').trim();
+    const recentEvents = recentReceiptEvents.slice(-25).reverse();
     if (msgId) {
-        return res.json({ success: true, item: pixDeliveryTracker.get(msgId) || null });
+        return res.json({
+            success: true,
+            item: pixDeliveryTracker.get(msgId) || null,
+            recentEvents
+        });
     }
     const items = Array.from(pixDeliveryTracker.values()).slice(-20).reverse();
-    res.json({ success: true, count: items.length, items });
+    res.json({ success: true, count: items.length, items, recentEvents });
 });
 
 // Endpoint de Teste do Alerta de Emergência Ntfy
