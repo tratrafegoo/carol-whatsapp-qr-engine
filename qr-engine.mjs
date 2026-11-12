@@ -1241,8 +1241,8 @@ function resolvePixKeyType(rawKey, configuredType = '') {
     return 'CPF';
 }
 
-function buildPixBizNodes() {
-    return [
+function buildPixBizNodes(remoteJid = '') {
+    const nodes = [
         {
             tag: 'biz',
             attrs: {
@@ -1264,6 +1264,12 @@ function buildPixBizNodes() {
             ]
         }
     ];
+
+    if (remoteJid && !/@(g\.us|newsletter|broadcast)$/.test(remoteJid)) {
+        nodes.push({ tag: 'bot', attrs: { biz_bot: '1' } });
+    }
+
+    return nodes;
 }
 
 async function sendUniversalPixCopyCard({
@@ -1287,6 +1293,17 @@ async function sendUniversalPixCopyCard({
     const cleanCopyCode = String(copyCode || cleanPixKey).trim();
     const resolvedKeyType = resolvePixKeyType(cleanCopyCode || cleanPixKey, configuredKeyType);
 
+    // 1. GARANTIA UNIVERSAL (100% de qualquer celular):
+    // Dispara primeiro uma mensagem de texto simples contendo estritamente a chave Pix isolada.
+    // No iPhone, segurar o balão dá "Copiar" imediato; no Android também, sem erro de seleção.
+    try {
+        await sendRealisticText(botId, activeSock, remoteJid, userPhone, cleanPixKey);
+        await new Promise((r) => setTimeout(r, 400));
+    } catch (textErr) {
+        console.warn(`[PIX Universal] Aviso ao enviar texto isolado da chave:`, textErr?.message);
+    }
+
+    // 2. BOTÃO INTERATIVO ENRIQUECIDO PARA iOS / ANDROID / WEB:
     const buttonParams = {
         display_text: 'Copiar chave Pix',
         id: 'copy_pix_key',
@@ -1300,7 +1317,9 @@ async function sendUniversalPixCopyCard({
         }
     ];
 
-    // Formato 100% limpo e direto conforme solicitado: apenas o texto da chave (e-mail/telefone/etc.) + botão "Copiar chave Pix"
+    const templateId = crypto.randomUUID ? crypto.randomUUID() : `pix_${Date.now()}`;
+
+    // Formato com messageParamsJson e messageSecret para reconhecimento de interface no iPhone
     const interactiveMessage = proto.Message?.InteractiveMessage?.create
         ? proto.Message.InteractiveMessage.create({
               body: proto.Message.InteractiveMessage.Body?.create
@@ -1308,18 +1327,32 @@ async function sendUniversalPixCopyCard({
                   : { text: cleanPixKey },
               nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage?.create
                   ? proto.Message.InteractiveMessage.NativeFlowMessage.create({
-                        buttons
+                        buttons,
+                        messageParamsJson: JSON.stringify({
+                            from: 'api',
+                            templateId
+                        })
                     })
                   : {
-                        buttons
+                        buttons,
+                        messageParamsJson: JSON.stringify({
+                            from: 'api',
+                            templateId
+                        })
                     }
           })
         : {
               body: { text: cleanPixKey },
               nativeFlowMessage: {
-                  buttons
+                  buttons,
+                  messageParamsJson: JSON.stringify({
+                      from: 'api',
+                      templateId
+                  })
               }
           };
+
+    const messageSecret = crypto.randomBytes ? crypto.randomBytes(32) : Buffer.from(Array.from({ length: 32 }, () => Math.floor(Math.random() * 256)));
 
     return safeDispatchBlock({
         sock: activeSock,
@@ -1334,6 +1367,7 @@ async function sendUniversalPixCopyCard({
                 remoteJid,
                 {
                     messageContextInfo: {
+                        messageSecret,
                         deviceListMetadata: {},
                         deviceListMetadataVersion: 2
                     },
@@ -1346,10 +1380,10 @@ async function sendUniversalPixCopyCard({
 
             await targetSock.relayMessage(remoteJid, waMessage.message, {
                 messageId: waMessage.key.id,
-                additionalNodes: buildPixBizNodes()
+                additionalNodes: buildPixBizNodes(remoteJid)
             });
 
-            console.log(`[PIX Card Universal] ✅ Cartão PIX simples (cta_copy | key=${cleanPixKey} | type=${resolvedKeyType}) enviado para ${remoteJid}`);
+            console.log(`[PIX Card Universal] ✅ Cartão PIX híbrido (texto isolado + cta_copy | key=${cleanPixKey} | type=${resolvedKeyType}) enviado para ${remoteJid}`);
             return true;
         }
     });
@@ -1577,7 +1611,7 @@ async function startQrSession(botId = 'bot_whatsapp_principal', forceNewQr = fal
                 cacheSentMessage(opts.messageId, message);
             }
             if (message?.interactiveMessage && (!opts?.additionalNodes || opts.additionalNodes.length === 0)) {
-                opts = { ...opts, additionalNodes: buildPixBizNodes() };
+                opts = { ...opts, additionalNodes: buildPixBizNodes(jid) };
             }
             return origRelayMessage(jid, message, opts);
         };
