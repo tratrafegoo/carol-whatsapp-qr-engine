@@ -1379,8 +1379,10 @@ function resolvePixKeyType(rawKey, configuredType = '') {
     return 'CPF';
 }
 
-function parsePixVariant(variant = 'default', noBotOverride = undefined) {
-    const raw = String(variant || 'default').trim().toLowerCase();
+const DEFAULT_PIX_VARIANT = 'attr_only_no_bot';
+
+function parsePixVariant(variant = DEFAULT_PIX_VARIANT, noBotOverride = undefined) {
+    const raw = String(variant || DEFAULT_PIX_VARIANT).trim().toLowerCase();
     const baseVariant = raw.replace(/_(no_bot|with_bot)$/, '') || 'default';
     const noBotByVariant = raw.endsWith('_no_bot') || (['zapo', 'minimal'].includes(baseVariant) && !raw.endsWith('_with_bot'));
     const noBot = typeof noBotOverride === 'boolean' ? noBotOverride : noBotByVariant;
@@ -1388,7 +1390,7 @@ function parsePixVariant(variant = 'default', noBotOverride = undefined) {
     return { rawVariant: raw, baseVariant, noBot, useAttrOnlyBiz };
 }
 
-function buildPixBizNodes(remoteJid = '', variant = 'default', noBotOverride = undefined) {
+function buildPixBizNodes(remoteJid = '', variant = DEFAULT_PIX_VARIANT, noBotOverride = undefined) {
     const { useAttrOnlyBiz, noBot } = parsePixVariant(variant, noBotOverride);
     const bizNode = useAttrOnlyBiz
         ? {
@@ -1421,7 +1423,7 @@ function buildPixInteractiveMessage({
     amount,
     footerText = '',
     configuredKeyType = '',
-    variant = 'default'
+    variant = DEFAULT_PIX_VARIANT
 }) {
     const { baseVariant } = parsePixVariant(variant);
     const cleanPixKey = String(pixKey || '').trim();
@@ -1542,7 +1544,7 @@ async function sendUniversalPixCopyCard({
     configuredKeyType = '',
     botId = 'bot_whatsapp_principal',
     userPhone = '',
-    variant = 'default',
+    variant = DEFAULT_PIX_VARIANT,
     noBot = undefined
 }) {
     const activeSock = activeSockets.get(botId) || sock;
@@ -1820,7 +1822,7 @@ async function startQrSession(botId = 'bot_whatsapp_principal', forceNewQr = fal
             },
         });
 
-        // Garante que qualquer reenvio automático (retry receipt) de mensagem interativa mantenha a tag <biz> e <bot>
+        // Garante que qualquer reenvio automático (retry receipt) de mensagem interativa mantenha o nó <biz native_flow_name="payment_info"/> (sem <bot biz_bot="1"/>)
         const origRelayMessage = sock.relayMessage.bind(sock);
         sock.relayMessage = async (jid, message, opts = {}) => {
             if (opts?.messageId && message) {
@@ -1829,7 +1831,7 @@ async function startQrSession(botId = 'bot_whatsapp_principal', forceNewQr = fal
             if (message?.interactiveMessage && (!opts?.additionalNodes || opts.additionalNodes.length === 0)) {
                 const firstBtn = message.interactiveMessage?.nativeFlowMessage?.buttons?.[0]?.name;
                 if (!firstBtn || firstBtn === 'payment_info') {
-                    opts = { ...opts, additionalNodes: buildPixBizNodes(jid) };
+                    opts = { ...opts, additionalNodes: buildPixBizNodes(jid, DEFAULT_PIX_VARIANT) };
                 }
             }
             return origRelayMessage(jid, message, opts);
@@ -8359,7 +8361,7 @@ app.post('/api/test/send-pix-card', async (req, res) => {
             amount = '20,00',
             footerText = 'Toque no botão abaixo para copiar',
             keyType = '',
-            variant = 'default',
+            variant = DEFAULT_PIX_VARIANT,
             noBot = undefined,
             preferPn = false,
             waitMs = 2500
