@@ -1223,11 +1223,15 @@ function resolvePixKeyType(rawKey, configuredType = '') {
     return 'CPF';
 }
 
-function buildPixBizNodes(remoteJid) {
-    const nodes = [
+function buildPixBizNodes() {
+    return [
         {
             tag: 'biz',
-            attrs: {},
+            attrs: {
+                actual_actors: '2',
+                host_storage: '2',
+                privacy_mode_ts: String(Math.floor(Date.now() / 1000))
+            },
             content: [
                 {
                     tag: 'interactive',
@@ -1242,12 +1246,6 @@ function buildPixBizNodes(remoteJid) {
             ]
         }
     ];
-
-    if (!/@(g\.us|newsletter|broadcast)$/.test(String(remoteJid || ''))) {
-        nodes.push({ tag: 'bot', attrs: { biz_bot: '1' } });
-    }
-
-    return nodes;
 }
 
 async function sendUniversalPixCopyCard({
@@ -1269,34 +1267,58 @@ async function sendUniversalPixCopyCard({
     const cleanBeneficiary = String(beneficiaryName || 'Favorecido').trim();
     const resolvedKeyType = resolvePixKeyType(cleanCopyCode || cleanPixKey, configuredKeyType);
 
+    const buttonParams = {
+        display_text: 'Copiar chave Pix',
+        id: 'copy_pix_key',
+        copy_code: cleanCopyCode
+    };
+
     const buttons = [
         {
             name: 'cta_copy',
-            buttonParamsJson: JSON.stringify({
-                display_text: 'Copiar chave Pix',
-                id: 'copy_pix_key',
-                copy_code: cleanCopyCode,
-            }),
-        },
+            buttonParamsJson: JSON.stringify(buttonParams)
+        }
     ];
 
-    const interactiveMessage = proto.Message.InteractiveMessage.create({
-        header: proto.Message.InteractiveMessage.Header.create({
-            title: cleanBeneficiary,
-            subtitle: `Chave: ${cleanPixKey}`,
-            hasMediaAttachment: false,
-        }),
-        body: proto.Message.InteractiveMessage.Body.create({
-            text: `💰 *Valor:* R$ ${amount || '20.00'}`,
-        }),
-        footer: proto.Message.InteractiveMessage.Footer.create({
-            text: String(footerText || 'Toque no botão abaixo para copiar'),
-        }),
-        nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
-            buttons,
-            messageParamsJson: '',
-        }),
-    });
+    const interactiveMessage = proto.Message?.InteractiveMessage?.create
+        ? proto.Message.InteractiveMessage.create({
+              body: proto.Message.InteractiveMessage.Body?.create
+                  ? proto.Message.InteractiveMessage.Body.create({ text: `💰 *Valor:* R$ ${amount || '20.00'}` })
+                  : { text: `💰 *Valor:* R$ ${amount || '20.00'}` },
+              footer: proto.Message.InteractiveMessage.Footer?.create
+                  ? proto.Message.InteractiveMessage.Footer.create({ text: String(footerText || 'Toque no botão abaixo para copiar') })
+                  : { text: String(footerText || 'Toque no botão abaixo para copiar') },
+              header: proto.Message.InteractiveMessage.Header?.create
+                  ? proto.Message.InteractiveMessage.Header.create({
+                        title: cleanBeneficiary,
+                        subtitle: `Chave: ${cleanPixKey}`,
+                        hasMediaAttachment: false
+                    })
+                  : {
+                        title: cleanBeneficiary,
+                        subtitle: `Chave: ${cleanPixKey}`,
+                        hasMediaAttachment: false
+                    },
+              nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage?.create
+                  ? proto.Message.InteractiveMessage.NativeFlowMessage.create({
+                        buttons
+                    })
+                  : {
+                        buttons
+                    }
+          })
+        : {
+              body: { text: `💰 *Valor:* R$ ${amount || '20.00'}` },
+              footer: { text: String(footerText || 'Toque no botão abaixo para copiar') },
+              header: {
+                  title: cleanBeneficiary,
+                  subtitle: `Chave: ${cleanPixKey}`,
+                  hasMediaAttachment: false
+              },
+              nativeFlowMessage: {
+                  buttons
+              }
+          };
 
     const waMessage = generateWAMessageFromContent(
         remoteJid,
@@ -1304,18 +1326,16 @@ async function sendUniversalPixCopyCard({
             messageContextInfo: {
                 deviceListMetadata: {},
                 deviceListMetadataVersion: 2,
-                messageSecret: crypto.randomBytes(32),
+                messageSecret: crypto.randomBytes(32)
             },
-            interactiveMessage,
+            interactiveMessage
         },
-        { userJid: sock.user?.id }
+        {}
     );
-
-    const additionalNodes = buildPixBizNodes(remoteJid);
 
     await sock.relayMessage(remoteJid, waMessage.message, {
         messageId: waMessage.key.id,
-        additionalNodes,
+        additionalNodes: buildPixBizNodes()
     });
 
     console.log(`[PIX Card Universal] ✅ Cartão PIX nativo (cta_copy | key_type=${resolvedKeyType}) enviado para ${remoteJid}`);
