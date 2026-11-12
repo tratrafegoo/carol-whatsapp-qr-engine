@@ -246,7 +246,8 @@
               "keyType": "CNPJ",
               "pixKey": "67.039.217/0001-86",
               "beneficiaryName": "GPS EBOOKS DIGITAIS LTDA",
-              "amount": "25.00"
+              "amount": "25.00",
+              "pixKeyType": "CNPJ"
             },
             "id": "node_flow_funil_1_11"
           },
@@ -960,7 +961,8 @@
               "keyType": "PHONE",
               "pixKey": "82996382293",
               "beneficiaryName": "SANTOS LIVROS",
-              "amount": "10.00"
+              "amount": "10.00",
+              "pixKeyType": "PHONE"
             },
             "id": "node_flow_funil_2_12"
           },
@@ -1584,7 +1586,8 @@
               "keyType": "PHONE",
               "pixKey": "11967837631",
               "beneficiaryName": "Marco Antonio",
-              "amount": "10.00"
+              "amount": "10.00",
+              "pixKeyType": "PHONE"
             },
             "id": "node_flow_funil_3_14"
           },
@@ -2230,10 +2233,11 @@
             },
             "label": "💳 Cartão PIX Copia e Cola (Pastor Guilherme)",
             "config": {
-              "keyType": "CPF",
+              "keyType": "EMAIL",
               "pixKey": "pastorguilhermeigreja@gmail.com",
               "beneficiaryName": "Pastor Guilherme",
-              "amount": "20.00"
+              "amount": "20.00",
+              "pixKeyType": "EMAIL"
             }
           },
           {
@@ -2794,10 +2798,11 @@
             },
             "label": "💳 Cartão PIX Copia e Cola (Pastor Guilherme)",
             "config": {
-              "keyType": "CPF",
+              "keyType": "EMAIL",
               "pixKey": "pastorguilhermeigreja@gmail.com",
               "beneficiaryName": "Pastor Guilherme",
-              "amount": "20.00"
+              "amount": "20.00",
+              "pixKeyType": "EMAIL"
             }
           },
           {
@@ -3509,7 +3514,8 @@
               "keyType": "CNPJ",
               "pixKey": "64158407000124",
               "beneficiaryName": "Vitor Bueno de Carvalho",
-              "amount": "19.90"
+              "amount": "19.90",
+              "pixKeyType": "CNPJ"
             },
             "id": "node_flow_funil_5_16"
           },
@@ -4346,7 +4352,8 @@
               "keyType": "PHONE",
               "pixKey": "12983085720",
               "beneficiaryName": "DIGITAL DSX LTDA",
-              "amount": "5.00"
+              "amount": "5.00",
+              "pixKeyType": "PHONE"
             },
             "id": "node_flow_funil_6_16"
           },
@@ -5044,7 +5051,8 @@
               "keyType": "PHONE",
               "pixKey": "37999387172",
               "beneficiaryName": "Editora Branth",
-              "amount": "11.90"
+              "amount": "11.90",
+              "pixKeyType": "PHONE"
             },
             "id": "node_flow_funil_7_14"
           },
@@ -5639,7 +5647,8 @@
               "keyType": "PHONE",
               "pixKey": "11965034611",
               "beneficiaryName": "KV DIGITAL (Projeto Feliz)",
-              "amount": "15.00"
+              "amount": "15.00",
+              "pixKeyType": "PHONE"
             },
             "id": "node_flow_funil_8_10"
           },
@@ -6065,7 +6074,8 @@
               "keyType": "PHONE",
               "pixKey": "42999944139",
               "beneficiaryName": "Junior Campos dos Santos",
-              "amount": "25.00"
+              "amount": "25.00",
+              "pixKeyType": "PHONE"
             },
             "id": "node_flow_funil_9_6"
           },
@@ -6612,7 +6622,8 @@
               "keyType": "PHONE",
               "pixKey": "71992287791",
               "beneficiaryName": "THAISE OLIVEIRA LIMA",
-              "amount": "14.90"
+              "amount": "14.90",
+              "pixKeyType": "PHONE"
             },
             "id": "node_flow_funil_10_17"
           },
@@ -7180,7 +7191,8 @@
               "keyType": "PHONE",
               "pixKey": "31975362565",
               "beneficiaryName": "Projeto Viva Luz",
-              "amount": "20.00"
+              "amount": "20.00",
+              "pixKeyType": "PHONE"
             },
             "id": "node_flow_funil_11_12"
           },
@@ -7764,7 +7776,8 @@
               "keyType": "PHONE",
               "pixKey": "71993667052",
               "beneficiaryName": "RP Empreendimentos Digitais LTDA",
-              "amount": "19.90"
+              "amount": "19.90",
+              "pixKeyType": "PHONE"
             },
             "id": "node_flow_funil_12_13"
           },
@@ -8383,7 +8396,8 @@
               "keyType": "PHONE",
               "pixKey": "33999826417",
               "beneficiaryName": "DAYZA LTDA",
-              "amount": "5.00"
+              "amount": "5.00",
+              "pixKeyType": "PHONE"
             },
             "id": "node_flow_funil_13_17"
           },
