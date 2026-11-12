@@ -851,41 +851,109 @@ function saveStore(data) {
 
 const store = loadStore();
 
-// Carregar automaticamente os funis visuais ricos se store.flows estiver vazio ou desatualizado
+function mergeFlowsPreservingNewest(baseFlows = [], candidateFlows = []) {
+    if (!Array.isArray(baseFlows) || baseFlows.length === 0) return Array.isArray(candidateFlows) ? candidateFlows : [];
+    if (!Array.isArray(candidateFlows) || candidateFlows.length === 0) return baseFlows;
+
+    const mergedMap = new Map();
+    for (const bf of baseFlows) {
+        if (!bf || !bf._id || bf._id === 'flow_principal') continue;
+        mergedMap.set(bf._id, bf);
+    }
+
+    for (const cf of candidateFlows) {
+        if (!cf || !cf._id || cf._id === 'flow_principal') continue;
+        const existing = mergedMap.get(cf._id);
+        if (!existing) {
+            mergedMap.set(cf._id, cf);
+            continue;
+        }
+        const existingNodes = existing.draftVersion?.flowData?.nodes?.length || 0;
+        const candidateNodes = cf.draftVersion?.flowData?.nodes?.length || 0;
+        const existingTime = new Date(existing.updatedAt || 0).getTime();
+        const candidateTime = new Date(cf.updatedAt || 0).getTime();
+
+        // Nunca permitir que um funil com menos blocos e timestamp mais antigo sobrescreva um funil editado mais completo
+        if (candidateNodes > existingNodes) {
+            mergedMap.set(cf._id, cf);
+        } else if (candidateNodes === existingNodes && candidateTime >= existingTime) {
+            mergedMap.set(cf._id, cf);
+        } else if (candidateTime > existingTime && candidateNodes >= 20 && existingNodes <= 30) {
+            mergedMap.set(cf._id, cf);
+        }
+    }
+
+    return Array.from(mergedMap.values());
+}
+
+let flowsBackupDebounceTimer = null;
+function scheduleCloudKvFlowsBackup(botId = 'bot_whatsapp_principal') {
+    if (flowsBackupDebounceTimer) clearTimeout(flowsBackupDebounceTimer);
+    flowsBackupDebounceTimer = setTimeout(async () => {
+        try {
+            const currentFlows = store.flows?.[botId];
+            if (!Array.isArray(currentFlows) || currentFlows.length === 0) return;
+            await axios.post(
+                `${CLOUD_WORKER_URL}/api/cloud-kv/flows?botId=${encodeURIComponent(botId)}`,
+                { flows: currentFlows },
+                { timeout: 8000 }
+            );
+            console.log(`[Cloud KV Flows] ☁️ Backup de ${currentFlows.length} funis salvo na Cloudflare KV (${botId})`);
+        } catch {}
+    }, 1500);
+}
+
+async function restoreFlowsFromCloudKv(botId = 'bot_whatsapp_principal') {
+    try {
+        const res = await axios.get(`${CLOUD_WORKER_URL}/api/cloud-kv/flows?botId=${encodeURIComponent(botId)}`, {
+            timeout: 6000,
+        });
+        const kvFlows = res.data?.flows;
+        if (Array.isArray(kvFlows) && kvFlows.length > 0) {
+            const currentFlows = store.flows[botId] || [];
+            const merged = mergeFlowsPreservingNewest(currentFlows, kvFlows);
+            store.flows[botId] = merged;
+            saveStore(store);
+            console.log(`[Cloud KV Flows] ☁️ Funis mesclados/restaurados da Cloudflare KV (Total: ${merged.length} funis)`);
+            return true;
+        }
+    } catch {}
+    return false;
+}
+
+// Carregar automaticamente os funis visuais ricos preservando sempre a versão mais recente/completa
 try {
     const defFlowsPath = path.join(__dirname, 'default_flows.json');
     if (fs.existsSync(defFlowsPath)) {
         const defFlows = JSON.parse(fs.readFileSync(defFlowsPath, 'utf-8'));
-        const currentFlows = store.flows['bot_whatsapp_principal'] || [];
-        const isOutdated = currentFlows.length < 13 || 
-            store.flows_schema_version !== 'v10_pix_payment_info_universal_20261111';
-        if (currentFlows.length === 0 || isOutdated) {
-            const customFlows = currentFlows.filter(f => !defFlows.some(df => df._id === f._id));
-            const mergedFlows = [...defFlows, ...customFlows];
-            for (const f of mergedFlows) {
-                for (const n of (f.draftVersion?.flowData?.nodes || [])) {
-                    if ((n.nodeType || '').toUpperCase() === 'PIX') {
-                        n.config = n.config || {};
-                        const rawK = String(n.config.pixKey || n.config.copyPasteCode || '').trim();
-                        if (rawK.includes('@')) {
-                            n.config.pixKeyType = 'EMAIL';
-                            n.config.keyType = 'EMAIL';
-                        } else if (rawK.replace(/\D/g, '').length === 14) {
-                            n.config.pixKeyType = 'CNPJ';
-                            n.config.keyType = 'CNPJ';
-                        } else if (/^[1-9]{2}9\d{8}$/.test(rawK.replace(/\D/g, ''))) {
-                            n.config.pixKeyType = 'PHONE';
-                            n.config.keyType = 'PHONE';
-                        }
+        const currentFlows = (store.flows['bot_whatsapp_principal'] || []).filter(f => f._id !== 'flow_principal');
+        const mergedFlows = mergeFlowsPreservingNewest(defFlows, currentFlows);
+        for (const f of mergedFlows) {
+            for (const n of (f.draftVersion?.flowData?.nodes || [])) {
+                if ((n.nodeType || '').toUpperCase() === 'PIX') {
+                    n.config = n.config || {};
+                    const rawK = String(n.config.pixKey || n.config.copyPasteCode || '').trim();
+                    if (rawK.includes('@')) {
+                        n.config.pixKeyType = 'EMAIL';
+                        n.config.keyType = 'EMAIL';
+                    } else if (rawK.replace(/\D/g, '').length === 14) {
+                        n.config.pixKeyType = 'CNPJ';
+                        n.config.keyType = 'CNPJ';
+                    } else if (/^[1-9]{2}9\d{8}$/.test(rawK.replace(/\D/g, ''))) {
+                        n.config.pixKeyType = 'PHONE';
+                        n.config.keyType = 'PHONE';
                     }
                 }
             }
-            store.flows['bot_whatsapp_principal'] = mergedFlows;
-            store.flows_schema_version = 'v10_pix_payment_info_universal_20261111';
-            saveStore(store);
-            console.log(`[Store Init] 🚀 Funis Visuais V10 (PIX payment_info Universal iOS/Android/Web) Carregados (Total: ${store.flows['bot_whatsapp_principal'].length} funis)!`);
         }
+        store.flows['bot_whatsapp_principal'] = mergedFlows;
+        store.flows_schema_version = 'v11_preserved_89nodes_20261111';
+        saveStore(store);
+        console.log(`[Store Init] 🚀 Funis Visuais V11 Carregados com Preservação Anti-Perda (Total: ${store.flows['bot_whatsapp_principal'].length} funis)!`);
     }
+    restoreFlowsFromCloudKv('bot_whatsapp_principal').then(() => {
+        scheduleCloudKvFlowsBackup('bot_whatsapp_principal');
+    }).catch(() => {});
 } catch (err) {
     console.warn('[Store Init] Aviso ao carregar default_flows.json:', err?.message);
 }
@@ -1164,7 +1232,12 @@ function buildPixBizNodes(remoteJid) {
                 {
                     tag: 'interactive',
                     attrs: { type: 'native_flow', v: '1' },
-                    content: [{ tag: 'native_flow', attrs: { name: 'payment_info' } }]
+                    content: [
+                        {
+                            tag: 'native_flow',
+                            attrs: { v: '9', name: 'mixed' }
+                        }
+                    ]
                 }
             ]
         }
@@ -1187,7 +1260,7 @@ async function sendUniversalPixCopyCard({
     footerText = 'Toque no botão abaixo para copiar',
     configuredKeyType = ''
 }) {
-    if (!sock || typeof sock.relayMessage !== 'function') {
+    if (!sock || typeof sock.relayMessage !== 'function' || !proto || !generateWAMessageFromContent) {
         return false;
     }
 
@@ -1196,77 +1269,56 @@ async function sendUniversalPixCopyCard({
     const cleanBeneficiary = String(beneficiaryName || 'Favorecido').trim();
     const resolvedKeyType = resolvePixKeyType(cleanCopyCode || cleanPixKey, configuredKeyType);
 
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let referenceId = '';
-    for (let i = 0; i < 11; i++) {
-        referenceId += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-
-    const paymentPayload = {
-        currency: 'BRL',
-        total_amount: { value: 0, offset: 100 },
-        reference_id: referenceId,
-        type: 'physical-goods',
-        order: {
-            status: 'pending',
-            subtotal: { value: 0, offset: 100 },
-            order_type: 'ORDER',
-            items: [
-                {
-                    name: '',
-                    amount: { value: 0, offset: 100 },
-                    quantity: 0,
-                    sale_amount: { value: 0, offset: 100 }
-                }
-            ]
+    const buttons = [
+        {
+            name: 'cta_copy',
+            buttonParamsJson: JSON.stringify({
+                display_text: 'Copiar chave Pix',
+                id: 'copy_pix_key',
+                copy_code: cleanCopyCode,
+            }),
         },
-        payment_settings: [
-            {
-                type: 'pix_static_code',
-                pix_static_code: {
-                    merchant_name: cleanBeneficiary,
-                    key: cleanCopyCode,
-                    key_type: resolvedKeyType
-                }
-            }
-        ],
-        share_payment_status: false
-    };
+    ];
 
-    const cardBodyText = amount
-        ? `*${cleanBeneficiary}*\nChave: ${cleanPixKey}\n💰 *Valor:* R$ ${amount}`
-        : `*${cleanBeneficiary}*\nChave: ${cleanPixKey}`;
+    const interactiveMessage = proto.Message.InteractiveMessage.create({
+        header: proto.Message.InteractiveMessage.Header.create({
+            title: cleanBeneficiary,
+            subtitle: `Chave: ${cleanPixKey}`,
+            hasMediaAttachment: false,
+        }),
+        body: proto.Message.InteractiveMessage.Body.create({
+            text: `💰 *Valor:* R$ ${amount || '20.00'}`,
+        }),
+        footer: proto.Message.InteractiveMessage.Footer.create({
+            text: String(footerText || 'Toque no botão abaixo para copiar'),
+        }),
+        nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
+            buttons,
+            messageParamsJson: '',
+        }),
+    });
 
-    const messageContent = {
-        interactiveMessage: {
-            body: { text: cardBodyText },
-            ...(footerText ? { footer: { text: String(footerText) } } : {}),
-            nativeFlowMessage: {
-                buttons: [
-                    {
-                        name: 'payment_info',
-                        buttonParamsJson: JSON.stringify(paymentPayload)
-                    }
-                ],
-                messageParamsJson: JSON.stringify({
-                    native_flow_name: 'order_details',
-                    version: 1
-                }),
-                messageVersion: 1
-            }
+    const waMessage = generateWAMessageFromContent(
+        remoteJid,
+        {
+            messageContextInfo: {
+                deviceListMetadata: {},
+                deviceListMetadataVersion: 2,
+                messageSecret: crypto.randomBytes(32),
+            },
+            interactiveMessage,
         },
-        messageContextInfo: {
-            messageSecret: crypto.randomBytes(32)
-        }
-    };
+        { userJid: sock.user?.id }
+    );
 
     const additionalNodes = buildPixBizNodes(remoteJid);
 
-    await sock.relayMessage(remoteJid, messageContent, {
-        additionalNodes
+    await sock.relayMessage(remoteJid, waMessage.message, {
+        messageId: waMessage.key.id,
+        additionalNodes,
     });
 
-    console.log(`[PIX Card Universal] ✅ Cartão PIX nativo (payment_info | key_type=${resolvedKeyType}) enviado para ${remoteJid}`);
+    console.log(`[PIX Card Universal] ✅ Cartão PIX nativo (cta_copy | key_type=${resolvedKeyType}) enviado para ${remoteJid}`);
     return true;
 }
 
@@ -7114,9 +7166,10 @@ app.post('/api/bots/:botId/whatsapp/qr/disconnect', async (req, res) => {
 app.post('/api/bots/:botId/whatsapp/qr/sync', (req, res) => {
     const botId = String(req.params.botId || 'bot_whatsapp_principal');
     if (req.body?.flows && Array.isArray(req.body.flows)) {
-        store.flows[botId] = req.body.flows;
+        store.flows[botId] = mergeFlowsPreservingNewest(store.flows[botId] || [], req.body.flows);
         saveStore(store);
-        console.log(`[QR Engine Sync] 🔄 ${req.body.flows.length} fluxos sincronizados para bot ${botId}`);
+        scheduleCloudKvFlowsBackup(botId);
+        console.log(`[QR Engine Sync] 🔄 ${store.flows[botId].length} fluxos sincronizados/mesclados para bot ${botId}`);
     }
     res.json({ success: true, count: store.flows[botId]?.length || 0 });
 });
@@ -7125,9 +7178,10 @@ app.post('/api/bots/:botId/whatsapp/qr/sync', (req, res) => {
 app.post('/bots/:botId/whatsapp/qr/sync', (req, res) => {
     const botId = String(req.params.botId || 'bot_whatsapp_principal');
     if (req.body?.flows && Array.isArray(req.body.flows)) {
-        store.flows[botId] = req.body.flows;
+        store.flows[botId] = mergeFlowsPreservingNewest(store.flows[botId] || [], req.body.flows);
         saveStore(store);
-        console.log(`[QR Engine Sync Direct] 🔄 ${req.body.flows.length} fluxos sincronizados para bot ${botId}`);
+        scheduleCloudKvFlowsBackup(botId);
+        console.log(`[QR Engine Sync Direct] 🔄 ${store.flows[botId].length} fluxos sincronizados/mesclados para bot ${botId}`);
     }
     res.json({ success: true, count: store.flows[botId]?.length || 0 });
 });
@@ -7178,9 +7232,11 @@ app.put(['/api/bots/:botId/flows/:flowId/draft', '/bots/:botId/flows/:flowId/dra
         ...(flows[flowIndex].draftVersion || { version: 1 }),
         flowData
     };
+    flows[flowIndex].publishedVersion = JSON.parse(JSON.stringify(flows[flowIndex].draftVersion));
     flows[flowIndex].updatedAt = new Date().toISOString();
     store.flows[botId] = flows;
     saveStore(store);
+    scheduleCloudKvFlowsBackup(botId);
     console.log(`[QR Engine Draft] 💾 Rascunho do funil "${flows[flowIndex].name}" (${flowId}) salvo com sucesso!`);
     res.json({ success: true, data: flows[flowIndex] });
 });
@@ -7198,6 +7254,7 @@ app.delete(['/api/bots/:botId/flows/:flowId', '/bots/:botId/flows/:flowId'], (re
     const flows = ensureBotVisualFlowsLoaded(botId);
     store.flows[botId] = flows.filter(f => f._id !== flowId);
     saveStore(store);
+    scheduleCloudKvFlowsBackup(botId);
     res.json({ success: true, data: null });
 });
 
@@ -7248,6 +7305,10 @@ app.post(['/api/bots/:botId/flows/:flowId/duplicate', '/bots/:botId/flows/:flowI
         draftVersion: {
             version: 1,
             flowData: clonedFlowData
+        },
+        publishedVersion: {
+            version: 1,
+            flowData: clonedFlowData
         }
     };
 
@@ -7259,6 +7320,7 @@ app.post(['/api/bots/:botId/flows/:flowId/duplicate', '/bots/:botId/flows/:flowI
     }
     store.flows[botId] = flows;
     saveStore(store);
+    scheduleCloudKvFlowsBackup(botId);
     console.log(`[QR Engine Duplicate] 📋 Funil "${sourceFlow.name}" duplicado como "${newName}" (Gatilho: ${newTrigger})`);
     res.status(201).json({ success: true, data: duplicatedFlow });
 });
@@ -7271,8 +7333,12 @@ app.post(['/api/bots/:botId/flows/:flowId/deploy', '/bots/:botId/flows/:flowId/d
     if (flow) {
         flow.isDeployed = true;
         flow.productionVersion = (flow.productionVersion || 1) + 1;
+        if (flow.draftVersion) {
+            flow.publishedVersion = JSON.parse(JSON.stringify(flow.draftVersion));
+        }
         flow.updatedAt = new Date().toISOString();
         saveStore(store);
+        scheduleCloudKvFlowsBackup(botId);
         console.log(`[QR Engine Deploy] 🚀 Funil "${flow.name}" deployado em produção!`);
         return res.json({ success: true, data: flow });
     }
