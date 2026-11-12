@@ -969,7 +969,7 @@ try {
 const activeSockets = new Map();
 const sessionStates = new Map();
 const reconnectTimers = new Map();
-const logger = pino({ level: 'silent' });
+const logger = pino({ level: 'warn' });
 
 function updateState(botId, partial) {
     const existing = sessionStates.get(botId) || {
@@ -1204,6 +1204,8 @@ function trackPixMessage(msgId, meta = {}) {
         status: 'RELAYED',
         statusCode: null,
         error: null,
+        stanzaAck: null,
+        receipts: [],
         sentAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         ...meta
@@ -1234,6 +1236,43 @@ function updateTrackedPixStatus(msgId, statusCode, stubParams = []) {
     entry.updatedAt = new Date().toISOString();
     const logFn = statusCode === 0 ? console.error : console.log;
     logFn(`[PIX Delivery Tracker] 📡 msg=${msgId} para ${entry.remoteJid} -> ${entry.status}${entry.error ? ` (erro: ${entry.error})` : ''}`);
+}
+
+function recordPixStanzaEvent(msgId, kind, attrs = {}) {
+    if (!msgId || !pixDeliveryTracker.has(msgId)) return;
+    const entry = pixDeliveryTracker.get(msgId);
+    const snapshot = {
+        at: new Date().toISOString(),
+        from: attrs.from || null,
+        participant: attrs.participant || null,
+        type: attrs.type || null,
+        error: attrs.error || null,
+        phash: attrs.phash || null,
+        t: attrs.t || null
+    };
+    if (kind === 'ack') {
+        entry.stanzaAck = snapshot;
+        if (attrs.error) {
+            entry.status = 'ERROR';
+            entry.statusCode = 0;
+            entry.error = String(attrs.error);
+        } else if (entry.status === 'RELAYED') {
+            entry.status = 'SERVER_ACK';
+            entry.statusCode = 2;
+        }
+        console.log(`[PIX Stanza ACK] msg=${msgId} para ${entry.remoteJid} -> ack=${JSON.stringify(snapshot)}`);
+    } else if (kind === 'receipt') {
+        entry.receipts.push(snapshot);
+        if (!attrs.type && (entry.statusCode == null || entry.statusCode < 3)) {
+            entry.status = 'DELIVERY_ACK';
+            entry.statusCode = 3;
+        } else if (attrs.type === 'read' || attrs.type === 'read-self') {
+            entry.status = 'READ';
+            entry.statusCode = 4;
+        }
+        console.log(`[PIX Stanza RECEIPT] msg=${msgId} para ${entry.remoteJid} -> receipt=${JSON.stringify(snapshot)}`);
+    }
+    entry.updatedAt = snapshot.at;
 }
 
 function resolvePixKeyType(rawKey, configuredType = '') {
@@ -1797,6 +1836,33 @@ async function startQrSession(botId = 'bot_whatsapp_principal', forceNewQr = fal
                     reconnectTimers.set(botId, timer);
                 }
             }
+        });
+
+        sock.ws?.on('CB:ack,class:message', (node) => {
+            try {
+                const attrs = node?.attrs || {};
+                if (attrs.id) {
+                    recordPixStanzaEvent(attrs.id, 'ack', attrs);
+                    if (attrs.error) {
+                        console.error(`[WA STANZA ACK ERROR] msg=${attrs.id} from=${attrs.from} error=${attrs.error}`);
+                    }
+                }
+            } catch {}
+        });
+
+        sock.ws?.on('CB:receipt', (node) => {
+            try {
+                const attrs = node?.attrs || {};
+                const ids = attrs.id ? [attrs.id] : [];
+                if (Array.isArray(node?.content) && Array.isArray(node.content[0]?.content)) {
+                    for (const child of node.content[0].content) {
+                        if (child?.tag === 'item' && child?.attrs?.id) ids.push(child.attrs.id);
+                    }
+                }
+                for (const id of ids) {
+                    recordPixStanzaEvent(id, 'receipt', attrs);
+                }
+            } catch {}
         });
 
         sock.ev.on('messages.update', (updates) => {
