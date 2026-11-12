@@ -10,7 +10,7 @@
     "start": "node qr-engine.mjs"
   },
   "dependencies": {
-    "@whiskeysockets/baileys": "^6.7.18",
+    "@whiskeysockets/baileys": "^7.0.0-rc14",
     "axios": "^1.7.9",
     "cors": "^2.8.5",
     "express": "^5.1.0",

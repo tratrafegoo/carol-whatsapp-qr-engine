@@ -652,12 +652,20 @@ async function restoreSessionFromCloudKv(botId, sessionFolder) {
         if (!fs.existsSync(sessionFolder)) {
             fs.mkdirSync(sessionFolder, { recursive: true });
         }
+        let restoredCount = 0;
         for (const [fileName, content] of Object.entries(filesMap)) {
             if (typeof content === 'string' && fileName.endsWith('.json')) {
+                // Ignorar sessões criptográficas antigas de destinatários (session-*.json) congeladas no KV
+                // para evitar erro "Bad MAC" no iPhone da sócia/leads e forçar assertSessions a buscar prekeys novas.
+                // Mantém creds.json, pre-key-*, app-state-sync-* e a sessão do próprio número principal.
+                if (fileName.startsWith('session-') && !fileName.startsWith('session-551152291989')) {
+                    continue;
+                }
                 fs.writeFileSync(path.join(sessionFolder, fileName), content, 'utf-8');
+                restoredCount++;
             }
         }
-        console.log(`[Cloud KV] ☁️ Sessão WhatsApp restaurada da nuvem Cloudflare (${ Object.keys(filesMap).length } arquivos)`);
+        console.log(`[Cloud KV] ☁️ Sessão WhatsApp restaurada da nuvem Cloudflare (${restoredCount} arquivos essenciais, sessões de leads renovadas)`);
         return true;
     } catch (err) {
         return false;
@@ -1123,8 +1131,9 @@ async function sendPttVoiceNote(sock, remoteJid, filePath, botId = null, userPho
         botId: botId || 'bot_whatsapp_principal',
         userPhone: userPhone || '',
         timeoutMs: 30000,
-        sendAction: async () => {
-            const sent = await sock.sendMessage(remoteJid, {
+        sendAction: async (activeSock) => {
+            const targetSock = activeSock || sock;
+            const sent = await targetSock.sendMessage(remoteJid, {
                 audio: audioBuffer,
                 mimetype,
                 ptt: true,
@@ -1172,10 +1181,19 @@ function resolvePttAudio(audioPath) {
 }
 
 // ============================================================
-// HELPER UNIVERSAL: CARTÃO PIX GRANDE NATIVO (payment_info / pix_static_code)
+// HELPER UNIVERSAL: CARTÃO PIX SIMPLES DE COPIAR CHAVE (cta_copy)
 // COMPATÍVEL COM TODOS OS iPHONES (iOS), ANDROIDS E WHATSAPP WEB
-// Fonte Oficial: evolution-foundation/evolution-api PR #2742 & evolution-go
 // ============================================================
+const sentMessagesCache = new Map();
+function cacheSentMessage(msgId, messageObj) {
+    if (!msgId || !messageObj) return;
+    sentMessagesCache.set(msgId, messageObj);
+    if (sentMessagesCache.size > 500) {
+        const firstKey = sentMessagesCache.keys().next().value;
+        if (firstKey) sentMessagesCache.delete(firstKey);
+    }
+}
+
 function resolvePixKeyType(rawKey, configuredType = '') {
     const key = String(rawKey || '').trim();
     const cfg = String(configuredType || '').trim().toUpperCase();
@@ -1255,16 +1273,18 @@ async function sendUniversalPixCopyCard({
     pixKey,
     copyCode,
     amount,
-    footerText = 'Toque no botão abaixo para copiar',
-    configuredKeyType = ''
+    footerText = '',
+    configuredKeyType = '',
+    botId = 'bot_whatsapp_principal',
+    userPhone = ''
 }) {
-    if (!sock || typeof sock.relayMessage !== 'function' || !proto || !generateWAMessageFromContent) {
+    const activeSock = activeSockets.get(botId) || sock;
+    if (!activeSock || typeof activeSock.relayMessage !== 'function' || !proto || !generateWAMessageFromContent) {
         return false;
     }
 
     const cleanPixKey = String(pixKey || '').trim();
     const cleanCopyCode = String(copyCode || cleanPixKey).trim();
-    const cleanBeneficiary = String(beneficiaryName || 'Favorecido').trim();
     const resolvedKeyType = resolvePixKeyType(cleanCopyCode || cleanPixKey, configuredKeyType);
 
     const buttonParams = {
@@ -1280,25 +1300,12 @@ async function sendUniversalPixCopyCard({
         }
     ];
 
+    // Formato 100% limpo e direto conforme solicitado: apenas o texto da chave (e-mail/telefone/etc.) + botão "Copiar chave Pix"
     const interactiveMessage = proto.Message?.InteractiveMessage?.create
         ? proto.Message.InteractiveMessage.create({
               body: proto.Message.InteractiveMessage.Body?.create
-                  ? proto.Message.InteractiveMessage.Body.create({ text: `💰 *Valor:* R$ ${amount || '20.00'}` })
-                  : { text: `💰 *Valor:* R$ ${amount || '20.00'}` },
-              footer: proto.Message.InteractiveMessage.Footer?.create
-                  ? proto.Message.InteractiveMessage.Footer.create({ text: String(footerText || 'Toque no botão abaixo para copiar') })
-                  : { text: String(footerText || 'Toque no botão abaixo para copiar') },
-              header: proto.Message.InteractiveMessage.Header?.create
-                  ? proto.Message.InteractiveMessage.Header.create({
-                        title: cleanBeneficiary,
-                        subtitle: `Chave: ${cleanPixKey}`,
-                        hasMediaAttachment: false
-                    })
-                  : {
-                        title: cleanBeneficiary,
-                        subtitle: `Chave: ${cleanPixKey}`,
-                        hasMediaAttachment: false
-                    },
+                  ? proto.Message.InteractiveMessage.Body.create({ text: cleanPixKey })
+                  : { text: cleanPixKey },
               nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage?.create
                   ? proto.Message.InteractiveMessage.NativeFlowMessage.create({
                         buttons
@@ -1308,38 +1315,44 @@ async function sendUniversalPixCopyCard({
                     }
           })
         : {
-              body: { text: `💰 *Valor:* R$ ${amount || '20.00'}` },
-              footer: { text: String(footerText || 'Toque no botão abaixo para copiar') },
-              header: {
-                  title: cleanBeneficiary,
-                  subtitle: `Chave: ${cleanPixKey}`,
-                  hasMediaAttachment: false
-              },
+              body: { text: cleanPixKey },
               nativeFlowMessage: {
                   buttons
               }
           };
 
-    const waMessage = generateWAMessageFromContent(
+    return safeDispatchBlock({
+        sock: activeSock,
         remoteJid,
-        {
-            messageContextInfo: {
-                deviceListMetadata: {},
-                deviceListMetadataVersion: 2,
-                messageSecret: crypto.randomBytes(32)
-            },
-            interactiveMessage
-        },
-        {}
-    );
+        blockType: 'PIX_CARD',
+        description: `Botão Copiar Pix (${cleanPixKey})`,
+        botId,
+        userPhone,
+        sendAction: async (currentSock) => {
+            const targetSock = currentSock || activeSockets.get(botId) || activeSock;
+            const waMessage = generateWAMessageFromContent(
+                remoteJid,
+                {
+                    messageContextInfo: {
+                        deviceListMetadata: {},
+                        deviceListMetadataVersion: 2
+                    },
+                    interactiveMessage
+                },
+                {}
+            );
 
-    await sock.relayMessage(remoteJid, waMessage.message, {
-        messageId: waMessage.key.id,
-        additionalNodes: buildPixBizNodes()
+            cacheSentMessage(waMessage.key.id, waMessage.message);
+
+            await targetSock.relayMessage(remoteJid, waMessage.message, {
+                messageId: waMessage.key.id,
+                additionalNodes: buildPixBizNodes()
+            });
+
+            console.log(`[PIX Card Universal] ✅ Cartão PIX simples (cta_copy | key=${cleanPixKey} | type=${resolvedKeyType}) enviado para ${remoteJid}`);
+            return true;
+        }
     });
-
-    console.log(`[PIX Card Universal] ✅ Cartão PIX nativo (cta_copy | key_type=${resolvedKeyType}) enviado para ${remoteJid}`);
-    return true;
 }
 
 // ============================================================
@@ -1366,6 +1379,7 @@ async function safeDispatchBlock({
     while (attempt < maxRetries) {
         attempt++;
         try {
+            const currentSock = activeSockets.get(botId) || sock;
             let timer;
             const timeoutPromise = new Promise((_, reject) => {
                 timer = setTimeout(() => {
@@ -1373,7 +1387,7 @@ async function safeDispatchBlock({
                 }, timeoutMs);
             });
 
-            const sendPromise = Promise.resolve().then(() => sendAction());
+            const sendPromise = Promise.resolve().then(() => sendAction(currentSock));
             const result = await Promise.race([sendPromise, timeoutPromise]);
             clearTimeout(timer);
 
@@ -1450,8 +1464,9 @@ async function sendSafeDocument(sock, remoteJid, buffer, fileName, caption = und
         botId,
         userPhone,
         timeoutMs: 45000,
-        sendAction: async () => {
-            const sent = await sock.sendMessage(remoteJid, {
+        sendAction: async (currentSock) => {
+            const targetSock = currentSock || sock;
+            const sent = await targetSock.sendMessage(remoteJid, {
                 document: buffer,
                 fileName,
                 mimetype: 'application/pdf',
@@ -1475,8 +1490,9 @@ async function sendSafeImage(sock, remoteJid, buffer, caption = undefined, botId
         description: desc,
         botId,
         userPhone,
-        sendAction: async () => {
-            const sent = await sock.sendMessage(remoteJid, {
+        sendAction: async (currentSock) => {
+            const targetSock = currentSock || sock;
+            const sent = await targetSock.sendMessage(remoteJid, {
                 image: buffer,
                 caption: caption || undefined,
             });
@@ -1521,6 +1537,16 @@ async function startQrSession(botId = 'bot_whatsapp_principal', forceNewQr = fal
             await restoreSessionFromCloudKv(botId, sessionFolder);
         }
 
+        // Limpa sessões de destinatários com erro "Bad MAC" residual em disco antes de iniciar
+        try {
+            const existingFiles = fs.readdirSync(sessionFolder);
+            for (const f of existingFiles) {
+                if ((f.startsWith('session-53128913264771') || f.startsWith('session-202671302688975')) && f.endsWith('.json')) {
+                    fs.unlinkSync(path.join(sessionFolder, f));
+                }
+            }
+        } catch {}
+
         const { state, saveCreds } = await useMultiFileAuthState(sessionFolder);
         let version = [2, 3000, 1015901307];
         try {
@@ -1536,7 +1562,25 @@ async function startQrSession(botId = 'bot_whatsapp_principal', forceNewQr = fal
             browser: ['Sistema Chatbot X1 (Carol)', 'Chrome', '128.0.0'],
             syncFullHistory: false,
             markOnlineOnConnect: true,
+            getMessage: async (key) => {
+                if (key?.id && sentMessagesCache.has(key.id)) {
+                    return sentMessagesCache.get(key.id);
+                }
+                return undefined;
+            },
         });
+
+        // Garante que qualquer reenvio automático (retry receipt) de mensagem interativa mantenha a tag <biz>
+        const origRelayMessage = sock.relayMessage.bind(sock);
+        sock.relayMessage = async (jid, message, opts = {}) => {
+            if (opts?.messageId && message) {
+                cacheSentMessage(opts.messageId, message);
+            }
+            if (message?.interactiveMessage && (!opts?.additionalNodes || opts.additionalNodes.length === 0)) {
+                opts = { ...opts, additionalNodes: buildPixBizNodes() };
+            }
+            return origRelayMessage(jid, message, opts);
+        };
 
         activeSockets.set(botId, sock);
 
@@ -6639,8 +6683,9 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
                         botId,
                         userPhone: session.userPhone,
                         timeoutMs: 30000,
-                        sendAction: async () => {
-                            const sent = await sock.sendMessage(remoteJid, {
+                        sendAction: async (currentSock) => {
+                            const targetSock = currentSock || sock;
+                            const sent = await targetSock.sendMessage(remoteJid, {
                                 audio: media.buffer,
                                 mimetype: isMp3 ? 'audio/mpeg' : 'audio/ogg; codecs=opus',
                                 ptt: true,
@@ -6657,7 +6702,7 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
                 }
             }
             try {
-                await sock.sendPresenceUpdate('paused', remoteJid);
+                await (activeSockets.get(botId) || sock).sendPresenceUpdate('paused', remoteJid);
             } catch {}
             break;
         }
@@ -6666,7 +6711,7 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
             const mediaUrl = config.mediaUrl || 'Material_Exclusivo_Carol.pdf';
             const caption = config.caption || '';
             try {
-                await sock.sendPresenceUpdate('composing', remoteJid);
+                await (activeSockets.get(botId) || sock).sendPresenceUpdate('composing', remoteJid);
             } catch {}
             await new Promise((r) => setTimeout(r, 1200));
 
@@ -6682,14 +6727,15 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
                     description: `Arquivo: ${media.filename}`,
                     botId,
                     userPhone: session.userPhone,
-                    sendAction: async () => {
+                    sendAction: async (currentSock) => {
+                        const targetSock = currentSock || sock;
                         let sent;
                         if (isImage) {
-                            sent = await sock.sendMessage(remoteJid, { image: media.buffer, caption: caption || undefined });
+                            sent = await targetSock.sendMessage(remoteJid, { image: media.buffer, caption: caption || undefined });
                         } else if (isVideo) {
-                            sent = await sock.sendMessage(remoteJid, { video: media.buffer, caption: caption || undefined, mimetype: 'video/mp4' });
+                            sent = await targetSock.sendMessage(remoteJid, { video: media.buffer, caption: caption || undefined, mimetype: 'video/mp4' });
                         } else {
-                            sent = await sock.sendMessage(remoteJid, {
+                            sent = await targetSock.sendMessage(remoteJid, {
                                 document: media.buffer,
                                 mimetype: 'application/pdf',
                                 fileName: config.filename || media.filename,
@@ -6713,30 +6759,29 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
             const copyCode = String(config.copyPasteCode || pixKey).trim();
             const beneficiaryName = String(config.beneficiaryName || 'Favorecido').trim();
             const amount = config.amount || '19.90';
-            const footerText = String(config.footerText || 'Toque no botão abaixo para copiar').trim();
+            const footerText = String(config.footerText || '').trim();
             const configuredKeyType = String(config.pixKeyType || config.keyType || '').trim();
 
-            // Envia o Cartão PIX Nativo Grande (payment_info / pix_static_code)
-            // Compatível simultaneamente com todos os iPhones (iOS), todos os Androids e WhatsApp Web
-            // Fonte Oficial: evolution-foundation/evolution-api PR #2742 & evolution-go
             let sentInteractiveCard = false;
             try {
                 sentInteractiveCard = await sendUniversalPixCopyCard({
-                    sock,
+                    sock: activeSockets.get(botId) || sock,
                     remoteJid,
                     beneficiaryName,
                     pixKey,
                     copyCode,
                     amount,
                     footerText,
-                    configuredKeyType
+                    configuredKeyType,
+                    botId,
+                    userPhone: session.userPhone
                 });
                 if (sentInteractiveCard) {
                     const resolvedType = resolvePixKeyType(copyCode || pixKey, configuredKeyType);
-                    logConversation(botId, session.userPhone, 'BOT', 'PIX', `[Cartão PIX Nativo payment_info (${resolvedType})]: ${beneficiaryName} | ${pixKey} | R$ ${amount}`);
+                    logConversation(botId, session.userPhone, 'BOT', 'PIX', `[Cartão PIX Simples (${resolvedType})]: ${pixKey}`);
                 }
             } catch (interactiveErr) {
-                console.error('[PIX Native payment_info Error]:', interactiveErr?.message);
+                console.error('[PIX Card Error]:', interactiveErr?.message);
             }
 
             // Fallback de segurança apenas se o protocolo nativo falhar
@@ -6919,15 +6964,16 @@ async function sendRealisticText(botId, sock, remoteJid, userPhone, text, option
         description: preview,
         botId,
         userPhone,
-        sendAction: async () => {
+        sendAction: async (currentSock) => {
+            const targetSock = currentSock || activeSockets.get(botId) || sock;
             try {
-                await sock.sendPresenceUpdate('composing', remoteJid);
+                await targetSock.sendPresenceUpdate('composing', remoteJid);
             } catch {}
             await new Promise((r) => setTimeout(r, 1200));
-            const sent = await sock.sendMessage(remoteJid, { text }, options);
+            const sent = await targetSock.sendMessage(remoteJid, { text }, options);
             logConversation(botId, userPhone, 'BOT', 'TEXT', text);
             try {
-                await sock.sendPresenceUpdate('paused', remoteJid);
+                await targetSock.sendPresenceUpdate('paused', remoteJid);
             } catch {}
             return sent;
         }
