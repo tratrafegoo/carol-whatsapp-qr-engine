@@ -5118,9 +5118,9 @@
     "description": "Pasta: funil 4/ | Criativos: funil 4/ads/ | Áudio MP3 (46s), 5 PDFs reais, Link Drive, PIX JOÃO GABRIEL e Reações ❤️",
     "isMainFlow": false,
     "isDeployed": true,
-    "productionVersion": 33,
+    "productionVersion": 36,
     "createdAt": "2026-11-11T01:57:29.148Z",
-    "updatedAt": "2026-11-12T21:24:55.502Z",
+    "updatedAt": "2026-11-13T02:19:55.000Z",
     "draftVersion": {
       "version": 1,
       "flowData": {
@@ -5408,42 +5408,87 @@
             "nodeId": "node_flow_funil_4_bonus_media",
             "nodeType": "MEDIA",
             "position": {
-              "x": 780,
+              "x": 740,
               "y": 2240
             },
-            "label": "🎁 Entrega Bônus Especial: 7 Estudos do Apocalipse",
+            "label": "🎁 Entrega Bônus 1: 7 Estudos do Apocalipse",
             "config": {
               "mediaType": "DOCUMENT",
-              "mediaUrl": "funil4/Bônus Especial - Estudos do Apocalipse.pdf",
-              "caption": "🎁 Aqui está o seu Bônus Especial: *7 Estudos do Apocalipse em PDF*!\n\nQue este estudo ilumine sua fé e traga grandes revelações da Palavra de Deus!",
-              "filename": "Bônus Especial - Estudos do Apocalipse.pdf"
+              "mediaUrl": "funil4/Bonus 1 - 7 Estudos do Apocalipse.pdf",
+              "caption": "🎁 *Bônus 1 de 4:* 7 Estudos do Apocalipse em PDF!\n\nQue este estudo ilumine sua fé e traga grandes revelações da Palavra de Deus! 📖",
+              "filename": "Bonus 1 - 7 Estudos do Apocalipse.pdf"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_bonus_media_2",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 1060,
+              "y": 2240
+            },
+            "label": "🎁 Entrega Bônus 2: 21 Dias Mais Perto de Deus",
+            "config": {
+              "mediaType": "DOCUMENT",
+              "mediaUrl": "funil4/Bonus 2 - 21 Dias Mais Perto de Deus.pdf",
+              "caption": "🙏 *Bônus 2 de 4:* Devocional 21 Dias Mais Perto de Deus!\n\nTrês semanas de leitura diária, reflexão e oração para fortalecer sua comunhão com o Pai. ✨",
+              "filename": "Bonus 2 - 21 Dias Mais Perto de Deus.pdf"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_bonus_media_3",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 1380,
+              "y": 2240
+            },
+            "label": "🎁 Entrega Bônus 3: Os 10 Maiores Ensinamentos de Jesus",
+            "config": {
+              "mediaType": "DOCUMENT",
+              "mediaUrl": "funil4/Bonus 3 - Os 10 Maiores Ensinamentos de Jesus.pdf",
+              "caption": "✝️ *Bônus 3 de 4:* Os 10 Maiores Ensinamentos de Jesus!\n\nAs lições eternas do Mestre explicadas com clareza para transformar sua mente e sua fé.",
+              "filename": "Bonus 3 - Os 10 Maiores Ensinamentos de Jesus.pdf"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_bonus_media_4",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 1700,
+              "y": 2240
+            },
+            "label": "🎁 Entrega Bônus 4: Manual da Família Abençoada",
+            "config": {
+              "mediaType": "DOCUMENT",
+              "mediaUrl": "funil4/Bonus 4 - Manual da Familia Abencoada.pdf",
+              "caption": "🏠 *Bônus 4 de 4:* Manual da Família Abençoada!\n\nPrincípios bíblicos práticos, orações e roteiro de Culto no Lar para blindar e abençoar a sua casa! ❤️",
+              "filename": "Bonus 4 - Manual da Familia Abencoada.pdf"
             }
           },
           {
             "nodeId": "node_flow_funil_4_meta_capi",
             "nodeType": "META_CAPI",
             "position": {
-              "x": 1120,
+              "x": 2040,
               "y": 2240
             },
             "label": "🎯 Conversão Meta Ads (CAPI - Purchase)",
             "config": {
               "eventName": "Purchase",
               "currency": "BRL",
-              "eventValue": 19.9
+              "eventValue": 20.0
             }
           },
           {
             "nodeId": "node_flow_funil_4_final_msg",
             "nodeType": "MESSAGE",
             "position": {
-              "x": 1460,
+              "x": 2380,
               "y": 2220
             },
             "label": "💬 Mensagem #10",
             "config": {
-              "text": "Glória a Deus! Seu comprovante foi aprovado com sucesso! 🙏✨\n\nTodos os 5 livros da *Jornada da Bíblia* e o *Bônus do Apocalipse* estão liberados para você com acesso vitalício.\n\nQualquer dúvida estou à disposição por aqui. Que Deus abençoe grandemente a sua vida e seu ministério! 📖❤️",
-              "messageText": "Glória a Deus! Seu comprovante foi aprovado com sucesso! 🙏✨\n\nTodos os 5 livros da *Jornada da Bíblia* e o *Bônus do Apocalipse* estão liberados para você com acesso vitalício.\n\nQualquer dúvida estou à disposição por aqui. Que Deus abençoe grandemente a sua vida e seu ministério! 📖❤️"
+              "text": "Glória a Deus! Seu comprovante foi aprovado com sucesso! 🙏✨\n\nTodos os 5 livros da *Jornada da Bíblia* e os seus *4 Bônus Exclusivos* (7 Estudos do Apocalipse, 21 Dias Mais Perto de Deus, Os 10 Maiores Ensinamentos de Jesus e Manual da Família Abençoada) estão liberados para você com acesso vitalício.\n\nToda semana também enviaremos conteúdos edificantes novos por aqui. Que Deus abençoe grandemente a sua vida e a sua família! 📖❤️",
+              "messageText": "Glória a Deus! Seu comprovante foi aprovado com sucesso! 🙏✨\n\nTodos os 5 livros da *Jornada da Bíblia* e os seus *4 Bônus Exclusivos* (7 Estudos do Apocalipse, 21 Dias Mais Perto de Deus, Os 10 Maiores Ensinamentos de Jesus e Manual da Família Abençoada) estão liberados para você com acesso vitalício.\n\nToda semana também enviaremos conteúdos edificantes novos por aqui. Que Deus abençoe grandemente a sua vida e a sua família! 📖❤️"
             }
           },
           {
@@ -5564,8 +5609,8 @@
             },
             "label": "💬 Mensagem #33",
             "config": {
-              "text": "Conforme combinamos, os materiais e os bônus já foram enviados, e você confirmou o recebimento.\n\nAgora estou aguardando apenas a contribuição combinada. Assim que realizar, me envie o comprovante por aqui. Deus abençoe.",
-              "messageText": "Conforme combinamos, os materiais e os bônus já foram enviados, e você confirmou o recebimento.\n\nAgora estou aguardando apenas a contribuição combinada. Assim que realizar, me envie o comprovante por aqui. Deus abençoe."
+              "text": "Conforme combinamos, os 5 livros da Jornada da Bíblia já foram enviados, e você confirmou o recebimento.\n\nAgora estou aguardando apenas a contribuição combinada. Assim que realizar, me envie o comprovante por aqui. Deus abençoe.",
+              "messageText": "Conforme combinamos, os 5 livros da Jornada da Bíblia já foram enviados, e você confirmou o recebimento.\n\nAgora estou aguardando apenas a contribuição combinada. Assim que realizar, me envie o comprovante por aqui. Deus abençoe."
             }
           },
           {
@@ -6498,37 +6543,12 @@
             "target": "flow_funil_4_msg_rem2"
           },
           {
-            "edgeId": "e_node_flow_funil_4_bonus_media_node_flow_funil_4_meta_capi",
-            "sourceNodeId": "node_flow_funil_4_bonus_media",
-            "targetNodeId": "node_flow_funil_4_meta_capi",
-            "id": "e_node_flow_funil_4_bonus_media_node_flow_funil_4_meta_capi",
-            "source": "node_flow_funil_4_bonus_media",
-            "target": "node_flow_funil_4_meta_capi"
-          },
-          {
-            "edgeId": "e_node_flow_funil_4_meta_capi_node_flow_funil_4_final_msg",
-            "sourceNodeId": "node_flow_funil_4_meta_capi",
-            "targetNodeId": "node_flow_funil_4_final_msg",
-            "id": "e_node_flow_funil_4_meta_capi_node_flow_funil_4_final_msg",
-            "source": "node_flow_funil_4_meta_capi",
-            "target": "node_flow_funil_4_final_msg"
-          },
-          {
             "edgeId": "e_node_flow_funil_4_11_node_flow_funil_4_12",
             "sourceNodeId": "node_flow_funil_4_11",
             "targetNodeId": "node_flow_funil_4_12",
             "id": "e_node_flow_funil_4_11_node_flow_funil_4_12",
             "source": "node_flow_funil_4_11",
             "target": "node_flow_funil_4_12"
-          },
-          {
-            "edgeId": "e_node_flow_funil_4_12_node_flow_funil_4_bonus_media",
-            "sourceNodeId": "node_flow_funil_4_12",
-            "targetNodeId": "node_flow_funil_4_bonus_media",
-            "sourceHandle": "success",
-            "id": "e_node_flow_funil_4_12_node_flow_funil_4_bonus_media",
-            "source": "node_flow_funil_4_12",
-            "target": "node_flow_funil_4_bonus_media"
           },
           {
             "edgeId": "edge_1794408862285",
@@ -7098,6 +7118,55 @@
             "id": "edge_1794518073819",
             "source": "delay_1794518064938",
             "target": "flow_funil_4_msg_rem1"
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_12_node_flow_funil_4_bonus_media",
+            "sourceNodeId": "node_flow_funil_4_12",
+            "targetNodeId": "node_flow_funil_4_bonus_media",
+            "id": "e_node_flow_funil_4_12_node_flow_funil_4_bonus_media",
+            "source": "node_flow_funil_4_12",
+            "target": "node_flow_funil_4_bonus_media",
+            "sourceHandle": "success"
+          },
+          {
+            "edgeId": "e_bonus1_to_bonus2",
+            "sourceNodeId": "node_flow_funil_4_bonus_media",
+            "targetNodeId": "node_flow_funil_4_bonus_media_2",
+            "id": "e_bonus1_to_bonus2",
+            "source": "node_flow_funil_4_bonus_media",
+            "target": "node_flow_funil_4_bonus_media_2"
+          },
+          {
+            "edgeId": "e_bonus2_to_bonus3",
+            "sourceNodeId": "node_flow_funil_4_bonus_media_2",
+            "targetNodeId": "node_flow_funil_4_bonus_media_3",
+            "id": "e_bonus2_to_bonus3",
+            "source": "node_flow_funil_4_bonus_media_2",
+            "target": "node_flow_funil_4_bonus_media_3"
+          },
+          {
+            "edgeId": "e_bonus3_to_bonus4",
+            "sourceNodeId": "node_flow_funil_4_bonus_media_3",
+            "targetNodeId": "node_flow_funil_4_bonus_media_4",
+            "id": "e_bonus3_to_bonus4",
+            "source": "node_flow_funil_4_bonus_media_3",
+            "target": "node_flow_funil_4_bonus_media_4"
+          },
+          {
+            "edgeId": "e_bonus4_to_meta_capi",
+            "sourceNodeId": "node_flow_funil_4_bonus_media_4",
+            "targetNodeId": "node_flow_funil_4_meta_capi",
+            "id": "e_bonus4_to_meta_capi",
+            "source": "node_flow_funil_4_bonus_media_4",
+            "target": "node_flow_funil_4_meta_capi"
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_meta_capi_node_flow_funil_4_final_msg",
+            "sourceNodeId": "node_flow_funil_4_meta_capi",
+            "targetNodeId": "node_flow_funil_4_final_msg",
+            "id": "e_node_flow_funil_4_meta_capi_node_flow_funil_4_final_msg",
+            "source": "node_flow_funil_4_meta_capi",
+            "target": "node_flow_funil_4_final_msg"
           }
         ]
       }
@@ -7232,7 +7301,7 @@
             "nodeId": "node_flow_funil_4_8_part3",
             "nodeType": "MEDIA",
             "position": {
-              "x": 320,
+              "x": 300,
               "y": 1300
             },
             "label": "📄 Livro 3 - Jornada da Bíblia (Parte 03: Poéticos)",
@@ -7282,8 +7351,8 @@
             },
             "label": "💬 Mensagem #6",
             "config": {
-              "text": "Acabei de enviar todos os 5 livros em PDF aqui na conversa para você baixar e ler no seu celular ou imprimir!\n\nValor sugerido: R$20,00\n⭐️ Gostei muito: R$30,00\n⭐️⭐️ Quero abençoar ainda mais: R$50,00\n\nIsso ajuda a continuarmos esse propósito!\nCaso não possa contribuir com o valor integral, fique à vontade para enviar o valor que puder!",
-              "messageText": "Acabei de enviar todos os 5 livros em PDF aqui na conversa para você baixar e ler no seu celular ou imprimir!\n\nValor sugerido: R$20,00\n⭐️ Gostei muito: R$30,00\n⭐️⭐️ Quero abençoar ainda mais: R$50,00\n\nIsso ajuda a continuarmos esse propósito!\nCaso não possa contribuir com o valor integral, fique à vontade para enviar o valor que puder!"
+              "text": "Acabei de enviar todos os 5 livros em PDF aqui na conversa para você baixar e ler no seu celular ou imprimir!\n\nValor sugerido: R$20,00\n⭐️ Gostei muito: R$30,00\n⭐️⭐️ Quero abençoar ainda mais: R$50,00\n\nIsso ajuda a continuarmos meu trabalho com propósito!",
+              "messageText": "Acabei de enviar todos os 5 livros em PDF aqui na conversa para você baixar e ler no seu celular ou imprimir!\n\nValor sugerido: R$20,00\n⭐️ Gostei muito: R$30,00\n⭐️⭐️ Quero abençoar ainda mais: R$50,00\n\nIsso ajuda a continuarmos meu trabalho com propósito!"
             }
           },
           {
@@ -7295,7 +7364,7 @@
             },
             "label": "💳 Cartão PIX Copia e Cola (Pastor Guilherme)",
             "config": {
-              "keyType": "CPF",
+              "keyType": "EMAIL",
               "pixKey": "pastorguilhermeigreja@gmail.com",
               "beneficiaryName": "Pastor Guilherme",
               "amount": "20.00"
@@ -7306,9 +7375,9 @@
             "nodeType": "MESSAGE",
             "position": {
               "x": 340,
-              "y": 2020
+              "y": 2040
             },
-            "label": "💬 Mensagem #7",
+            "label": "💬 Mensagem #8",
             "config": {
               "text": "pastorguilhermeigreja@gmail.com",
               "messageText": "pastorguilhermeigreja@gmail.com"
@@ -7321,10 +7390,10 @@
               "x": 340,
               "y": 2180
             },
-            "label": "💬 Mensagem #8",
+            "label": "💬 Mensagem #9",
             "config": {
-              "text": "Após o pagamento, me envie o comprovante aqui, que eu vou te enviar como BÔNUS:\n7 ESTUDOS DO APOCALIPSE EM PDF 🎁",
-              "messageText": "Após o pagamento, me envie o comprovante aqui, que eu vou te enviar como BÔNUS:\n7 ESTUDOS DO APOCALIPSE EM PDF 🎁"
+              "text": "Após o pagamento, me envie o comprovante aqui, que eu vou te enviar como BÔNUS:\n- 7 ESTUDOS DO APOCALIPSE EM PDF \n- 21 DIAS MAIS PERTO DE DEUS \n- OS 10 MAIORES ENSINAMENTOS DE JESUS \n- MANUAL DA FAMÍLIA ABENÇOADA \nE toda semana teremos conteúdo novo que será encaminhado no seu WhatsApp 🎁",
+              "messageText": "Após o pagamento, me envie o comprovante aqui, que eu vou te enviar como BÔNUS:\n- 7 ESTUDOS DO APOCALIPSE EM PDF \n- 21 DIAS MAIS PERTO DE DEUS \n- OS 10 MAIORES ENSINAMENTOS DE JESUS \n- MANUAL DA FAMÍLIA ABENÇOADA \nE toda semana teremos conteúdo novo que será encaminhado no seu WhatsApp 🎁"
             }
           },
           {
@@ -7334,7 +7403,7 @@
               "x": 700,
               "y": 2420
             },
-            "label": "💬 Mensagem #10",
+            "label": "💬 Mensagem #11",
             "config": {
               "text": "Te entreguei os materiais com todo amor e carinho conforme combinado. \n\nAgora conto com você para cumprir sua parte 🙏",
               "messageText": "Te entreguei os materiais com todo amor e carinho conforme combinado. \n\nAgora conto com você para cumprir sua parte 🙏"
@@ -7361,7 +7430,7 @@
               "x": 1080,
               "y": 2440
             },
-            "label": "💬 Mensagem #11",
+            "label": "💬 Mensagem #12",
             "config": {
               "text": "Deus conhece nossos corações e nossas intenções. Enviei os materiais confiando no seu compromisso. Sua contribuição ainda está pendente. Posso contar com você para cumprir o combinado?",
               "messageText": "Deus conhece nossos corações e nossas intenções. Enviei os materiais confiando no seu compromisso. Sua contribuição ainda está pendente. Posso contar com você para cumprir o combinado?"
@@ -7371,8 +7440,8 @@
             "nodeId": "node_flow_funil_4_12",
             "nodeType": "PIX_VERIFIER",
             "position": {
-              "x": 320,
-              "y": 2340
+              "x": 340,
+              "y": 2360
             },
             "label": "🧠 Auditoria Comprovante IA Gemini",
             "config": {
@@ -7381,7 +7450,7 @@
               "failureMessage": "⚠️ Não conseguimos confirmar o pagamento PIX.",
               "beneficiary": "Pastor Guilherme",
               "detectRefusalAi": true,
-              "enableTimeoutLimit": true,
+              "enableTimeoutLimit": false,
               "timeoutHours": 10
             }
           },
@@ -7389,42 +7458,87 @@
             "nodeId": "node_flow_funil_4_bonus_media",
             "nodeType": "MEDIA",
             "position": {
-              "x": 780,
+              "x": 740,
               "y": 2240
             },
-            "label": "🎁 Entrega Bônus Especial: 7 Estudos do Apocalipse",
+            "label": "🎁 Entrega Bônus 1: 7 Estudos do Apocalipse",
             "config": {
               "mediaType": "DOCUMENT",
-              "mediaUrl": "funil4/Bônus Especial - Estudos do Apocalipse.pdf",
-              "caption": "🎁 Aqui está o seu Bônus Especial: *7 Estudos do Apocalipse em PDF*!\n\nQue este estudo ilumine sua fé e traga grandes revelações da Palavra de Deus!",
-              "filename": "Bônus Especial - Estudos do Apocalipse.pdf"
+              "mediaUrl": "funil4/Bonus 1 - 7 Estudos do Apocalipse.pdf",
+              "caption": "🎁 *Bônus 1 de 4:* 7 Estudos do Apocalipse em PDF!\n\nQue este estudo ilumine sua fé e traga grandes revelações da Palavra de Deus! 📖",
+              "filename": "Bonus 1 - 7 Estudos do Apocalipse.pdf"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_bonus_media_2",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 1060,
+              "y": 2240
+            },
+            "label": "🎁 Entrega Bônus 2: 21 Dias Mais Perto de Deus",
+            "config": {
+              "mediaType": "DOCUMENT",
+              "mediaUrl": "funil4/Bonus 2 - 21 Dias Mais Perto de Deus.pdf",
+              "caption": "🙏 *Bônus 2 de 4:* Devocional 21 Dias Mais Perto de Deus!\n\nTrês semanas de leitura diária, reflexão e oração para fortalecer sua comunhão com o Pai. ✨",
+              "filename": "Bonus 2 - 21 Dias Mais Perto de Deus.pdf"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_bonus_media_3",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 1380,
+              "y": 2240
+            },
+            "label": "🎁 Entrega Bônus 3: Os 10 Maiores Ensinamentos de Jesus",
+            "config": {
+              "mediaType": "DOCUMENT",
+              "mediaUrl": "funil4/Bonus 3 - Os 10 Maiores Ensinamentos de Jesus.pdf",
+              "caption": "✝️ *Bônus 3 de 4:* Os 10 Maiores Ensinamentos de Jesus!\n\nAs lições eternas do Mestre explicadas com clareza para transformar sua mente e sua fé.",
+              "filename": "Bonus 3 - Os 10 Maiores Ensinamentos de Jesus.pdf"
+            }
+          },
+          {
+            "nodeId": "node_flow_funil_4_bonus_media_4",
+            "nodeType": "MEDIA",
+            "position": {
+              "x": 1700,
+              "y": 2240
+            },
+            "label": "🎁 Entrega Bônus 4: Manual da Família Abençoada",
+            "config": {
+              "mediaType": "DOCUMENT",
+              "mediaUrl": "funil4/Bonus 4 - Manual da Familia Abencoada.pdf",
+              "caption": "🏠 *Bônus 4 de 4:* Manual da Família Abençoada!\n\nPrincípios bíblicos práticos, orações e roteiro de Culto no Lar para blindar e abençoar a sua casa! ❤️",
+              "filename": "Bonus 4 - Manual da Familia Abencoada.pdf"
             }
           },
           {
             "nodeId": "node_flow_funil_4_meta_capi",
             "nodeType": "META_CAPI",
             "position": {
-              "x": 1120,
+              "x": 2040,
               "y": 2240
             },
             "label": "🎯 Conversão Meta Ads (CAPI - Purchase)",
             "config": {
               "eventName": "Purchase",
               "currency": "BRL",
-              "eventValue": 19.9
+              "eventValue": 20.0
             }
           },
           {
             "nodeId": "node_flow_funil_4_final_msg",
             "nodeType": "MESSAGE",
             "position": {
-              "x": 1460,
+              "x": 2380,
               "y": 2220
             },
-            "label": "💬 Mensagem #9",
+            "label": "💬 Mensagem #10",
             "config": {
-              "text": "Glória a Deus! Seu comprovante foi aprovado com sucesso! 🙏✨\n\nTodos os 5 livros da *Jornada da Bíblia* e o *Bônus do Apocalipse* estão liberados para você com acesso vitalício.\n\nQualquer dúvida estou à disposição por aqui. Que Deus abençoe grandemente a sua vida e seu ministério! 📖❤️",
-              "messageText": "Glória a Deus! Seu comprovante foi aprovado com sucesso! 🙏✨\n\nTodos os 5 livros da *Jornada da Bíblia* e o *Bônus do Apocalipse* estão liberados para você com acesso vitalício.\n\nQualquer dúvida estou à disposição por aqui. Que Deus abençoe grandemente a sua vida e seu ministério! 📖❤️"
+              "text": "Glória a Deus! Seu comprovante foi aprovado com sucesso! 🙏✨\n\nTodos os 5 livros da *Jornada da Bíblia* e os seus *4 Bônus Exclusivos* (7 Estudos do Apocalipse, 21 Dias Mais Perto de Deus, Os 10 Maiores Ensinamentos de Jesus e Manual da Família Abençoada) estão liberados para você com acesso vitalício.\n\nToda semana também enviaremos conteúdos edificantes novos por aqui. Que Deus abençoe grandemente a sua vida e a sua família! 📖❤️",
+              "messageText": "Glória a Deus! Seu comprovante foi aprovado com sucesso! 🙏✨\n\nTodos os 5 livros da *Jornada da Bíblia* e os seus *4 Bônus Exclusivos* (7 Estudos do Apocalipse, 21 Dias Mais Perto de Deus, Os 10 Maiores Ensinamentos de Jesus e Manual da Família Abençoada) estão liberados para você com acesso vitalício.\n\nToda semana também enviaremos conteúdos edificantes novos por aqui. Que Deus abençoe grandemente a sua vida e a sua família! 📖❤️"
             }
           },
           {
@@ -7448,7 +7562,7 @@
               "x": 1460,
               "y": 2440
             },
-            "label": "💬 Mensagem #12",
+            "label": "💬 Mensagem #13",
             "config": {
               "text": "Confio na sua palavra. Posso receber sua contribuição hoje? 🙏🏻",
               "messageText": "Confio na sua palavra. Posso receber sua contribuição hoje? 🙏🏻"
@@ -7475,7 +7589,7 @@
               "x": 1820,
               "y": 2440
             },
-            "label": "💬 Mensagem #13",
+            "label": "💬 Mensagem #14",
             "config": {
               "text": "Paz.. Fiquei aqui esperando o pagamento, confiei na sua palavra...",
               "messageText": "Paz.. Fiquei aqui esperando o pagamento, confiei na sua palavra..."
@@ -7488,7 +7602,7 @@
               "x": 2000,
               "y": 2600
             },
-            "label": "💬 Mensagem #27",
+            "label": "💬 Mensagem #28",
             "config": {
               "text": "Você consegue fazer a sua contribuição agora? Se sim vou agradecer e muito! 🙏",
               "messageText": "Você consegue fazer a sua contribuição agora? Se sim vou agradecer e muito! 🙏"
@@ -7516,7 +7630,7 @@
               "x": 2420,
               "y": 2620
             },
-            "label": "💬 Mensagem #31",
+            "label": "💬 Mensagem #32",
             "config": {
               "text": "Fico no aguardo amém ?",
               "messageText": "Fico no aguardo amém ?"
@@ -7543,10 +7657,10 @@
               "x": 2760,
               "y": 2640
             },
-            "label": "💬 Mensagem #32",
+            "label": "💬 Mensagem #33",
             "config": {
-              "text": "Conforme combinamos, os materiais e os bônus já foram enviados, e você confirmou o recebimento.\n\nAgora estou aguardando apenas a contribuição combinada. Assim que realizar, me envie o comprovante por aqui. Deus abençoe.",
-              "messageText": "Conforme combinamos, os materiais e os bônus já foram enviados, e você confirmou o recebimento.\n\nAgora estou aguardando apenas a contribuição combinada. Assim que realizar, me envie o comprovante por aqui. Deus abençoe."
+              "text": "Conforme combinamos, os 5 livros da Jornada da Bíblia já foram enviados, e você confirmou o recebimento.\n\nAgora estou aguardando apenas a contribuição combinada. Assim que realizar, me envie o comprovante por aqui. Deus abençoe.",
+              "messageText": "Conforme combinamos, os 5 livros da Jornada da Bíblia já foram enviados, e você confirmou o recebimento.\n\nAgora estou aguardando apenas a contribuição combinada. Assim que realizar, me envie o comprovante por aqui. Deus abençoe."
             }
           },
           {
@@ -7570,7 +7684,7 @@
               "x": 3100,
               "y": 2640
             },
-            "label": "💬 Mensagem #33",
+            "label": "💬 Mensagem #34",
             "config": {
               "text": "Oi ? está ai ? Consegue me enviar agora por favor ?",
               "messageText": "Oi ? está ai ? Consegue me enviar agora por favor ?"
@@ -7597,7 +7711,7 @@
               "x": 3480,
               "y": 2620
             },
-            "label": "💬 Mensagem #34",
+            "label": "💬 Mensagem #35",
             "config": {
               "text": "Preciso te lembrar de algo: diante de Deus, palavra e compromisso também são coisas sérias.",
               "messageText": "Preciso te lembrar de algo: diante de Deus, palavra e compromisso também são coisas sérias."
@@ -7610,7 +7724,7 @@
               "x": 3640,
               "y": 2460
             },
-            "label": "💬 Mensagem #16",
+            "label": "💬 Mensagem #17",
             "config": {
               "text": "A Bíblia diz em Eclesiastes 5:4: \n\n“Quando a Deus fizeres algum voto, não tardes em cumpri-lo.”",
               "messageText": "A Bíblia diz em Eclesiastes 5:4: \n\n“Quando a Deus fizeres algum voto, não tardes em cumpri-lo.”"
@@ -7623,7 +7737,7 @@
               "x": 3840,
               "y": 2620
             },
-            "label": "💬 Mensagem #35",
+            "label": "💬 Mensagem #36",
             "config": {
               "text": "A contribuição simbólica não é apenas um valor. É uma forma de honrar aquilo que foi combinado e ajudar esse projeto continuar alcançando outros irmãos que também precisam desse material.",
               "messageText": "A contribuição simbólica não é apenas um valor. É uma forma de honrar aquilo que foi combinado e ajudar esse projeto continuar alcançando outros irmãos que também precisam desse material."
@@ -7636,7 +7750,7 @@
               "x": 4000,
               "y": 2440
             },
-            "label": "💬 Mensagem #17",
+            "label": "💬 Mensagem #18",
             "config": {
               "text": "Se você recebeu, acessou e o material chegou certinho, peço com carinho: \nhonre sua palavra e faça sua contribuição.",
               "messageText": "Se você recebeu, acessou e o material chegou certinho, peço com carinho: \nhonre sua palavra e faça sua contribuição."
@@ -7649,7 +7763,7 @@
               "x": 4200,
               "y": 2600
             },
-            "label": "💬 Mensagem #36",
+            "label": "💬 Mensagem #37",
             "config": {
               "text": "Que Deus toque no seu coração e abençoe sua vida 🙏",
               "messageText": "Que Deus toque no seu coração e abençoe sua vida 🙏"
@@ -7692,7 +7806,7 @@
               "x": 5300,
               "y": 2580
             },
-            "label": "💬 Mensagem #28",
+            "label": "💬 Mensagem #29",
             "config": {
               "text": "Por favor, preciso do seu pagamento \n\nMeu trabalho está ficando prejudicado.  Você aceitou o envio do meu material então me ajude com R$10 pelo menos para eu não me sentir enganado",
               "messageText": "Por favor, preciso do seu pagamento \n\nMeu trabalho está ficando prejudicado.  Você aceitou o envio do meu material então me ajude com R$10 pelo menos para eu não me sentir enganado"
@@ -7777,7 +7891,7 @@
               "x": 5820,
               "y": 2420
             },
-            "label": "💬 Mensagem #18",
+            "label": "💬 Mensagem #19",
             "config": {
               "text": "Poxa, irmão... fico triste que você aproveitou o material, mas não retribuiu minha confiança. 😔 Enviei tudo com muito carinho. Se ainda puder ser honesto comigo, mande o comprovante agora.",
               "messageText": "Poxa, irmão... fico triste que você aproveitou o material, mas não retribuiu minha confiança. 😔 Enviei tudo com muito carinho. Se ainda puder ser honesto comigo, mande o comprovante agora."
@@ -7804,7 +7918,7 @@
               "x": 6180,
               "y": 2420
             },
-            "label": "💬 Mensagem #19",
+            "label": "💬 Mensagem #20",
             "config": {
               "text": "Muitas pessoas já me deixaram na mão...\nEspero de coração que você não faça o mesmo.",
               "messageText": "Muitas pessoas já me deixaram na mão...\nEspero de coração que você não faça o mesmo."
@@ -7831,7 +7945,7 @@
               "x": 6540,
               "y": 2420
             },
-            "label": "💬 Mensagem #14",
+            "label": "💬 Mensagem #15",
             "config": {
               "text": "Porque você fez isso? 🙏\nEu te enviei tudo antes justamente na confiança…",
               "messageText": "Porque você fez isso? 🙏\nEu te enviei tudo antes justamente na confiança…"
@@ -7844,7 +7958,7 @@
               "x": 6760,
               "y": 2560
             },
-            "label": "💬 Mensagem #29",
+            "label": "💬 Mensagem #30",
             "config": {
               "text": "Você aceitou o envio dos materiais, peço que por favor, não deixe meu trabalho prejudicado.\n\n🙏Preciso do Pix de pelo menos R$10 para não ficar no prejuízo e me sentir enganado",
               "messageText": "Você aceitou o envio dos materiais, peço que por favor, não deixe meu trabalho prejudicado.\n\n🙏Preciso do Pix de pelo menos R$10 para não ficar no prejuízo e me sentir enganado"
@@ -7872,7 +7986,7 @@
               "x": 7280,
               "y": 2420
             },
-            "label": "💬 Mensagem #15",
+            "label": "💬 Mensagem #16",
             "config": {
               "text": "Eclesiastes 5:5\n“É melhor não fazer promessa do que fazer e não cumprir.”",
               "messageText": "Eclesiastes 5:5\n“É melhor não fazer promessa do que fazer e não cumprir.”"
@@ -7900,7 +8014,7 @@
               "x": 7880,
               "y": 2580
             },
-            "label": "💬 Mensagem #30",
+            "label": "💬 Mensagem #31",
             "config": {
               "text": "Confiei em você e já te enviei todo o material completo 🎁\n\nÉ justamente essa contribuição simbólica que mantém esse ministério ativo e alcançando outras vidas.\n\nPor isso, peço com carinho que não faça como algumas pessoas que recebem e não retornam 🙏\nA contribuição é de apenas R$20 pelo acervo completo.\n\nConto com a sua honestidade e apoio para continuarmos abençoando mais pessoas através da Palavra 📖✨",
               "messageText": "Confiei em você e já te enviei todo o material completo 🎁\n\nÉ justamente essa contribuição simbólica que mantém esse ministério ativo e alcançando outras vidas.\n\nPor isso, peço com carinho que não faça como algumas pessoas que recebem e não retornam 🙏\nA contribuição é de apenas R$20 pelo acervo completo.\n\nConto com a sua honestidade e apoio para continuarmos abençoando mais pessoas através da Palavra 📖✨"
@@ -7941,7 +8055,7 @@
               "x": 8340,
               "y": 2600
             },
-            "label": "💬 Mensagem #37",
+            "label": "💬 Mensagem #38",
             "config": {
               "text": "Por que você visualiza a mensagem e não responde ?? depositei minha confiança em você",
               "messageText": "Por que você visualiza a mensagem e não responde ?? depositei minha confiança em você"
@@ -7954,7 +8068,7 @@
               "x": 8560,
               "y": 2440
             },
-            "label": "💬 Mensagem #20",
+            "label": "💬 Mensagem #21",
             "config": {
               "text": "Para facilitar, vou te enviar a chave Pix separada para você só copiar e colar 👇👇",
               "messageText": "Para facilitar, vou te enviar a chave Pix separada para você só copiar e colar 👇👇"
@@ -7996,7 +8110,7 @@
               "x": 9060,
               "y": 2620
             },
-            "label": "💬 Mensagem #38",
+            "label": "💬 Mensagem #39",
             "config": {
               "text": "Irmão, preciso ser sincero com você…\n\nIsso acaba sendo uma falta de respeito com o trabalho que foi feito com tanto zelo e dedicação.\n\nDepositei minha confiança em você, liberei todo o material primeiro, acreditando no compromisso entre irmãos.\n\nMeu propósito nunca foi vender apenas um conteúdo, mas fortalecer vidas e ministérios através da Palavra.\n\nConto com a sua honestidade para cumprir o que foi combinado 🙏\n\nAssim que realizar a contribuição simbólica, me envie o comprovante para que eu possa liberar os bônus prometidos.\n\nSeguimos juntos na obra.",
               "messageText": "Irmão, preciso ser sincero com você…\n\nIsso acaba sendo uma falta de respeito com o trabalho que foi feito com tanto zelo e dedicação.\n\nDepositei minha confiança em você, liberei todo o material primeiro, acreditando no compromisso entre irmãos.\n\nMeu propósito nunca foi vender apenas um conteúdo, mas fortalecer vidas e ministérios através da Palavra.\n\nConto com a sua honestidade para cumprir o que foi combinado 🙏\n\nAssim que realizar a contribuição simbólica, me envie o comprovante para que eu possa liberar os bônus prometidos.\n\nSeguimos juntos na obra."
@@ -8023,7 +8137,7 @@
               "x": 9440,
               "y": 2620
             },
-            "label": "💬 Mensagem #39",
+            "label": "💬 Mensagem #40",
             "config": {
               "text": "A paz querido irmão, responde por favor 😢🙏🏻",
               "messageText": "A paz querido irmão, responde por favor 😢🙏🏻"
@@ -8050,7 +8164,7 @@
               "x": 9800,
               "y": 2640
             },
-            "label": "💬 Mensagem #40",
+            "label": "💬 Mensagem #41",
             "config": {
               "text": "Quando for possível para você, peço que efetue o pagamento dos materiais enviados, honrando o compromisso que assumimos entre irmãos 🙏\nFico no aguardo.",
               "messageText": "Quando for possível para você, peço que efetue o pagamento dos materiais enviados, honrando o compromisso que assumimos entre irmãos 🙏\nFico no aguardo."
@@ -8063,7 +8177,7 @@
               "x": 10040,
               "y": 2500
             },
-            "label": "💬 Mensagem #21",
+            "label": "💬 Mensagem #22",
             "config": {
               "text": "Valor: R$20 \n\nou o que você puder contribuir já está ótimo, amém!",
               "messageText": "Valor: R$20 \n\nou o que você puder contribuir já está ótimo, amém!"
@@ -8091,7 +8205,7 @@
               "x": 10560,
               "y": 2660
             },
-            "label": "💬 Mensagem #41",
+            "label": "💬 Mensagem #42",
             "config": {
               "text": "Não faça igual outras pessoas, enviei tudo com carinho e na confiança, que Deus possa tocar no seu coração e você enviar a contrbuição de pelo menos R$10 AMÉM ?",
               "messageText": "Não faça igual outras pessoas, enviei tudo com carinho e na confiança, que Deus possa tocar no seu coração e você enviar a contrbuição de pelo menos R$10 AMÉM ?"
@@ -8147,7 +8261,7 @@
               "x": 11120,
               "y": 2500
             },
-            "label": "💬 Mensagem #22",
+            "label": "💬 Mensagem #23",
             "config": {
               "text": "A Paz você ainda está ai?",
               "messageText": "A Paz você ainda está ai?"
@@ -8160,7 +8274,7 @@
               "x": 11240,
               "y": 2640
             },
-            "label": "💬 Mensagem #42",
+            "label": "💬 Mensagem #43",
             "config": {
               "text": "me da um retorno, por favor... 🙏",
               "messageText": "me da um retorno, por favor... 🙏"
@@ -8173,7 +8287,7 @@
               "x": 11440,
               "y": 2500
             },
-            "label": "💬 Mensagem #23",
+            "label": "💬 Mensagem #24",
             "config": {
               "text": "Precisp da conntrbuição de pelo menos R$10 para não ficar no prejuizo, confiei em você e liberei todos os materiais, agora por favor me envie a contribuição 🙏",
               "messageText": "Precisp da conntrbuição de pelo menos R$10 para não ficar no prejuizo, confiei em você e liberei todos os materiais, agora por favor me envie a contribuição 🙏"
@@ -8200,7 +8314,7 @@
               "x": 11780,
               "y": 2500
             },
-            "label": "💬 Mensagem #24",
+            "label": "💬 Mensagem #25",
             "config": {
               "text": "Me envie o comprovante por favor.",
               "messageText": "Me envie o comprovante por favor."
@@ -8228,7 +8342,7 @@
               "x": 12120,
               "y": 2520
             },
-            "label": "💬 Mensagem #25",
+            "label": "💬 Mensagem #26",
             "config": {
               "text": "Boa tarde Olá irmão, tudo bem? 🙏\n\nPassando aqui porque vi que você recebeu todo o material dos esboços, mas talvez na correria ainda não conseguiu olhar com calma.\n\nE como combinamos, eu te enviei tudo primeiro pela confiança 🤝\n\n\nEla me ajuda a continuar mantendo esse trabalho e abençoando outras vidas através da Palavra.",
               "messageText": "Boa tarde Olá irmão, tudo bem? 🙏\n\nPassando aqui porque vi que você recebeu todo o material dos esboços, mas talvez na correria ainda não conseguiu olhar com calma.\n\nE como combinamos, eu te enviei tudo primeiro pela confiança 🤝\n\n\nEla me ajuda a continuar mantendo esse trabalho e abençoando outras vidas através da Palavra."
@@ -8255,7 +8369,7 @@
               "x": 12440,
               "y": 2520
             },
-            "label": "💬 Mensagem #26",
+            "label": "💬 Mensagem #27",
             "config": {
               "text": "POXA, é dificil acreditar nas pessoas hoje em dia! QUE MALDADE.\n\nDeus não se agrada com isso.",
               "messageText": "POXA, é dificil acreditar nas pessoas hoje em dia! QUE MALDADE.\n\nDeus não se agrada com isso."
@@ -8268,7 +8382,7 @@
               "x": 12580,
               "y": 2660
             },
-            "label": "💬 Mensagem #43",
+            "label": "💬 Mensagem #44",
             "config": {
               "text": "Nao esperava ser enganado!😪",
               "messageText": "Nao esperava ser enganado!😪"
@@ -8295,7 +8409,7 @@
               "x": 12900,
               "y": 2680
             },
-            "label": "💬 Mensagem #44",
+            "label": "💬 Mensagem #45",
             "config": {
               "text": "Desculpa te incomodar…\n\nMas enquanto orava, Deus me lembrou do verdadeiro propósito disso tudo.\n\nEsse material não foi criado apenas para ser mais um PDF no celular.\n\nEle foi preparado para ajudar pessoas que pregam a Palavra, que muitas vezes estão cansadas, sem tempo, mas ainda assim querem entregar uma mensagem com zelo, direção e temor a Deus.\n\nEu te enviei os materiais confiando que eles poderiam abençoar seu ministério.\n\nE se eles chegaram até você, talvez não tenha sido por acaso.\n\nA contribuição simbólica é apenas para ajudar esse projeto continuar alcançando mais pessoas que também precisam desse apoio.\n\nSe você ainda puder fazer sua contribuição, vai me ajudar muito a manter esse trabalho de pé.\n\nQue Deus abençoe sua vida, sua casa e seu ministério. 🙏",
               "messageText": "Desculpa te incomodar…\n\nMas enquanto orava, Deus me lembrou do verdadeiro propósito disso tudo.\n\nEsse material não foi criado apenas para ser mais um PDF no celular.\n\nEle foi preparado para ajudar pessoas que pregam a Palavra, que muitas vezes estão cansadas, sem tempo, mas ainda assim querem entregar uma mensagem com zelo, direção e temor a Deus.\n\nEu te enviei os materiais confiando que eles poderiam abençoar seu ministério.\n\nE se eles chegaram até você, talvez não tenha sido por acaso.\n\nA contribuição simbólica é apenas para ajudar esse projeto continuar alcançando mais pessoas que também precisam desse apoio.\n\nSe você ainda puder fazer sua contribuição, vai me ajudar muito a manter esse trabalho de pé.\n\nQue Deus abençoe sua vida, sua casa e seu ministério. 🙏"
@@ -8327,6 +8441,33 @@
             "config": {
               "text": "Posso lhe enviar o material?",
               "messageText": "Posso lhe enviar o material?"
+            }
+          },
+          {
+            "nodeId": "message_1794516978662",
+            "nodeType": "MESSAGE",
+            "position": {
+              "x": 660,
+              "y": 1720
+            },
+            "label": "💬 Mensagem #7",
+            "config": {
+              "text": "Copie a chave do PIX abaixo e faça sua contribuição por favor 🙏",
+              "messageText": "Copie a chave do PIX abaixo e faça sua contribuição por favor 🙏"
+            }
+          },
+          {
+            "nodeId": "delay_1794518064938",
+            "nodeType": "DELAY",
+            "position": {
+              "x": 560,
+              "y": 2580
+            },
+            "label": "⏰ Aguardar 5 minutos (copy)",
+            "config": {
+              "delaySeconds": 300,
+              "delayValue": 5,
+              "delayUnit": "minutes"
             }
           }
         ],
@@ -8452,46 +8593,12 @@
             "target": "flow_funil_4_msg_rem2"
           },
           {
-            "edgeId": "e_node_flow_funil_4_bonus_media_node_flow_funil_4_meta_capi",
-            "sourceNodeId": "node_flow_funil_4_bonus_media",
-            "targetNodeId": "node_flow_funil_4_meta_capi",
-            "id": "e_node_flow_funil_4_bonus_media_node_flow_funil_4_meta_capi",
-            "source": "node_flow_funil_4_bonus_media",
-            "target": "node_flow_funil_4_meta_capi"
-          },
-          {
-            "edgeId": "e_node_flow_funil_4_meta_capi_node_flow_funil_4_final_msg",
-            "sourceNodeId": "node_flow_funil_4_meta_capi",
-            "targetNodeId": "node_flow_funil_4_final_msg",
-            "id": "e_node_flow_funil_4_meta_capi_node_flow_funil_4_final_msg",
-            "source": "node_flow_funil_4_meta_capi",
-            "target": "node_flow_funil_4_final_msg"
-          },
-          {
             "edgeId": "e_node_flow_funil_4_11_node_flow_funil_4_12",
             "sourceNodeId": "node_flow_funil_4_11",
             "targetNodeId": "node_flow_funil_4_12",
             "id": "e_node_flow_funil_4_11_node_flow_funil_4_12",
             "source": "node_flow_funil_4_11",
             "target": "node_flow_funil_4_12"
-          },
-          {
-            "edgeId": "e_node_flow_funil_4_12_node_flow_funil_4_bonus_media",
-            "sourceNodeId": "node_flow_funil_4_12",
-            "targetNodeId": "node_flow_funil_4_bonus_media",
-            "sourceHandle": "success",
-            "id": "e_node_flow_funil_4_12_node_flow_funil_4_bonus_media",
-            "source": "node_flow_funil_4_12",
-            "target": "node_flow_funil_4_bonus_media"
-          },
-          {
-            "edgeId": "edge_1794408801898",
-            "sourceNodeId": "node_flow_funil_4_12",
-            "targetNodeId": "flow_funil_4_msg_rem1",
-            "sourceHandle": "timeout",
-            "id": "edge_1794408801898",
-            "source": "node_flow_funil_4_12",
-            "target": "flow_funil_4_msg_rem1"
           },
           {
             "edgeId": "edge_1794408862285",
@@ -9014,14 +9121,6 @@
             "target": "pix_1794411166538"
           },
           {
-            "edgeId": "edge_1794423508494",
-            "sourceNodeId": "node_flow_funil_4_9",
-            "targetNodeId": "node_flow_funil_4_10",
-            "id": "edge_1794423508494",
-            "source": "node_flow_funil_4_9",
-            "target": "node_flow_funil_4_10"
-          },
-          {
             "edgeId": "edge_1794424553797",
             "sourceNodeId": "node_flow_funil_4_5",
             "targetNodeId": "message_1794424547300",
@@ -9036,6 +9135,88 @@
             "id": "edge_1794424555653",
             "source": "message_1794424547300",
             "target": "node_flow_funil_4_6"
+          },
+          {
+            "edgeId": "edge_1794517042509",
+            "sourceNodeId": "node_flow_funil_4_9",
+            "targetNodeId": "message_1794516978662",
+            "id": "edge_1794517042509",
+            "source": "node_flow_funil_4_9",
+            "target": "message_1794516978662"
+          },
+          {
+            "edgeId": "edge_1794517119008",
+            "sourceNodeId": "message_1794516978662",
+            "targetNodeId": "node_flow_funil_4_10",
+            "id": "edge_1794517119008",
+            "source": "message_1794516978662",
+            "target": "node_flow_funil_4_10"
+          },
+          {
+            "edgeId": "edge_1794518069066",
+            "sourceNodeId": "node_flow_funil_4_12",
+            "targetNodeId": "delay_1794518064938",
+            "sourceHandle": "timeout",
+            "id": "edge_1794518069066",
+            "source": "node_flow_funil_4_12",
+            "target": "delay_1794518064938"
+          },
+          {
+            "edgeId": "edge_1794518073819",
+            "sourceNodeId": "delay_1794518064938",
+            "targetNodeId": "flow_funil_4_msg_rem1",
+            "id": "edge_1794518073819",
+            "source": "delay_1794518064938",
+            "target": "flow_funil_4_msg_rem1"
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_12_node_flow_funil_4_bonus_media",
+            "sourceNodeId": "node_flow_funil_4_12",
+            "targetNodeId": "node_flow_funil_4_bonus_media",
+            "id": "e_node_flow_funil_4_12_node_flow_funil_4_bonus_media",
+            "source": "node_flow_funil_4_12",
+            "target": "node_flow_funil_4_bonus_media",
+            "sourceHandle": "success"
+          },
+          {
+            "edgeId": "e_bonus1_to_bonus2",
+            "sourceNodeId": "node_flow_funil_4_bonus_media",
+            "targetNodeId": "node_flow_funil_4_bonus_media_2",
+            "id": "e_bonus1_to_bonus2",
+            "source": "node_flow_funil_4_bonus_media",
+            "target": "node_flow_funil_4_bonus_media_2"
+          },
+          {
+            "edgeId": "e_bonus2_to_bonus3",
+            "sourceNodeId": "node_flow_funil_4_bonus_media_2",
+            "targetNodeId": "node_flow_funil_4_bonus_media_3",
+            "id": "e_bonus2_to_bonus3",
+            "source": "node_flow_funil_4_bonus_media_2",
+            "target": "node_flow_funil_4_bonus_media_3"
+          },
+          {
+            "edgeId": "e_bonus3_to_bonus4",
+            "sourceNodeId": "node_flow_funil_4_bonus_media_3",
+            "targetNodeId": "node_flow_funil_4_bonus_media_4",
+            "id": "e_bonus3_to_bonus4",
+            "source": "node_flow_funil_4_bonus_media_3",
+            "target": "node_flow_funil_4_bonus_media_4"
+          },
+          {
+            "edgeId": "e_bonus4_to_meta_capi",
+            "sourceNodeId": "node_flow_funil_4_bonus_media_4",
+            "targetNodeId": "node_flow_funil_4_meta_capi",
+            "id": "e_bonus4_to_meta_capi",
+            "source": "node_flow_funil_4_bonus_media_4",
+            "target": "node_flow_funil_4_meta_capi"
+          },
+          {
+            "edgeId": "e_node_flow_funil_4_meta_capi_node_flow_funil_4_final_msg",
+            "sourceNodeId": "node_flow_funil_4_meta_capi",
+            "targetNodeId": "node_flow_funil_4_final_msg",
+            "id": "e_node_flow_funil_4_meta_capi_node_flow_funil_4_final_msg",
+            "source": "node_flow_funil_4_meta_capi",
+            "target": "node_flow_funil_4_final_msg"
           }
         ]
       }

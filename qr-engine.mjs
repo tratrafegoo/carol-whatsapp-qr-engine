@@ -426,8 +426,7 @@ async function auditAudioRefusalWithGemini(audioBuffer, mimeType = 'audio/ogg') 
     try {
         const base64Audio = audioBuffer.toString('base64');
         const cleanMime = (mimeType && mimeType.includes('mp4')) ? 'audio/mp4' : 'audio/ogg';
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
-
+        const modelsToTry = ['gemini-3.5-flash-lite', 'gemini-4-hydrogen', 'gemini-3.6-flash'];
         const prompt = `Você é uma inteligência artificial especialista em vendas no WhatsApp para infoprodutos.
 O lead enviou esta mensagem de áudio (nota de voz gravada no WhatsApp) após receber a chave PIX e a oferta.
 Analise o áudio e realize duas tarefas:
@@ -441,31 +440,48 @@ Retorne EXCLUSIVAMENTE um objeto JSON válido no formato:
   "refusalReason": "motivo resumido da recusa ou null"
 }`;
 
-        const response = await axios.post(
-            url,
-            {
-                contents: [
-                    {
-                        parts: [
-                            { text: prompt },
-                            {
-                                inline_data: {
-                                    mime_type: cleanMime,
-                                    data: base64Audio
-                                }
-                            }
-                        ]
-                    }
-                ],
-                generationConfig: {
-                    response_mime_type: "application/json",
-                    temperature: 0.1
-                }
-            },
-            { timeout: 15000 }
-        );
+        let response = null;
+        let lastErr = null;
 
-        const rawJson = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        for (const modelName of modelsToTry) {
+            try {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`;
+                response = await axios.post(
+                    url,
+                    {
+                        contents: [
+                            {
+                                parts: [
+                                    { text: prompt },
+                                    {
+                                        inline_data: {
+                                            mime_type: cleanMime,
+                                            data: base64Audio
+                                        }
+                                    }
+                                ]
+                            }
+                        ],
+                        generationConfig: {
+                            response_mime_type: "application/json",
+                            temperature: 0.1
+                        }
+                    },
+                    { headers: { 'Content-Type': 'application/json' }, timeout: 15000 }
+                );
+                if (response?.data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+                    console.log(`[Audio Auditor] 🎙️ Áudio analisado via ${modelName}`);
+                    break;
+                }
+            } catch (mErr) {
+                lastErr = mErr;
+                console.warn(`[Audio Auditor] Modelo ${modelName} falhou: ${mErr?.response?.data?.error?.message || mErr.message}`);
+            }
+        }
+
+        if (!response && lastErr) throw lastErr;
+
+        const rawJson = response?.data?.candidates?.[0]?.content?.parts?.[0]?.text;
         if (rawJson) {
             const parsed = JSON.parse(rawJson);
             const transcript = parsed.transcript || '';
@@ -480,7 +496,7 @@ Retorne EXCLUSIVAMENTE um objeto JSON válido no formato:
             };
         }
     } catch (e) {
-        console.warn('[Audio Auditor] Erro ao analisar áudio com Gemini:', e.message);
+        console.warn('[Audio Auditor] Erro ao analisar áudio com Gemini:', e?.response?.data?.error?.message || e.message);
     }
 
     return { isRefusal: false, transcript: '', refusalReason: null };
@@ -502,8 +518,9 @@ async function auditPixReceiptWithGemini(mediaBuffer, mimeType, expectedAmount =
 
     try {
         const base64Data = mediaBuffer.toString('base64');
-        const modelsToTry = ['gemini-2.0-flash', 'gemini-2.5-flash'];
+        const modelsToTry = ['gemini-3.5-flash-lite', 'gemini-4-hydrogen', 'gemini-3.6-flash'];
         let response = null;
+        let usedModel = null;
         let lastErr = null;
 
         for (const modelName of modelsToTry) {
@@ -529,11 +546,15 @@ async function auditPixReceiptWithGemini(mediaBuffer, mimeType, expectedAmount =
                             response_mime_type: 'application/json',
                         },
                     },
-                    { headers: { 'Content-Type': 'application/json' }, timeout: 25000 }
+                    { headers: { 'Content-Type': 'application/json' }, timeout: 18000 }
                 );
-                if (response?.data?.candidates?.[0]?.content?.parts?.[0]?.text) break;
+                if (response?.data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+                    usedModel = modelName;
+                    break;
+                }
             } catch (mErr) {
                 lastErr = mErr;
+                console.warn(`[PIX Auditor] Modelo ${modelName} falhou: ${mErr?.response?.data?.error?.message || mErr.message}`);
             }
         }
 
@@ -541,7 +562,7 @@ async function auditPixReceiptWithGemini(mediaBuffer, mimeType, expectedAmount =
 
         const textOutput = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
         const parsed = JSON.parse(textOutput);
-        console.log('[PIX Auditor] 🧠 Resultado da IA:', JSON.stringify(parsed));
+        console.log(`[PIX Auditor] 🧠 Resultado da IA (${usedModel}):`, JSON.stringify(parsed));
 
         if (parsed.status !== 'CONCLUIDO') {
             return {
@@ -774,7 +795,7 @@ const DEFAULT_FLOW_NODES = [
         config: {
             expectedAmount: '20.00',
             beneficiaryName: 'Pastor Guilherme',
-            model: 'gemini-2.0-flash',
+            model: 'gemini-3.5-flash-lite',
         },
     },
     {
@@ -852,9 +873,318 @@ function loadStore() {
     return initial;
 }
 
+let isRestoringRuntimeState = false;
+let runtimeStateBootRestored = false;
+let runtimeBackupDebounceTimer = null;
+let lastRuntimeBackupHash = '';
+
+function sanitizeSessionsForBackup(userSessions = {}) {
+    const cleaned = {};
+    for (const [k, s] of Object.entries(userSessions || {})) {
+        if (!s || typeof s !== 'object') continue;
+        const copy = { ...s };
+        delete copy.inFlightStartedAt;
+        cleaned[k] = copy;
+    }
+    return cleaned;
+}
+
+function buildRuntimeStatePayload(botId = 'bot_whatsapp_principal') {
+    const scopedSessions = {};
+    for (const [k, s] of Object.entries(store.userSessions || {})) {
+        if (k.startsWith(`${botId}:`) || (s && s.botId === botId) || !s?.botId) {
+            const copy = { ...s };
+            delete copy.inFlightStartedAt;
+            scopedSessions[k] = copy;
+        }
+    }
+    return {
+        botId,
+        savedAt: new Date().toISOString(),
+        userSessions: scopedSessions,
+        scheduledJobs: Array.isArray(store.scheduledJobs) ? store.scheduledJobs : [],
+        conversations: Array.isArray(store.conversations) ? store.conversations.slice(-500) : [],
+        funnelStats: store.funnelStats || {},
+        funnelTransactions: Array.isArray(store.funnelTransactions) ? store.funnelTransactions : [],
+    };
+}
+
+function computeRuntimeHash(payload) {
+    try {
+        return JSON.stringify({
+            sc: Object.keys(payload.userSessions || {}).length,
+            su: Object.entries(payload.userSessions || {}).map(([k, v]) => [k, v.waitingFor, v.currentNodeId, v.paid, v.updatedAt]),
+            jc: (payload.scheduledJobs || []).map(j => [j.jobId, j.resumeAt, j.targetNodeId]),
+            cc: (payload.conversations || []).length,
+            lc: payload.conversations?.[(payload.conversations || []).length - 1]?._id || '',
+            tc: (payload.funnelTransactions || []).length,
+            fs: payload.funnelStats || {},
+        });
+    } catch {
+        return String(Date.now());
+    }
+}
+
+async function flushRuntimeStateBackupNow(botId = 'bot_whatsapp_principal', force = false) {
+    try {
+        const payload = buildRuntimeStatePayload(botId);
+        const hash = computeRuntimeHash(payload);
+        if (!force && hash === lastRuntimeBackupHash) {
+            return { skipped: true };
+        }
+        await axios.post(
+            `${CLOUD_WORKER_URL}/api/cloud-kv/runtime-state?botId=${encodeURIComponent(botId)}`,
+            payload,
+            { timeout: 8000 }
+        );
+        lastRuntimeBackupHash = hash;
+        console.log(`[Cloud KV Runtime] ☁️ Backup salvo: ${Object.keys(payload.userSessions).length} sessões, ${payload.scheduledJobs.length} jobs, ${payload.conversations.length} msgs.`);
+        return { success: true, savedAt: payload.savedAt };
+    } catch (err) {
+        console.warn('[Cloud KV Runtime] Aviso ao salvar backup runtime:', err?.message);
+        return { success: false, error: err?.message };
+    }
+}
+
+function scheduleCloudKvRuntimeBackup(botId = 'bot_whatsapp_principal') {
+    if (isRestoringRuntimeState || !runtimeStateBootRestored) return;
+    if (runtimeBackupDebounceTimer) clearTimeout(runtimeBackupDebounceTimer);
+    runtimeBackupDebounceTimer = setTimeout(() => {
+        flushRuntimeStateBackupNow(botId, false).catch(() => {});
+    }, 45000);
+}
+
+function reconstructMissingSessionsFromHistory(botId = 'bot_whatsapp_principal') {
+    const flows = store.flows?.[botId] || [];
+    const activeFlowId = store.activeFunnelId || 'flow_1794362249148';
+    const activeFlow = flows.find(f => f._id === activeFlowId) || flows.find(f => f._id === 'flow_1794362249148') || flows[0];
+    const resolveFlowHelpers = (targetFlowId) => {
+        const f = flows.find(fl => fl._id === targetFlowId) || activeFlow;
+        const nodes = f?.draftVersion?.flowData?.nodes || [];
+        const inputNode = nodes.find(n => (n.nodeType || '').toUpperCase() === 'INPUT') || null;
+        const verifierNode = nodes.find(n => (n.nodeType || '').toUpperCase() === 'PIX_VERIFIER') || null;
+        const pixNode = nodes.find(n => (n.nodeType || '').toUpperCase() === 'PIX') || null;
+        return { flow: f, inputNode, verifierNode, pixNode };
+    };
+
+    let reconstructedCount = 0;
+    store.userSessions = store.userSessions || {};
+
+    // 1. Reconstruir sessões de leads com jobs agendados no scheduler (pós-PIX / remarketing)
+    for (const job of (store.scheduledJobs || [])) {
+        const jBot = job.botId || botId;
+        const phone = String(job.userPhone || '').replace(/\D/g, '');
+        if (!phone) continue;
+        const key = `${jBot}:${phone}`;
+        const jidDigits = String(job.remoteJid || '').split('@')[0].split(':')[0].replace(/\D/g, '');
+        const { flow, verifierNode, pixNode } = resolveFlowHelpers(job.flowId);
+        let sess = store.userSessions[key] || (jidDigits ? store.userSessions[`${jBot}:${jidDigits}`] : null);
+        if (!sess) {
+            sess = {
+                botId: jBot,
+                userJid: job.remoteJid || (phone.length > 13 ? `${phone}@lid` : `${phone}@s.whatsapp.net`),
+                userPhone: phone,
+                userName: 'Cliente',
+                flowId: flow?._id || job.flowId || activeFlowId,
+                flowName: flow?.name || job.flowName || '',
+                currentNodeId: verifierNode?.nodeId || verifierNode?.id || 'node_flow_funil_4_12',
+                waitingFor: 'PIX_RECEIPT',
+                hasReceivedPix: true,
+                wasInRecovery: true,
+                expectedAmount: Number(verifierNode?.config?.expectedAmount || pixNode?.config?.amount || 20.0),
+                latestPixAmount: Number(pixNode?.config?.amount || verifierNode?.config?.expectedAmount || 20.0),
+                beneficiary: String(verifierNode?.config?.beneficiary || pixNode?.config?.beneficiaryName || 'Pastor Guilherme'),
+                updatedAt: job.scheduledAt || new Date().toISOString(),
+            };
+            store.userSessions[key] = sess;
+            reconstructedCount += 1;
+        } else if (!store.userSessions[key]) {
+            store.userSessions[key] = sess;
+        }
+        if (jidDigits && jidDigits !== phone && !store.userSessions[`${jBot}:${jidDigits}`]) {
+            store.userSessions[`${jBot}:${jidDigits}`] = sess;
+        }
+    }
+
+    // 2. Enriquecer e reconstruir leads parados na pergunta inicial (USER_REPLY) ou após PIX pelo histórico de mensagens
+    const byPhone = new Map();
+    for (const m of (store.conversations || [])) {
+        const p = String(m.userPhoneNumber || '').replace(/\D/g, '');
+        if (!p) continue;
+        if (!byPhone.has(p)) byPhone.set(p, []);
+        byPhone.get(p).push(m);
+    }
+
+    for (const [phone, msgs] of byPhone.entries()) {
+        const key = `${botId}:${phone}`;
+        const lastUser = [...msgs].reverse().find(m => m.sender === 'USER' && m.userName);
+        if (store.userSessions[key]) {
+            if (lastUser?.userName && (!store.userSessions[key].userName || store.userSessions[key].userName === 'Cliente')) {
+                store.userSessions[key].userName = lastUser.userName;
+            }
+            continue;
+        }
+
+        const hasAsk = msgs.some(m => m.sender === 'BOT' && String(m.messageContent || '').includes('Posso lhe enviar o material'));
+        const hasPdf = msgs.some(m => m.sender === 'BOT' && m.messageType === 'PDF');
+        const hasPix = msgs.some(m => m.sender === 'BOT' && m.messageType === 'PIX');
+        const declined = msgs.some(m => m.sender === 'BOT' && String(m.messageContent || '').includes('Quando desejar receber os materiais'));
+        const lastMsg = msgs[msgs.length - 1];
+        const { flow, inputNode, verifierNode, pixNode } = resolveFlowHelpers(activeFlowId);
+        if (!flow) continue;
+
+        if (hasPix && !hasPdf) {
+            // fallback raro: recebeu PIX sem job
+        }
+
+        if (hasPix) {
+            store.userSessions[key] = {
+                botId,
+                userJid: phone.length > 13 ? `${phone}@lid` : `${phone}@s.whatsapp.net`,
+                userPhone: phone,
+                userName: lastUser?.userName || 'Cliente',
+                flowId: flow._id,
+                flowName: flow.name,
+                currentNodeId: verifierNode?.nodeId || 'node_flow_funil_4_12',
+                waitingFor: 'PIX_RECEIPT',
+                hasReceivedPix: true,
+                expectedAmount: Number(verifierNode?.config?.expectedAmount || pixNode?.config?.amount || 20.0),
+                latestPixAmount: Number(pixNode?.config?.amount || verifierNode?.config?.expectedAmount || 20.0),
+                beneficiary: String(verifierNode?.config?.beneficiary || pixNode?.config?.beneficiaryName || 'Pastor Guilherme'),
+                updatedAt: lastMsg?.sentAt || new Date().toISOString(),
+            };
+            reconstructedCount += 1;
+        } else if (hasAsk && !hasPdf && !declined && inputNode) {
+            store.userSessions[key] = {
+                botId,
+                userJid: phone.length > 13 ? `${phone}@lid` : `${phone}@s.whatsapp.net`,
+                userPhone: phone,
+                userName: lastUser?.userName || 'Cliente',
+                flowId: flow._id,
+                flowName: flow.name,
+                currentNodeId: inputNode.nodeId,
+                variableName: inputNode.config?.variableName || 'lead_confirm',
+                waitingFor: 'USER_REPLY',
+                updatedAt: lastMsg?.sentAt || new Date().toISOString(),
+            };
+            reconstructedCount += 1;
+        }
+    }
+
+    return reconstructedCount;
+}
+
+function mergeRuntimeState(stateData = {}, options = {}) {
+    if (!stateData || typeof stateData !== 'object') return { mergedSessions: 0, mergedJobs: 0, reconstructed: 0 };
+    isRestoringRuntimeState = true;
+    try {
+        let mergedSessions = 0;
+        let mergedJobs = 0;
+
+        if (stateData.userSessions && typeof stateData.userSessions === 'object') {
+            store.userSessions = store.userSessions || {};
+            const cleanIncoming = sanitizeSessionsForBackup(stateData.userSessions);
+            for (const [key, sess] of Object.entries(cleanIncoming)) {
+                const existing = store.userSessions[key];
+                const incTime = new Date(sess.updatedAt || 0).getTime();
+                const extTime = new Date(existing?.updatedAt || 0).getTime();
+                if (!existing || incTime > extTime) {
+                    store.userSessions[key] = sess;
+                    mergedSessions += 1;
+                }
+            }
+        }
+
+        if (Array.isArray(stateData.conversations) && stateData.conversations.length > 0) {
+            const byId = new Map();
+            for (const m of (store.conversations || [])) {
+                if (m && m._id) byId.set(m._id, m);
+            }
+            for (const m of stateData.conversations) {
+                if (m && m._id && !byId.has(m._id)) byId.set(m._id, m);
+            }
+            const mergedMsgs = Array.from(byId.values()).sort((a, b) => new Date(a.sentAt || 0) - new Date(b.sentAt || 0));
+            store.conversations = mergedMsgs.slice(-500);
+        }
+
+        if (Array.isArray(stateData.scheduledJobs) && stateData.scheduledJobs.length > 0) {
+            store.scheduledJobs = store.scheduledJobs || [];
+            const seenJobKeys = new Set(
+                store.scheduledJobs.map(j => `${j.userPhone}:${j.targetNodeId || ''}:${Boolean(j.isPixTimeout)}`)
+            );
+            for (const job of stateData.scheduledJobs) {
+                const sKey = `${job.botId || 'bot_whatsapp_principal'}:${job.userPhone}`;
+                if (store.userSessions?.[sKey]?.paid) continue;
+                const dedup = `${job.userPhone}:${job.targetNodeId || ''}:${Boolean(job.isPixTimeout)}`;
+                if (!seenJobKeys.has(dedup)) {
+                    store.scheduledJobs.push(job);
+                    seenJobKeys.add(dedup);
+                    mergedJobs += 1;
+                }
+            }
+        }
+
+        if (Array.isArray(stateData.funnelTransactions) && stateData.funnelTransactions.length > 0) {
+            const seenTx = new Set((store.funnelTransactions || []).map(t => t.id));
+            store.funnelTransactions = store.funnelTransactions || [];
+            for (const tx of stateData.funnelTransactions) {
+                if (tx?.id && !seenTx.has(tx.id)) {
+                    store.funnelTransactions.push(tx);
+                    seenTx.add(tx.id);
+                }
+            }
+            store.funnelTransactions.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+        }
+
+        if (stateData.funnelStats && typeof stateData.funnelStats === 'object') {
+            store.funnelStats = store.funnelStats || {};
+            const inc = stateData.funnelStats;
+            for (const k of ['startedCount', 'materialDeliveredCount', 'pixSentCount', 'receiptReceivedCount', 'convertedCount', 'dropOffCount', 'totalRevenue']) {
+                if (typeof inc[k] === 'number' && inc[k] > (store.funnelStats[k] || 0)) {
+                    store.funnelStats[k] = inc[k];
+                }
+            }
+            if (Array.isArray(inc.recentConversions) && inc.recentConversions.length > (store.funnelStats.recentConversions?.length || 0)) {
+                store.funnelStats.recentConversions = inc.recentConversions;
+            }
+        }
+
+        let reconstructed = 0;
+        if (options.reconstructMissingSessions) {
+            reconstructed = reconstructMissingSessionsFromHistory('bot_whatsapp_principal');
+        }
+
+        saveStore(store);
+        return { mergedSessions, mergedJobs, reconstructed };
+    } finally {
+        isRestoringRuntimeState = false;
+    }
+}
+
+async function restoreRuntimeStateFromCloudKv(botId = 'bot_whatsapp_principal') {
+    try {
+        const res = await axios.get(`${CLOUD_WORKER_URL}/api/cloud-kv/runtime-state?botId=${encodeURIComponent(botId)}`, {
+            timeout: 7000,
+        });
+        const kvState = res.data?.state;
+        if (kvState && typeof kvState === 'object') {
+            const summary = mergeRuntimeState(kvState, { reconstructMissingSessions: false });
+            lastRuntimeBackupHash = computeRuntimeHash(buildRuntimeStatePayload(botId));
+            console.log(`[Cloud KV Runtime] ☁️ Estado de runtime restaurado do KV (${summary.mergedSessions} sessões, ${summary.mergedJobs} jobs, ${store.conversations?.length || 0} msgs)`);
+            return true;
+        }
+    } catch (err) {
+        console.warn('[Cloud KV Runtime] Aviso ao restaurar estado runtime do KV:', err?.message);
+    } finally {
+        runtimeStateBootRestored = true;
+    }
+    return false;
+}
+
 function saveStore(data) {
     try {
         fs.writeFileSync(STORE_FILE, JSON.stringify(data, null, 2), 'utf-8');
+        scheduleCloudKvRuntimeBackup('bot_whatsapp_principal');
     } catch {}
 }
 
@@ -1002,6 +1332,7 @@ try {
     restoreFlowsFromCloudKv('bot_whatsapp_principal').then(() => {
         scheduleCloudKvFlowsBackup('bot_whatsapp_principal');
     }).catch(() => {});
+    restoreRuntimeStateFromCloudKv('bot_whatsapp_principal').catch(() => {});
 } catch (err) {
     console.warn('[Store Init] Aviso ao carregar default_flows.json:', err?.message);
 }
@@ -5992,6 +6323,22 @@ async function resolveIncomingSession(botId, sock, remoteJid, msg) {
     return { userPhone: primaryPhone, sessionKey: primaryKey, session: null, altPhones: Array.from(altPhones) };
 }
 
+const leadMessageQueues = new Map();
+
+function enqueueLeadMessage(queueKey, taskFn) {
+    const prev = leadMessageQueues.get(queueKey) || Promise.resolve();
+    const next = prev
+        .catch(() => {})
+        .then(taskFn)
+        .finally(() => {
+            if (leadMessageQueues.get(queueKey) === next) {
+                leadMessageQueues.delete(queueKey);
+            }
+        });
+    leadMessageQueues.set(queueKey, next);
+    return next;
+}
+
 async function handleIncomingMessage(botId, sock, msg) {
     if (!msg.message || msg.key.fromMe) return;
 
@@ -6005,6 +6352,11 @@ async function handleIncomingMessage(botId, sock, msg) {
         return;
     }
 
+    const rawQueueKey = remoteJid.split('@')[0].split(':')[0].replace(/\D/g, '') || remoteJid;
+    return enqueueLeadMessage(`${botId}:${rawQueueKey}`, () => processIncomingMessageLocked(botId, sock, msg, remoteJid));
+}
+
+async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
     const identity = await resolveIncomingSession(botId, sock, remoteJid, msg);
     const userPhone = identity.userPhone;
     const pushName = msg.pushName || 'Cliente';
@@ -6160,8 +6512,14 @@ async function handleIncomingMessage(botId, sock, msg) {
                     session.waitingFor = null;
                     session.variables = session.variables || {};
                     session.variables[session.variableName || 'user_reply'] = textContent;
+                    session.inFlightStartedAt = Date.now();
                     saveStore(store);
-                    await executeFromNode(botId, sock, remoteJid, session, nextEdge.targetNodeId || nextEdge.target, nodes, edges);
+                    try {
+                        await executeFromNode(botId, sock, remoteJid, session, nextEdge.targetNodeId || nextEdge.target, nodes, edges);
+                    } finally {
+                        delete session.inFlightStartedAt;
+                        saveStore(store);
+                    }
                     return;
                 }
             }
@@ -8328,6 +8686,200 @@ app.post('/api/funnels/reset', (_req, res) => {
     res.json({ success: true, message: 'Funil e métricas zerados com sucesso para início da operação real!' });
 });
 
+app.get('/api/admin/runtime-state', (req, res) => {
+    const botId = String(req.query.botId || 'bot_whatsapp_principal');
+    res.json({
+        success: true,
+        singleFunnelMode: Boolean(store.singleFunnelMode),
+        activeFunnelId: store.activeFunnelId || null,
+        activeFunnelName: store.activeFunnelName || null,
+        state: buildRuntimeStatePayload(botId),
+    });
+});
+
+app.post('/api/admin/runtime-state', async (req, res) => {
+    try {
+        const body = req.body || {};
+        const botId = String(body.botId || 'bot_whatsapp_principal');
+        const statePayload = body.state || body;
+        const summary = mergeRuntimeState(statePayload, {
+            reconstructMissingSessions: Boolean(body.reconstructMissingSessions),
+        });
+        if (typeof body.singleFunnelMode === 'boolean') {
+            store.singleFunnelMode = body.singleFunnelMode;
+        }
+        if (body.activeFunnelId) store.activeFunnelId = String(body.activeFunnelId);
+        if (body.activeFunnelName) store.activeFunnelName = String(body.activeFunnelName);
+        saveStore(store);
+        const backupRes = await flushRuntimeStateBackupNow(botId, true);
+        res.json({
+            success: true,
+            summary,
+            backup: backupRes,
+            totalSessions: Object.keys(store.userSessions || {}).length,
+            totalJobs: (store.scheduledJobs || []).length,
+            totalConversations: (store.conversations || []).length,
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err?.message || 'Erro ao restaurar runtime state' });
+    }
+});
+
+app.post('/api/admin/runtime-state/backup', async (req, res) => {
+    try {
+        const botId = String(req.body?.botId || 'bot_whatsapp_principal');
+        const backupRes = await flushRuntimeStateBackupNow(botId, true);
+        res.json({
+            success: Boolean(backupRes?.success),
+            ...backupRes,
+            totalSessions: Object.keys(store.userSessions || {}).length,
+            totalJobs: (store.scheduledJobs || []).length,
+            totalConversations: (store.conversations || []).length,
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err?.message || 'Erro ao fazer backup runtime' });
+    }
+});
+
+app.post('/api/admin/manual-pix-approve', async (req, res) => {
+    try {
+        const body = req.body || {};
+        const botId = String(body.botId || 'bot_whatsapp_principal');
+        const rawJid = String(body.jid || '').trim();
+        const rawPhone = String(body.phone || rawJid.split('@')[0] || '').split(':')[0].replace(/\D/g, '');
+        const flowId = String(body.flowId || store.activeFunnelId || 'flow_1794362249148').trim();
+        const paidValue = Number(body.amount || 20.0);
+        const recordSale = body.recordSale !== false;
+        const pushName = String(body.name || 'Cliente').trim() || 'Cliente';
+
+        if (!rawJid && (!rawPhone || rawPhone.length < 10)) {
+            return res.status(400).json({ success: false, error: 'Informe jid ou phone válido.' });
+        }
+
+        const sock = activeSockets.get(botId);
+        if (!sock || !sock.user) {
+            return res.status(400).json({ success: false, error: 'WhatsApp não está conectado no servidor.' });
+        }
+
+        let remoteJid = rawJid;
+        let canonicalPhone = rawPhone;
+        const variantPhones = new Set(canonicalPhone ? getBrazilianPhoneVariants(canonicalPhone) : []);
+
+        if (rawJid && rawJid.endsWith('@lid')) {
+            remoteJid = rawJid;
+            canonicalPhone = rawJid.split('@')[0].split(':')[0].replace(/\D/g, '') || canonicalPhone;
+            try {
+                const pn = await sock?.signalRepository?.lidMapping?.getPNForLID?.(rawJid);
+                if (pn) {
+                    const pnDigits = String(pn).split('@')[0].split(':')[0].replace(/\D/g, '');
+                    getBrazilianPhoneVariants(pnDigits).forEach(v => variantPhones.add(v));
+                }
+            } catch {}
+        } else if (!remoteJid) {
+            const jidInfo = await resolveBrazilianWhatsAppJid(sock, rawPhone);
+            remoteJid = jidInfo.jid || `${rawPhone}@s.whatsapp.net`;
+            canonicalPhone = jidInfo.phoneDigits || rawPhone;
+            (jidInfo.allVariants || []).forEach(v => variantPhones.add(v));
+            if (jidInfo.lid) {
+                variantPhones.add(jidInfo.lid.split('@')[0].split(':')[0].replace(/\D/g, ''));
+            }
+        }
+        variantPhones.add(canonicalPhone);
+
+        // Cancelar todos os timers e agendamentos de cobrança para todas as variantes desse lead
+        for (const pVar of variantPhones) {
+            if (!pVar) continue;
+            cancelAllUserTimers(botId, pVar);
+        }
+        if (Array.isArray(store.scheduledJobs)) {
+            store.scheduledJobs = store.scheduledJobs.filter(j => {
+                const jp = String(j.userPhone || '').replace(/\D/g, '');
+                const jJidDigits = String(j.remoteJid || '').split('@')[0].split(':')[0].replace(/\D/g, '');
+                return !variantPhones.has(jp) && !variantPhones.has(jJidDigits) && j.remoteJid !== remoteJid;
+            });
+        }
+
+        const visualFlow = getVisualFlowById(botId, flowId) || getVisualFlowById(botId, 'flow_1794362249148');
+        if (!visualFlow) {
+            return res.status(404).json({ success: false, error: `Fluxo "${flowId}" não encontrado.` });
+        }
+
+        const sessionKey = `${botId}:${canonicalPhone}`;
+        let session = store.userSessions[sessionKey];
+        for (const pVar of variantPhones) {
+            if (!session && store.userSessions[`${botId}:${pVar}`]) {
+                session = store.userSessions[`${botId}:${pVar}`];
+            }
+        }
+        if (!session) {
+            session = {
+                botId,
+                userJid: remoteJid,
+                userPhone: canonicalPhone,
+                userName: pushName,
+                flowId: visualFlow.flow._id,
+                flowName: visualFlow.flow.name,
+            };
+        }
+
+        session.userJid = remoteJid;
+        session.userPhone = canonicalPhone;
+        session.userName = pushName !== 'Cliente' ? pushName : (session.userName || 'Cliente');
+        session.flowId = visualFlow.flow._id;
+        session.flowName = visualFlow.flow.name;
+        session.paid = true;
+        session.paidAmount = paidValue;
+        session.expectedAmount = paidValue;
+        session.waitingFor = null;
+        session.rejectedPayment = false;
+        session.expired = false;
+        session.capiFired = !recordSale;
+        session.updatedAt = new Date().toISOString();
+
+        const verifierNode = visualFlow.nodes.find(n => (n.nodeType || '').toUpperCase() === 'PIX_VERIFIER');
+        if (verifierNode) {
+            session.currentNodeId = verifierNode.nodeId;
+        }
+
+        store.userSessions[sessionKey] = session;
+        for (const pVar of variantPhones) {
+            if (pVar) store.userSessions[`${botId}:${pVar}`] = session;
+        }
+        saveStore(store);
+
+        const verifierNodeId = verifierNode ? verifierNode.nodeId : session.currentNodeId;
+        const successEdge =
+            visualFlow.edges.find(e => (e.sourceNodeId || e.source) === verifierNodeId && e.sourceHandle === 'success') ||
+            visualFlow.edges.find(e => (e.sourceNodeId || e.source) === verifierNodeId && (!e.sourceHandle || e.sourceHandle === 'default'));
+
+        if (!successEdge) {
+            return res.status(400).json({ success: false, error: 'Nó PIX_VERIFIER sem saída success conectada.' });
+        }
+
+        console.log(`[Admin Manual Approve] ✅ Liberando bônus para ${session.userName} (${remoteJid} | R$ ${paidValue.toFixed(2)} | recordSale=${recordSale})...`);
+        await executeFromNode(botId, sock, remoteJid, session, successEdge.targetNodeId || successEdge.target, visualFlow.nodes, visualFlow.edges);
+
+        if (recordSale && !session.capiFired) {
+            await recordAndFireFunnelConversion(botId, session, paidValue, visualFlow.flow.name);
+        }
+
+        await flushRuntimeStateBackupNow(botId, true);
+
+        res.json({
+            success: true,
+            message: `Bônus enviados para ${session.userName} (${remoteJid})!`,
+            remoteJid,
+            canonicalPhone,
+            amount: paidValue,
+            recordSale,
+            capiFired: Boolean(session.capiFired),
+        });
+    } catch (err) {
+        console.error('[Admin Manual Approve Error]:', err);
+        res.status(500).json({ success: false, error: err?.message || 'Erro ao aprovar manualmente' });
+    }
+});
+
 app.get('/api/meta/config', (_req, res) => {
     const cfg = store.metaConfig || {};
     res.json({
@@ -9051,3 +9603,20 @@ setInterval(async () => {
         await fetch(RENDER_PING_URL).catch(() => {});
     } catch {}
 }, 3 * 60 * 1000);
+
+// Backup automático de sessões e conversas ao receber sinal de restart/deploy (SIGTERM/SIGINT)
+let isShuttingDown = false;
+async function handleGracefulShutdown(signal) {
+    if (isShuttingDown) return;
+    isShuttingDown = true;
+    console.log(`[QR Engine] 🛑 Recebido sinal ${signal}. Salvando sessões e jobs no Cloudflare KV antes de encerrar...`);
+    try {
+        await Promise.race([
+            flushRuntimeStateBackupNow('bot_whatsapp_principal', true),
+            new Promise((r) => setTimeout(r, 3500))
+        ]);
+    } catch {}
+    process.exit(0);
+}
+process.on('SIGTERM', () => { handleGracefulShutdown('SIGTERM'); });
+process.on('SIGINT', () => { handleGracefulShutdown('SIGINT'); });
