@@ -142,50 +142,157 @@ export const FUNNELS_CATALOG = [
     }
 ];
 
-// ─── EXTRAÇÃO DE CONTEXTO DE ANÚNCIO (CTWA NATIVO OU TAGS UTM) ───
+// ─── UTILITÁRIOS DE TELEFONE REAL VS @LID E NORMALIZAÇÃO META ───
+const DEFAULT_META_PAGE_ID = '1046083835265089';
+
+function getMetaAccessToken(preferEnvOnly = false) {
+    const envOrStore = process.env.META_ACCESS_TOKEN || store.metaConfig?.accessToken;
+    if (envOrStore) return envOrStore;
+    if (preferEnvOnly) return '';
+    return 'EAAUO1JVtzLgBS9gj3E8dtMiX2KkICYQyjZAUuy0SJJmzWPZCZABlSDFUllmoDfB5h1lt7xHJ3ifoY5jOMuLRKG9Bkq7Ulw9V3vOG3PgXEWqZByjMrv1ZCozA2hnjKCWyjlcHAsm4hxzFZCptbgtD3WbzZBxzg8ZBWncHbjBVjOdRON9xfxhX9EoYMQj0Yf7XbG3FDQZDZD';
+}
+
+function isPlausibleRealPhone(digits, jidHint = '') {
+    if (jidHint && String(jidHint).endsWith('@lid')) return false;
+    const clean = String(digits || '').replace(/\D/g, '');
+    if (!clean || /^0+$/.test(clean)) return false;
+    // @lid IDs no WhatsApp têm tipicamente 14-15+ dígitos arbitrários; telefones BR com DDI 55 têm 12 ou 13 dígitos
+    if (clean.startsWith('55')) {
+        return clean.length === 12 || clean.length === 13;
+    }
+    if (jidHint && String(jidHint).endsWith('@s.whatsapp.net')) {
+        return clean.length >= 10 && clean.length <= 15;
+    }
+    return clean.length >= 10 && clean.length <= 13;
+}
+
+function sha256Hex(value) {
+    return crypto.createHash('sha256').update(String(value)).digest('hex');
+}
+
+function normalizeMetaPersonNamePart(rawPart) {
+    if (!rawPart) return '';
+    return String(rawPart)
+        .trim()
+        .toLowerCase()
+        .replace(/[^\p{L}\p{N}]/gu, '');
+}
+
+function splitMetaCustomerName(pushName) {
+    const raw = String(pushName || '').trim();
+    if (!raw || raw === '-' || ['cliente', 'lead', 'visitante'].includes(raw.toLowerCase())) {
+        return { fn: '', ln: '' };
+    }
+    const tokens = raw.split(/\s+/).map(normalizeMetaPersonNamePart).filter(Boolean);
+    if (tokens.length === 0) return { fn: '', ln: '' };
+    return {
+        fn: tokens[0],
+        ln: tokens.length >= 2 ? tokens[tokens.length - 1] : ''
+    };
+}
+
+function decodeCtwaConversionData(rawConversionData) {
+    if (!rawConversionData) return { raw: null, decodedToken: '', isOpaquePayload: false };
+    try {
+        let str = '';
+        if (Buffer.isBuffer(rawConversionData) || rawConversionData instanceof Uint8Array) {
+            str = Buffer.from(rawConversionData).toString('utf8');
+        } else {
+            const rawStr = String(rawConversionData).trim();
+            if (/^\d+(,\d+)+$/.test(rawStr)) {
+                const bytes = rawStr.split(',').map(n => Number(n.trim())).filter(n => Number.isFinite(n) && n >= 0 && n <= 255);
+                str = Buffer.from(bytes).toString('utf8');
+            } else if (/^[0-9a-fA-F]{16,}$/.test(rawStr) && rawStr.length % 2 === 0) {
+                const asUtf8 = Buffer.from(rawStr, 'hex').toString('utf8');
+                str = /^[\x20-\x7e]+$/.test(asUtf8) ? asUtf8 : rawStr;
+            } else {
+                str = rawStr;
+            }
+        }
+        str = str.replace(/[\r\n\0]+/g, '').trim();
+        const printable = /^[A-Za-z0-9_\-+/=]+$/.test(str) ? str : '';
+        // Payloads opacos do WhatsApp Web/Baileys (conversionData/ctwaPayload) começam em Afh/Afg/Afj e têm ~350-500 chars;
+        // já ctwa_clid oficial da Cloud API tipicamente tem <= 250 chars
+        const isOpaquePayload = printable.length > 250;
+        return {
+            raw: Buffer.isBuffer(rawConversionData) ? rawConversionData.toString('utf8') : String(rawConversionData),
+            decodedToken: printable,
+            isOpaquePayload
+        };
+    } catch {
+        return { raw: String(rawConversionData), decodedToken: '', isOpaquePayload: false };
+    }
+}
+
+// ─── EXTRAÇÃO E ENRIQUECIMENTO DE CONTEXTO DE ANÚNCIO (CTWA / GRAPH API) ───
 function extractAdContext(msg, textContent) {
     const adData = {};
-    let m = msg.message || {};
+    let m = msg?.message || {};
     while (m.ephemeralMessage || m.viewOnceMessage || m.viewOnceMessageV2 || m.documentWithCaptionMessage) {
         m = m.ephemeralMessage?.message || m.viewOnceMessage?.message || m.viewOnceMessageV2?.message || m.documentWithCaptionMessage?.message || m;
     }
     const contextInfo =
         m.extendedTextMessage?.contextInfo ||
-        m.contextInfo ||
         m.imageMessage?.contextInfo ||
-        msg.message?.extendedTextMessage?.contextInfo ||
-        msg.message?.contextInfo ||
+        m.videoMessage?.contextInfo ||
+        m.documentMessage?.contextInfo ||
+        m.buttonsResponseMessage?.contextInfo ||
+        m.listResponseMessage?.contextInfo ||
+        m.contextInfo ||
+        msg?.message?.extendedTextMessage?.contextInfo ||
+        msg?.message?.contextInfo ||
         {};
 
-    if (contextInfo.externalAdReply) {
+    const ext = contextInfo.externalAdReply;
+    if (ext && typeof ext === 'object') {
         adData.isCtwa = true;
-        adData.adTitle = contextInfo.externalAdReply.title || '';
-        adData.sourceUrl = contextInfo.externalAdReply.sourceUrl || '';
+        if (ext.title) adData.adTitle = ext.title;
+        if (ext.body) adData.adBody = ext.body;
+        if (ext.sourceUrl) adData.sourceUrl = ext.sourceUrl;
+        if (ext.sourceType) adData.sourceType = ext.sourceType;
+        if (ext.sourceApp) adData.sourceApp = ext.sourceApp;
+        if (ext.mediaUrl || ext.thumbnailUrl) adData.mediaUrl = ext.mediaUrl || ext.thumbnailUrl;
+        if (ext.sourceId && /^\d{6,}$/.test(String(ext.sourceId).trim())) {
+            adData.adId = String(ext.sourceId).trim();
+        }
+        if (ext.ctwaClid) {
+            adData.ctwaClid = String(ext.ctwaClid).trim();
+        }
     }
 
-    if (contextInfo.conversionData) {
-        try {
-            adData.conversionData = Buffer.isBuffer(contextInfo.conversionData)
-                ? contextInfo.conversionData.toString('hex')
-                : String(contextInfo.conversionData);
-        } catch {}
+    if (contextInfo.entryPointConversionSource === 'ctwa_ad' || contextInfo.conversionSource === 'FB_Ads') {
+        adData.isCtwa = true;
+        if (contextInfo.conversionSource) adData.conversionSource = contextInfo.conversionSource;
+        if (contextInfo.entryPointConversionApp) adData.entryPointApp = contextInfo.entryPointConversionApp;
+    }
+
+    const rawConv = contextInfo.conversionData || contextInfo.ctwaPayload;
+    if (rawConv) {
+        const decoded = decodeCtwaConversionData(rawConv);
+        if (decoded.raw) adData.conversionData = decoded.raw;
+        if (decoded.decodedToken) {
+            adData.ctwaPayload = decoded.decodedToken;
+            if (!adData.ctwaClid && !decoded.isOpaquePayload) {
+                adData.ctwaClid = decoded.decodedToken;
+            }
+        }
     }
 
     if (contextInfo.ctwaClid) {
-        adData.ctwaClid = contextInfo.ctwaClid;
+        adData.ctwaClid = String(contextInfo.ctwaClid).trim();
     }
 
-    // Identificação de tags inseridas no texto de mensagem (Ex: [ref_1202084910284_1202084910285] ou [ref:1202084910284] ou [1202084910284])
+    // Identificação de tags inseridas no texto de mensagem (Ex: [ref_1202084910284_1202084910285] ou [ref:1202084910284])
     if (textContent) {
         const refMatch = textContent.match(/\[(?:ref:?_?|Ref:?\s*|ref\s+)?([0-9a-zA-Z_\-]+)\]/i);
         if (refMatch && refMatch[1]) {
             const rawRef = refMatch[1].trim();
             adData.rawTag = rawRef;
             const parts = rawRef.split('_');
-            if (parts.length >= 2) {
+            if (parts.length >= 2 && /^\d+$/.test(parts[0]) && /^\d+$/.test(parts[1])) {
                 adData.campaignId = parts[0];
                 adData.adId = parts[1];
-            } else {
+            } else if (/^\d+$/.test(rawRef)) {
                 adData.campaignId = rawRef;
             }
         }
@@ -194,73 +301,350 @@ function extractAdContext(msg, textContent) {
     return Object.keys(adData).length > 0 ? adData : null;
 }
 
+const metaAdLookupCache = new Map();
+let metaCreativeIndexCache = { timestamp: 0, byIgUrl: new Map(), byVideoId: new Map() };
+let metaCreativeIndexPromise = null;
+
+function normalizeInstagramPermalink(url) {
+    if (!url) return '';
+    try {
+        const u = new URL(String(url).trim());
+        return `${u.hostname.replace(/^www\./, '').toLowerCase()}${u.pathname.replace(/\/+$/, '')}`;
+    } catch {
+        return String(url).trim().replace(/^https?:\/\/(www\.)?/i, '').split('?')[0].replace(/\/+$/, '').toLowerCase();
+    }
+}
+
+async function getMetaCreativeAttributionIndex() {
+    const now = Date.now();
+    if (metaCreativeIndexCache.timestamp > 0 && now - metaCreativeIndexCache.timestamp < 10 * 60 * 1000) {
+        return metaCreativeIndexCache;
+    }
+    if (metaCreativeIndexPromise) return metaCreativeIndexPromise;
+
+    const token = getMetaAccessToken(false);
+    if (!token) return metaCreativeIndexCache;
+
+    metaCreativeIndexPromise = (async () => {
+        try {
+            const bmId = process.env.META_BUSINESS_ID || '2124779294600156';
+            const accountsRes = await Promise.allSettled([
+                axios.get(`https://graph.facebook.com/v21.0/${bmId}/client_ad_accounts?fields=id,account_id&limit=100&access_token=${token}`, { timeout: 6000 }),
+                axios.get(`https://graph.facebook.com/v21.0/${bmId}/owned_ad_accounts?fields=id,account_id&limit=100&access_token=${token}`, { timeout: 6000 })
+            ]);
+            const accountIds = new Set();
+            for (const r of accountsRes) {
+                if (r.status === 'fulfilled') {
+                    for (const acc of (r.value.data?.data || [])) {
+                        accountIds.add(acc.id || `act_${acc.account_id}`);
+                    }
+                }
+            }
+
+            const byIgUrl = new Map();
+            const byVideoId = new Map();
+            const adsResults = await Promise.allSettled(
+                Array.from(accountIds).map(accId =>
+                    axios.get(`https://graph.facebook.com/v21.0/${accId}/ads`, {
+                        params: {
+                            fields: 'id,name,effective_status,campaign_id,campaign{id,name},adset_id,account_id,creative{id,video_id,instagram_permalink_url,object_story_spec{video_data{video_id}}}',
+                            filtering: JSON.stringify([{ field: 'effective_status', operator: 'IN', value: ['ACTIVE', 'PAUSED'] }]),
+                            limit: 30,
+                            access_token: token
+                        },
+                        timeout: 7000
+                    })
+                )
+            );
+
+            for (const res of adsResults) {
+                if (res.status !== 'fulfilled') continue;
+                for (const ad of (res.value.data?.data || [])) {
+                    const info = {
+                        adId: ad.id,
+                        adName: ad.name || '',
+                        campaignId: ad.campaign_id || ad.campaign?.id || '',
+                        campaignName: ad.campaign?.name || '',
+                        adsetId: ad.adset_id || '',
+                        accountId: ad.account_id ? `act_${String(ad.account_id).replace(/^act_/, '')}` : '',
+                        effectiveStatus: ad.effective_status || ''
+                    };
+                    const igKey = normalizeInstagramPermalink(ad.creative?.instagram_permalink_url);
+                    if (igKey) {
+                        const list = byIgUrl.get(igKey) || [];
+                        list.push(info);
+                        byIgUrl.set(igKey, list);
+                    }
+                    const vid = ad.creative?.video_id || ad.creative?.object_story_spec?.video_data?.video_id;
+                    if (vid) {
+                        const list = byVideoId.get(String(vid)) || [];
+                        list.push(info);
+                        byVideoId.set(String(vid), list);
+                    }
+                }
+            }
+
+            metaCreativeIndexCache = { timestamp: Date.now(), byIgUrl, byVideoId };
+        } catch (err) {
+            console.warn('[Atribuição Meta Graph] Aviso ao indexar criativos:', err?.message);
+        } finally {
+            metaCreativeIndexPromise = null;
+        }
+        return metaCreativeIndexCache;
+    })();
+
+    return metaCreativeIndexPromise;
+}
+
+async function resolveMetaAdAttribution(adData) {
+    if (!adData || typeof adData !== 'object') return adData;
+    if (adData.campaignId && adData.accountId) return adData;
+
+    const token = getMetaAccessToken(false);
+    if (!token) return adData;
+
+    try {
+        // 1) Se já temos o adId exato (via externalAdReply.sourceId ou [ref_camp_ad]), consulta direto
+        if (adData.adId && /^\d{6,}$/.test(String(adData.adId))) {
+            const cacheKey = `ad:${adData.adId}`;
+            let cached = metaAdLookupCache.get(cacheKey);
+            if (!cached || Date.now() - cached.ts > 6 * 3600 * 1000) {
+                const res = await axios.get(`https://graph.facebook.com/v21.0/${adData.adId}`, {
+                    params: {
+                        fields: 'id,name,campaign_id,campaign{id,name},adset_id,account_id',
+                        access_token: token
+                    },
+                    timeout: 5000
+                });
+                const d = res.data || {};
+                cached = {
+                    ts: Date.now(),
+                    data: {
+                        adId: d.id || adData.adId,
+                        adName: d.name || '',
+                        campaignId: d.campaign_id || d.campaign?.id || adData.campaignId || undefined,
+                        campaignName: d.campaign?.name || undefined,
+                        adsetId: d.adset_id || undefined,
+                        accountId: d.account_id ? `act_${String(d.account_id).replace(/^act_/, '')}` : undefined
+                    }
+                };
+                metaAdLookupCache.set(cacheKey, cached);
+            }
+            return { ...adData, ...cached.data };
+        }
+
+        // 2) Se temos apenas campaignId (via [ref_camp]), resolve accountId e campaignName
+        if (adData.campaignId && !adData.accountId && /^\d{6,}$/.test(String(adData.campaignId))) {
+            const cacheKey = `camp:${adData.campaignId}`;
+            let cached = metaAdLookupCache.get(cacheKey);
+            if (!cached || Date.now() - cached.ts > 6 * 3600 * 1000) {
+                const res = await axios.get(`https://graph.facebook.com/v21.0/${adData.campaignId}`, {
+                    params: { fields: 'id,name,account_id', access_token: token },
+                    timeout: 5000
+                });
+                const d = res.data || {};
+                cached = {
+                    ts: Date.now(),
+                    data: {
+                        campaignId: d.id || adData.campaignId,
+                        campaignName: d.name || undefined,
+                        accountId: d.account_id ? `act_${String(d.account_id).replace(/^act_/, '')}` : undefined
+                    }
+                };
+                metaAdLookupCache.set(cacheKey, cached);
+            }
+            return { ...adData, ...cached.data };
+        }
+
+        // 3) Se temos sourceUrl (instagram.com/p/... ou fb.me/...), tenta resolver pelo índice da BM
+        if (adData.sourceUrl) {
+            const srcUrl = String(adData.sourceUrl).trim();
+            const index = await getMetaCreativeAttributionIndex();
+
+            if (srcUrl.includes('instagram.com/')) {
+                const igKey = normalizeInstagramPermalink(srcUrl);
+                const matches = index.byIgUrl.get(igKey) || [];
+                const activeMatches = matches.filter(m => m.effectiveStatus === 'ACTIVE');
+                const pool = activeMatches.length > 0 ? activeMatches : matches;
+                if (pool.length === 1) {
+                    return { ...adData, ...pool[0] };
+                }
+            } else if (/^https?:\/\/(fb\.me|www\.facebook\.com|facebook\.com)\//i.test(srcUrl)) {
+                let targetUrl = srcUrl;
+                if (/^https?:\/\/fb\.me\//i.test(srcUrl)) {
+                    const cacheKey = `fbme:${srcUrl}`;
+                    const cachedUrl = metaAdLookupCache.get(cacheKey);
+                    if (cachedUrl) {
+                        targetUrl = cachedUrl.url;
+                    } else {
+                        const r = await axios.get(srcUrl, { maxRedirects: 0, validateStatus: s => s >= 200 && s < 400, timeout: 4000 }).catch(e => e.response);
+                        const loc = r?.headers?.location || '';
+                        if (loc) {
+                            targetUrl = loc;
+                            metaAdLookupCache.set(cacheKey, { url: loc, ts: Date.now() });
+                        }
+                    }
+                }
+                const fbidMatch = targetUrl.match(/story_fbid=(\d+)/);
+                if (fbidMatch && fbidMatch[1]) {
+                    const videoId = fbidMatch[1];
+                    const matches = index.byVideoId.get(videoId) || [];
+                    const activeMatches = matches.filter(m => m.effectiveStatus === 'ACTIVE');
+                    const pool = activeMatches.length > 0 ? activeMatches : matches;
+                    if (pool.length === 1) {
+                        return { ...adData, creativeVideoId: videoId, ...pool[0] };
+                    }
+                    if (pool.length > 1) {
+                        return {
+                            ...adData,
+                            creativeVideoId: videoId,
+                            creativeName: pool[0].adName || undefined
+                        };
+                    }
+                }
+            }
+        }
+    } catch (err) {
+        console.warn('[Atribuição Meta Graph] Falha não-crítica ao enriquecer anúncio:', err?.message);
+    }
+    return adData;
+}
+
 // ─── DISPARO PARA META CONVERSIONS API (CAPI) ───
-async function sendMetaCapiConversion(transactionRecord) {
+async function sendMetaCapiConversion(transactionRecord, options = {}) {
     const metaPixelId = process.env.META_PIXEL_ID || store.metaConfig?.pixelId;
-    const metaAccessToken = process.env.META_ACCESS_TOKEN || store.metaConfig?.accessToken;
+    const metaAccessToken = getMetaAccessToken(true);
+    const metaPageId = process.env.META_PAGE_ID || store.metaConfig?.pageId || DEFAULT_META_PAGE_ID;
+    const metaWabaId = process.env.META_WABA_ID || store.metaConfig?.wabaId || '';
+    const metaMessagingDatasetId = process.env.META_MESSAGING_DATASET_ID || store.metaConfig?.messagingDatasetId || '';
 
     if (!metaPixelId || !metaAccessToken) {
         console.log(`[Meta CAPI] ⚠️ Pixel ID ou Access Token da Meta não configurados no Chatbot. Conversão registrada localmente.`);
-        return { success: false, skipped: true, reason: 'Pixel ID ou Access Token ausente' };
+        return { success: false, skipped: true, reason: 'Pixel ID ou Access Token ausente', capiMode: 'skipped' };
     }
 
     try {
-        const cleanPhone = (transactionRecord.userPhone || '').replace(/\D/g, '');
-        const phoneHash = cleanPhone ? crypto.createHash('sha256').update(cleanPhone).digest('hex') : undefined;
-        
-        const firstName = (transactionRecord.pushName || '').trim().split(' ')[0].toLowerCase();
-        const fnHash = firstName ? crypto.createHash('sha256').update(firstName).digest('hex') : undefined;
-
-        const payload = {
-            data: [
-                {
-                    event_name: 'Purchase',
-                    event_time: Math.floor(Date.now() / 1000),
-                    action_source: 'business_messaging',
-                    messaging_channel: 'whatsapp',
-                    user_data: {
-                        ph: phoneHash ? [phoneHash] : [],
-                        fn: fnHash ? [fnHash] : [],
-                        ctwa_clid: transactionRecord.ctwaClid || undefined
-                    },
-                    custom_data: {
-                        currency: 'BRL',
-                        value: Number(Number(transactionRecord.amount || 0).toFixed(2)),
-                        content_name: transactionRecord.funnelName,
-                        content_type: 'product',
-                        order_id: transactionRecord.id,
-                        campaign_id: transactionRecord.campaignId || undefined,
-                        ad_id: transactionRecord.adId || undefined
-                    }
-                }
-            ]
-        };
-
-        const capiUrl = `https://graph.facebook.com/v21.0/${metaPixelId}/events?access_token=${metaAccessToken}`;
-        let res;
-        try {
-            res = await axios.post(capiUrl, payload, { timeout: 10000 });
-        } catch (messagingErr) {
-            console.log(`[Meta CAPI] Fallback inteligente para action_source: website (wa.me)...`);
-            payload.data[0].action_source = 'website';
-            delete payload.data[0].messaging_channel;
-            payload.data[0].event_source_url = `https://wa.me/551152291989`;
-            res = await axios.post(capiUrl, payload, { timeout: 10000 });
+        // Nunca hashear @lid (14+ dígitos internos do WhatsApp) como telefone no CAPI!
+        const candidatePhones = [];
+        for (const rawP of [transactionRecord.realPhone, transactionRecord.userPhone]) {
+            const digits = String(rawP || '').replace(/\D/g, '');
+            const hint = digits && transactionRecord.lidDigits && digits === transactionRecord.lidDigits ? `${digits}@lid` : '';
+            if (isPlausibleRealPhone(digits, hint)) {
+                getBrazilianPhoneVariants(digits).forEach(v => {
+                    if (!candidatePhones.includes(v)) candidatePhones.push(v);
+                });
+            }
         }
-        console.log(`[Meta CAPI] ✅ Evento Purchase enviado com sucesso para a Meta! Eventos recebidos: ${res.data?.events_received || 1}`);
-        return { success: true, data: res.data };
+        const phHashes = candidatePhones.map(sha256Hex);
+
+        const { fn, ln } = splitMetaCustomerName(transactionRecord.pushName);
+        const fnHash = fn ? sha256Hex(fn) : undefined;
+        const lnHash = ln ? sha256Hex(ln) : undefined;
+        const countryHash = (candidatePhones.some(p => p.startsWith('55')) || !candidatePhones.length) ? sha256Hex('br') : undefined;
+        const extRaw = candidatePhones[0] || String(transactionRecord.userPhone || '').replace(/\D/g, '');
+        const extIdHash = extRaw ? sha256Hex(extRaw) : undefined;
+
+        const decodedConv = decodeCtwaConversionData(transactionRecord.ctwaClid || transactionRecord.ctwaPayload || transactionRecord.conversionData);
+        const officialCtwaClid = (transactionRecord.ctwaClid && !decodeCtwaConversionData(transactionRecord.ctwaClid).isOpaquePayload)
+            ? String(transactionRecord.ctwaClid).trim()
+            : (!decodedConv.isOpaquePayload && decodedConv.decodedToken ? decodedConv.decodedToken : undefined);
+
+        // event_time precisa estar nos últimos 7 dias e no máximo igual ao timestamp atual
+        const nowSec = Math.floor(Date.now() / 1000);
+        const rawTxMs = Number(transactionRecord.time) || (transactionRecord.timestamp ? Date.parse(transactionRecord.timestamp) : NaN);
+        let eventTime = Number.isFinite(rawTxMs) ? Math.floor(rawTxMs / 1000) : nowSec;
+        if (eventTime > nowSec) eventTime = nowSec;
+        if (nowSec - eventTime > 6 * 86400 + 43200) eventTime = nowSec - 6 * 86400;
+
+        const customData = {
+            currency: 'BRL',
+            value: Number(Number(transactionRecord.amount || 0).toFixed(2)),
+            content_name: transactionRecord.funnelName || 'Jornada da Bíblia',
+            content_type: 'product',
+            order_id: transactionRecord.id
+        };
+        if (transactionRecord.campaignId) customData.campaign_id = String(transactionRecord.campaignId);
+        if (transactionRecord.adId) customData.ad_id = String(transactionRecord.adId);
+
+        const baseUserData = {};
+        if (phHashes.length > 0) baseUserData.ph = phHashes;
+        if (fnHash) baseUserData.fn = [fnHash];
+        if (lnHash) baseUserData.ln = [lnHash];
+        if (countryHash) baseUserData.country = [countryHash];
+        if (extIdHash) baseUserData.external_id = [extIdHash];
+
+        // Só utiliza business_messaging quando houver Dataset WABA/Page e ctwa_clid oficial da Cloud API (ou wabaId+dataset configurado),
+        // caso contrário envia action_source: 'chat' diretamente no Pixel consolidado (1494508035936698), que a Meta aceita com Advanced Matching.
+        const useBusinessMessaging = Boolean(
+            (metaMessagingDatasetId && (officialCtwaClid || metaWabaId)) ||
+            (officialCtwaClid && metaWabaId)
+        );
+
+        let targetDatasetId = metaPixelId;
+        let capiMode = 'chat';
+        let eventObj;
+
+        if (useBusinessMessaging) {
+            targetDatasetId = metaMessagingDatasetId || metaPixelId;
+            capiMode = 'business_messaging';
+            const bmUserData = { ...baseUserData };
+            if (metaWabaId) bmUserData.whatsapp_business_account_id = String(metaWabaId);
+            else bmUserData.page_id = String(metaPageId);
+            if (officialCtwaClid) bmUserData.ctwa_clid = officialCtwaClid;
+
+            eventObj = {
+                event_name: 'Purchase',
+                event_time: eventTime,
+                event_id: transactionRecord.id,
+                action_source: 'business_messaging',
+                messaging_channel: 'whatsapp',
+                user_data: bmUserData,
+                custom_data: customData
+            };
+        } else {
+            eventObj = {
+                event_name: 'Purchase',
+                event_time: eventTime,
+                event_id: transactionRecord.id,
+                action_source: 'chat',
+                user_data: baseUserData,
+                custom_data: customData
+            };
+        }
+
+        const payload = { data: [eventObj] };
+        if (options?.testEventCode) {
+            payload.test_event_code = String(options.testEventCode).trim();
+        }
+
+        const capiUrl = `https://graph.facebook.com/v21.0/${targetDatasetId}/events?access_token=${metaAccessToken}`;
+        const res = await axios.post(capiUrl, payload, { timeout: 10000 });
+        console.log(`[Meta CAPI] ✅ Evento Purchase (${capiMode}) enviado para ${targetDatasetId}! Recebidos: ${res.data?.events_received || 1} | MatchKeys: ${Object.keys(eventObj.user_data).join(',')} | fbtrace_id: ${res.data?.fbtrace_id || '-'}`);
+        return {
+            success: true,
+            capiMode,
+            datasetId: targetDatasetId,
+            matchKeys: Object.keys(eventObj.user_data),
+            realPhoneMatched: candidatePhones.length > 0,
+            data: res.data
+        };
     } catch (err) {
-        const errorMsg = err.response?.data?.error?.message || err.message;
-        console.error(`[Meta CAPI] ❌ Erro ao enviar evento de conversão para a Meta:`, err.response?.data || err.message);
-        sendNtfyEmergencyAlert({
-            title: '⚠️ ALERTA X1: FALHA NO DISPARO META CAPI',
-            message: `⚠️ Não foi possível enviar evento Purchase para a Meta CAPI!\nValor: R$ ${transactionRecord.amount}\nFunil: ${transactionRecord.funnelName}\nLead: +${transactionRecord.userPhone}\nErro da Meta: ${errorMsg}\nVerifique o token de acesso da Meta no painel.`,
-            priority: 'high',
-            tags: 'warning,chart_with_downwards_trend',
-            alertKey: 'capi_error',
-            cooldownSec: 180
-        }).catch(() => {});
-        return { success: false, error: errorMsg };
+        const metaErr = err.response?.data?.error;
+        const errorMsg = metaErr?.error_user_msg || metaErr?.message || err.message;
+        const errorSubcode = metaErr?.error_subcode || null;
+        const fbtraceId = metaErr?.fbtrace_id || null;
+        console.error(`[Meta CAPI] ❌ Erro (${errorSubcode || 'HTTP'}) ao enviar Purchase:`, err.response?.data || err.message);
+        if (!options?.testEventCode) {
+            sendNtfyEmergencyAlert({
+                title: '⚠️ ALERTA X1: FALHA NO DISPARO META CAPI',
+                message: `⚠️ Erro ao enviar Purchase para Meta CAPI!\nValor: R$ ${transactionRecord.amount}\nFunil: ${transactionRecord.funnelName}\nLead: ${transactionRecord.pushName || 'Cliente'} (+${transactionRecord.realPhone || transactionRecord.userPhone})\nSubcódigo: ${errorSubcode || '-'}\nErro: ${errorMsg}`,
+                priority: 'high',
+                tags: 'warning,chart_with_downwards_trend',
+                alertKey: 'capi_error',
+                cooldownSec: 180
+            }).catch(() => {});
+        }
+        return { success: false, capiMode: 'error', error: errorMsg, errorSubcode, fbtraceId };
     }
 }
 
@@ -6275,52 +6659,227 @@ async function resolveBrazilianWhatsAppJid(sock, rawPhone) {
     };
 }
 
+function syncSessionAliases(botId, session, extraIdentifiers = []) {
+    if (!botId || !session) return;
+    store.userSessions = store.userSessions || {};
+    const keys = new Set();
+    const addId = (val) => {
+        const clean = String(val || '').split('@')[0].split(':')[0].replace(/\D/g, '');
+        if (clean) keys.add(clean);
+    };
+    addId(session.userPhone);
+    addId(session.realPhone);
+    addId(session.lidDigits);
+    addId(session.userJid);
+    for (const extra of (extraIdentifiers || [])) addId(extra);
+    for (const id of keys) {
+        store.userSessions[`${botId}:${id}`] = session;
+    }
+}
+
+async function recoverSessionIdentityAndAttribution(botId, sock, session, candidateHints = []) {
+    if (!session) return session;
+    const lidCandidates = new Set();
+    const pnCandidates = new Set();
+
+    const inspectValue = (val, jidHint = '') => {
+        if (!val) return;
+        const s = String(val).trim();
+        const digits = s.split('@')[0].split(':')[0].replace(/\D/g, '');
+        if (!digits) return;
+        const hint = s.includes('@') ? s : jidHint;
+        if (isPlausibleRealPhone(digits, hint)) {
+            pnCandidates.add(digits);
+        } else if (hint.endsWith('@lid') || digits.length >= 14) {
+            lidCandidates.add(digits);
+        }
+    };
+
+    inspectValue(session.realPhone);
+    inspectValue(session.userPhone, session.userJid && String(session.userPhone) === String(session.userJid).split('@')[0].split(':')[0].replace(/\D/g, '') ? session.userJid : '');
+    inspectValue(session.userJid);
+    inspectValue(session.lidDigits, session.lidDigits ? `${session.lidDigits}@lid` : '');
+    for (const h of candidateHints) inspectValue(h);
+
+    const activeSock = sock || activeSockets.get(botId);
+    const lidMapping = activeSock?.signalRepository?.lidMapping;
+
+    if (pnCandidates.size === 0 && lidMapping && typeof lidMapping.getPNForLID === 'function') {
+        const lidJids = [];
+        if (session.userJid && String(session.userJid).endsWith('@lid')) lidJids.push(session.userJid);
+        for (const l of lidCandidates) lidJids.push(`${l}@lid`);
+        for (const lj of lidJids) {
+            try {
+                const pn = await lidMapping.getPNForLID(lj);
+                if (pn) inspectValue(pn, `${pn}`.includes('@') ? '' : '@s.whatsapp.net');
+            } catch {}
+        }
+    }
+
+    if (pnCandidates.size === 0) {
+        for (const [otherKey, other] of Object.entries(store.userSessions || {})) {
+            if (!other || other.botId !== botId) continue;
+            const sharesIdentity =
+                other === session ||
+                (session.userJid && other.userJid === session.userJid) ||
+                (session.lidDigits && other.lidDigits === session.lidDigits) ||
+                (session.adData?.conversionData && other.adData?.conversionData === session.adData.conversionData);
+            if (sharesIdentity) {
+                const keyDigits = String(otherKey).includes(':') ? String(otherKey).split(':').slice(1).join(':') : '';
+                if (keyDigits) inspectValue(keyDigits);
+                inspectValue(other.realPhone);
+                inspectValue(other.userPhone);
+            }
+        }
+    }
+
+    if (pnCandidates.size === 0) {
+        for (const job of (store.scheduledJobs || [])) {
+            if (job?.botId === botId && session.userJid && job.remoteJid === session.userJid) {
+                inspectValue(job.userPhone);
+            }
+        }
+    }
+
+    const sortedPns = Array.from(pnCandidates).sort((a, b) => {
+        const aScore = (a.startsWith('55') && a.length === 13) ? 2 : 1;
+        const bScore = (b.startsWith('55') && b.length === 13) ? 2 : 1;
+        return bScore - aScore;
+    });
+    const resolvedRealPhone = sortedPns[0] || null;
+    const resolvedLidDigits = Array.from(lidCandidates)[0] || null;
+
+    if (resolvedRealPhone && session.realPhone !== resolvedRealPhone) {
+        session.realPhone = resolvedRealPhone;
+    }
+    if (resolvedLidDigits && session.lidDigits !== resolvedLidDigits) {
+        session.lidDigits = resolvedLidDigits;
+    }
+    if (session.realPhone && !isPlausibleRealPhone(session.userPhone)) {
+        session.userPhone = session.realPhone;
+    }
+
+    if (session.adData && (!session.adData.campaignId || !session.adData.accountId)) {
+        const enriched = await Promise.race([
+            resolveMetaAdAttribution(session.adData),
+            new Promise((resolve) => setTimeout(() => resolve(session.adData), 2500))
+        ]);
+        if (enriched && (enriched.campaignId || enriched.adId || enriched.accountId || enriched.creativeVideoId)) {
+            session.adData = Object.assign(session.adData, enriched);
+        }
+    }
+
+    syncSessionAliases(botId, session, [resolvedRealPhone, resolvedLidDigits]);
+    return session;
+}
+
 async function resolveIncomingSession(botId, sock, remoteJid, msg) {
     const primaryPhone = remoteJid.split('@')[0].split(':')[0].replace(/\D/g, '');
     const altPhones = new Set(getBrazilianPhoneVariants(primaryPhone));
+    let resolvedRealPhone = isPlausibleRealPhone(primaryPhone, remoteJid) ? primaryPhone : null;
+    let resolvedLidDigits = remoteJid.endsWith('@lid') ? primaryPhone : null;
 
-    const keyAlt = msg?.key?.senderPn || msg?.key?.participantPn || msg?.key?.remoteJidAlt || '';
-    if (keyAlt) {
-        const altDigits = String(keyAlt).split('@')[0].split(':')[0].replace(/\D/g, '');
-        getBrazilianPhoneVariants(altDigits).forEach(p => altPhones.add(p));
+    const considerCandidate = (rawVal, hint = '') => {
+        if (!rawVal) return;
+        const s = String(rawVal).trim();
+        const digits = s.split('@')[0].split(':')[0].replace(/\D/g, '');
+        if (!digits) return;
+        const effectiveHint = s.includes('@') ? s : hint;
+        if (effectiveHint.endsWith('@lid') || (!resolvedLidDigits && !digits.startsWith('55') && digits.length >= 14)) {
+            if (!resolvedLidDigits) resolvedLidDigits = digits;
+            altPhones.add(digits);
+            return;
+        }
+        getBrazilianPhoneVariants(digits).forEach(p => altPhones.add(p));
+        if (!resolvedRealPhone && isPlausibleRealPhone(digits, effectiveHint)) {
+            resolvedRealPhone = digits;
+        }
+    };
+
+    for (const keyAlt of [msg?.key?.senderPn, msg?.key?.participantPn, msg?.key?.remoteJidAlt]) {
+        if (keyAlt) considerCandidate(keyAlt);
     }
 
     const lidMapping = sock?.signalRepository?.lidMapping;
     try {
         if (lidMapping && remoteJid.endsWith('@lid') && typeof lidMapping.getPNForLID === 'function') {
             const pn = await lidMapping.getPNForLID(remoteJid);
-            if (pn) {
-                const pnDigits = String(pn).split('@')[0].split(':')[0].replace(/\D/g, '');
-                getBrazilianPhoneVariants(pnDigits).forEach(p => altPhones.add(p));
-            }
+            if (pn) considerCandidate(pn, `${pn}`.includes('@') ? '' : '@s.whatsapp.net');
         } else if (lidMapping && remoteJid.endsWith('@s.whatsapp.net') && typeof lidMapping.getLIDForPN === 'function') {
             const lid = await lidMapping.getLIDForPN(remoteJid);
-            if (lid) {
-                altPhones.add(String(lid).split('@')[0].split(':')[0].replace(/\D/g, ''));
-            }
+            if (lid) considerCandidate(lid, `${lid}`.includes('@') ? '' : '@lid');
         }
     } catch {}
 
     const primaryKey = `${botId}:${primaryPhone}`;
-    if (store.userSessions[primaryKey]) {
-        return { userPhone: primaryPhone, sessionKey: primaryKey, session: store.userSessions[primaryKey], altPhones: Array.from(altPhones) };
-    }
+    const canonicalUserPhone = resolvedRealPhone || primaryPhone;
+    const canonicalKey = `${botId}:${canonicalUserPhone}`;
 
-    for (const candidatePhone of altPhones) {
-        const candidateKey = `${botId}:${candidatePhone}`;
-        if (store.userSessions[candidateKey]) {
-            const found = store.userSessions[candidateKey];
-            // Sincroniza alias para o JID/telefone atual mantendo o mesmo estado sem reiniciar conversa
-            found.userJid = remoteJid;
-            found.userPhone = primaryPhone;
-            store.userSessions[primaryKey] = found;
-            saveStore(store);
-            console.log(`[Session Alias] 🔗 Sessão localizada via alias (${candidatePhone} -> ${primaryPhone})`);
-            return { userPhone: primaryPhone, sessionKey: primaryKey, session: found, altPhones: Array.from(altPhones) };
+    let found = store.userSessions[canonicalKey] || store.userSessions[primaryKey] || null;
+    let matchedAlias = null;
+    if (!found) {
+        for (const candidatePhone of altPhones) {
+            const candidateKey = `${botId}:${candidatePhone}`;
+            if (store.userSessions[candidateKey]) {
+                found = store.userSessions[candidateKey];
+                matchedAlias = candidatePhone;
+                break;
+            }
         }
     }
 
-    return { userPhone: primaryPhone, sessionKey: primaryKey, session: null, altPhones: Array.from(altPhones) };
+    if (found) {
+        const existingReal = isPlausibleRealPhone(found.realPhone) ? found.realPhone
+            : (isPlausibleRealPhone(found.userPhone) ? found.userPhone : null);
+        const bestRealPhone = resolvedRealPhone || existingReal;
+        const bestLidDigits = resolvedLidDigits || found.lidDigits || (String(found.userJid || '').endsWith('@lid') ? String(found.userJid).split('@')[0].split(':')[0].replace(/\D/g, '') : null);
+
+        let changed = false;
+        if (remoteJid && found.userJid !== remoteJid) {
+            found.userJid = remoteJid;
+            changed = true;
+        }
+        if (bestRealPhone && found.realPhone !== bestRealPhone) {
+            found.realPhone = bestRealPhone;
+            changed = true;
+        }
+        if (bestLidDigits && found.lidDigits !== bestLidDigits) {
+            found.lidDigits = bestLidDigits;
+            changed = true;
+        }
+        const desiredPhone = bestRealPhone || found.userPhone || primaryPhone;
+        if (desiredPhone && found.userPhone !== desiredPhone) {
+            found.userPhone = desiredPhone;
+            changed = true;
+        }
+
+        syncSessionAliases(botId, found, [primaryPhone, bestRealPhone, bestLidDigits, matchedAlias]);
+        if (matchedAlias || changed) {
+            saveStore(store);
+            if (matchedAlias) {
+                console.log(`[Session Alias] 🔗 Sessão localizada via alias (${matchedAlias} -> ${found.userPhone} | JID: ${remoteJid})`);
+            }
+        }
+        return {
+            userPhone: found.userPhone,
+            rawPrimaryPhone: primaryPhone,
+            realPhone: found.realPhone || null,
+            lidDigits: found.lidDigits || null,
+            sessionKey: `${botId}:${found.userPhone}`,
+            session: found,
+            altPhones: Array.from(altPhones)
+        };
+    }
+
+    return {
+        userPhone: canonicalUserPhone,
+        rawPrimaryPhone: primaryPhone,
+        realPhone: resolvedRealPhone || null,
+        lidDigits: resolvedLidDigits || null,
+        sessionKey: canonicalKey,
+        session: null,
+        altPhones: Array.from(altPhones)
+    };
 }
 
 const leadMessageQueues = new Map();
@@ -6404,15 +6963,36 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
                 botId,
                 userJid: remoteJid,
                 userPhone,
+                realPhone: identity.realPhone || undefined,
+                lidDigits: identity.lidDigits || undefined,
                 userName: pushName,
                 adData: detectedAd,
                 updatedAt: new Date().toISOString()
             };
-            store.userSessions[sessionKey] = session;
+            syncSessionAliases(botId, session, [identity.rawPrimaryPhone]);
+            saveStore(store);
         } else {
             session.adData = { ...(session.adData || {}), ...detectedAd };
+            if (identity.realPhone && !session.realPhone) session.realPhone = identity.realPhone;
+            if (identity.lidDigits && !session.lidDigits) session.lidDigits = identity.lidDigits;
+            syncSessionAliases(botId, session, [identity.rawPrimaryPhone]);
         }
         console.log(`[Atribuição Meta Ads] 🎯 Detectado anúncio para ${userPhone}:`, session.adData);
+
+        if (!session.adData.campaignId || !session.adData.accountId) {
+            const adTargetRef = session.adData;
+            resolveMetaAdAttribution(adTargetRef)
+                .then((enriched) => {
+                    if (enriched && adTargetRef && (enriched.campaignId || enriched.adId || enriched.accountId || enriched.creativeVideoId)) {
+                        Object.assign(adTargetRef, enriched);
+                        saveStore(store);
+                        if (enriched.campaignId || enriched.adId) {
+                            console.log(`[Atribuição Meta Graph] ✅ Enriquecido para ${userPhone}: Camp=${enriched.campaignId || '-'} | Ad=${enriched.adId || '-'} | Conta=${enriched.accountId || '-'}`);
+                        }
+                    }
+                })
+                .catch(() => {});
+        }
     }
 
     const normalizedText = textContent.trim().toLowerCase();
@@ -6718,6 +7298,8 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
             botId,
             userJid: remoteJid,
             userPhone,
+            realPhone: identity.realPhone || session?.realPhone || undefined,
+            lidDigits: identity.lidDigits || session?.lidDigits || undefined,
             userName: pushName,
             flowId: visualFlowMatch.flow._id,
             flowName: visualFlowMatch.flow.name,
@@ -6726,7 +7308,7 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
             inFlightStartedAt: Date.now(),
             updatedAt: new Date().toISOString()
         };
-        store.userSessions[sessionKey] = session;
+        syncSessionAliases(botId, session, [identity.rawPrimaryPhone]);
         saveStore(store);
 
         const firstEdge = visualFlowMatch.edges.find(e => (e.sourceNodeId || e.source) === visualFlowMatch.startNode.nodeId);
@@ -6934,15 +7516,17 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
                     botId,
                     userJid: remoteJid,
                     userPhone,
+                    realPhone: identity.realPhone || session?.realPhone || undefined,
+                    lidDigits: identity.lidDigits || session?.lidDigits || undefined,
                     userName: pushName,
                     flowId: fallbackVisual.flow._id,
                     flowName: fallbackVisual.flow.name,
                     currentNodeId: fallbackVisual.startNode.nodeId,
-                    adData: detectedAd || undefined,
+                    adData: session?.adData || detectedAd || undefined,
                     inFlightStartedAt: Date.now(),
                     updatedAt: new Date().toISOString()
                 };
-                store.userSessions[sessionKey] = session;
+                syncSessionAliases(botId, session, [identity.rawPrimaryPhone]);
                 saveStore(store);
                 try {
                     await executeFromNode(botId, sock, remoteJid, session, firstEdge.targetNodeId || firstEdge.target, fallbackVisual.nodes, fallbackVisual.edges);
@@ -7332,11 +7916,15 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
             });
 
             // ─── Registro Oficial de Transação & Disparo Meta CAPI + FaceHub ───
+            await recoverSessionIdentityAndAttribution(botId, sock, session, [userPhone, identity.rawPrimaryPhone]);
+            const resolvedTxPhone = session.realPhone || (isPlausibleRealPhone(session.userPhone) ? session.userPhone : userPhone);
+            const adInfo = session.adData || {};
             const txId = 'tx_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
             const now = new Date();
             const transactionRecord = {
                 id: txId,
                 timestamp: now.toISOString(),
+                time: Date.now(),
                 timeFormatted: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
                 dateFormatted: now.toLocaleDateString('pt-BR'),
                 botId,
@@ -7344,13 +7932,22 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
                 funnelName,
                 amount: paidValue,
                 beneficiary,
-                userPhone,
+                userPhone: resolvedTxPhone,
+                realPhone: session.realPhone || undefined,
+                lidDigits: session.lidDigits || undefined,
                 pushName,
-                campaignId: session.adData?.campaignId || null,
-                adId: session.adData?.adId || null,
-                adTag: session.adData?.rawTag || null,
-                isCtwa: !!session.adData?.isCtwa,
-                ctwaClid: session.adData?.ctwaClid || null,
+                accountId: adInfo.accountId || null,
+                campaignId: adInfo.campaignId || null,
+                campaignName: adInfo.campaignName || null,
+                adId: adInfo.adId || null,
+                adName: adInfo.adName || null,
+                adTag: adInfo.rawTag || null,
+                sourceUrl: adInfo.sourceUrl || null,
+                entryPointApp: adInfo.sourceApp || adInfo.entryPointApp || null,
+                creativeVideoId: adInfo.creativeVideoId || null,
+                isCtwa: Boolean(adInfo.isCtwa || adInfo.ctwaClid || adInfo.ctwaPayload || adInfo.sourceUrl || adInfo.sourceId),
+                ctwaClid: adInfo.ctwaClid || null,
+                ctwaPayload: adInfo.ctwaPayload || undefined,
                 status: 'APROVADO_PIX',
                 capiStatus: 'PENDING'
             };
@@ -7358,6 +7955,9 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
             // Disparar Meta Conversions API (CAPI)
             try {
                 const capiRes = await sendMetaCapiConversion(transactionRecord);
+                transactionRecord.capiMode = capiRes.capiMode || null;
+                transactionRecord.capiMatchKeys = capiRes.matchKeys || undefined;
+                transactionRecord.capiRealPhoneMatched = Boolean(capiRes.realPhoneMatched);
                 transactionRecord.capiStatus = capiRes.success ? 'ENVIADO_CAPI_OK' : (capiRes.skipped ? 'CAPI_CONFIG_PENDENTE' : 'ERRO_CAPI: ' + capiRes.error);
             } catch (capiErr) {
                 transactionRecord.capiStatus = 'ERRO_CAPI: ' + capiErr.message;
@@ -7868,6 +8468,11 @@ async function recordAndFireFunnelConversion(botId, session, paidValue, customLa
         return;
     }
     session.capiFired = true;
+
+    await recoverSessionIdentityAndAttribution(botId, activeSockets.get(botId), session);
+    const resolvedPhone = session.realPhone || session.userPhone;
+    const adInfo = session.adData || {};
+
     const value = Number(paidValue || session.paidAmount || session.latestPixAmount || session.expectedAmount || 19.90);
     const now = new Date();
     const transactionRecord = {
@@ -7877,17 +8482,26 @@ async function recordAndFireFunnelConversion(botId, session, paidValue, customLa
         dateFormatted: now.toLocaleDateString('pt-BR'),
         timeFormatted: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
         botId,
-        userPhone: session.userPhone,
+        userPhone: resolvedPhone,
+        realPhone: session.realPhone || undefined,
+        lidDigits: session.lidDigits || undefined,
         pushName: session.userName || 'Cliente',
         amount: value,
         beneficiary: session.beneficiary || 'Pastor Guilherme',
         funnelId: session.flowId || 'funil_visual',
         funnelName: session.flowName || customLabel || 'Funil Visual',
-        campaignId: session.adData?.campaignId || undefined,
-        adId: session.adData?.adId || undefined,
-        ctwaClid: session.adData?.ctwaClid || undefined,
-        adTag: session.adData?.adTag || undefined,
-        isCtwa: Boolean(session.adData?.isCtwa || session.adData?.ctwaClid),
+        accountId: adInfo.accountId || undefined,
+        campaignId: adInfo.campaignId || undefined,
+        campaignName: adInfo.campaignName || undefined,
+        adId: adInfo.adId || undefined,
+        adName: adInfo.adName || undefined,
+        ctwaClid: adInfo.ctwaClid || undefined,
+        ctwaPayload: adInfo.ctwaPayload || undefined,
+        adTag: adInfo.adTag || adInfo.rawTag || undefined,
+        sourceUrl: adInfo.sourceUrl || undefined,
+        entryPointApp: adInfo.sourceApp || adInfo.entryPointApp || undefined,
+        creativeVideoId: adInfo.creativeVideoId || undefined,
+        isCtwa: Boolean(adInfo.isCtwa || adInfo.ctwaClid || adInfo.ctwaPayload || adInfo.sourceUrl || adInfo.sourceId),
         isRecovery: Boolean(session.wasInRecovery || session.rejectedPayment || session.expired),
         status: 'APROVADO_PIX',
         capiStatus: 'PENDING'
@@ -7895,10 +8509,13 @@ async function recordAndFireFunnelConversion(botId, session, paidValue, customLa
 
     try {
         const capiRes = await sendMetaCapiConversion(transactionRecord);
+        transactionRecord.capiMode = capiRes.capiMode || undefined;
+        transactionRecord.capiMatchKeys = capiRes.matchKeys || undefined;
+        transactionRecord.capiRealPhoneMatched = Boolean(capiRes.realPhoneMatched);
         transactionRecord.capiStatus = capiRes.success
             ? 'ENVIADO_CAPI_OK'
             : (capiRes.skipped ? 'CAPI_CONFIG_PENDENTE' : 'ERRO_CAPI: ' + capiRes.error);
-        console.log(`[Visual Flow META_CAPI] 🎯 Disparo CAPI (${transactionRecord.isRecovery ? 'RECUPERAÇÃO' : 'DIRETO'} - R$ ${value.toFixed(2)}): ${transactionRecord.capiStatus}`);
+        console.log(`[Visual Flow META_CAPI] 🎯 Disparo CAPI (${transactionRecord.isRecovery ? 'RECUPERAÇÃO' : 'DIRETO'} | ${capiRes.capiMode || '-'} | R$ ${value.toFixed(2)}): ${transactionRecord.capiStatus}`);
     } catch (capiErr) {
         transactionRecord.capiStatus = 'ERRO_CAPI: ' + capiErr.message;
     }
@@ -8418,10 +9035,13 @@ app.post('/api/funnels/recover-lead', async (req, res) => {
             const firstEdge = visualFlow ? visualFlow.edges.find(e => (e.sourceNodeId || e.source) === visualFlow.startNode.nodeId) : null;
 
             if (visualFlow && firstEdge) {
+                const lidDigitsFromInfo = jidInfo.lid ? jidInfo.lid.split('@')[0].split(':')[0].replace(/\D/g, '') : undefined;
                 const session = {
                     botId,
                     userJid: remoteJid,
                     userPhone: canonicalPhone,
+                    realPhone: isPlausibleRealPhone(canonicalPhone) ? canonicalPhone : undefined,
+                    lidDigits: lidDigitsFromInfo || undefined,
                     userName: pushName,
                     flowId: visualFlow.flow._id,
                     flowName: visualFlow.flow.name,
@@ -8430,11 +9050,7 @@ app.post('/api/funnels/recover-lead', async (req, res) => {
                     inFlightStartedAt: Date.now(),
                     updatedAt: new Date().toISOString()
                 };
-                store.userSessions[sessionKey] = session;
-                if (jidInfo.lid) {
-                    const lidDigits = jidInfo.lid.split('@')[0].split(':')[0].replace(/\D/g, '');
-                    if (lidDigits) store.userSessions[`${botId}:${lidDigits}`] = session;
-                }
+                syncSessionAliases(botId, session, [rawPhone, lidDigitsFromInfo]);
                 saveStore(store);
 
                 console.log(`[Lead Recovery] ⏳ Executando fluxo visual "${visualFlow.flow.name}" (${visualFlow.flow._id}) para ${canonicalPhone}...`);
@@ -8763,28 +9379,47 @@ app.post('/api/admin/manual-pix-approve', async (req, res) => {
 
         let remoteJid = rawJid;
         let canonicalPhone = rawPhone;
+        let resolvedRealPhone = isPlausibleRealPhone(rawPhone) ? rawPhone : null;
+        let resolvedLidDigits = null;
         const variantPhones = new Set(canonicalPhone ? getBrazilianPhoneVariants(canonicalPhone) : []);
 
         if (rawJid && rawJid.endsWith('@lid')) {
             remoteJid = rawJid;
-            canonicalPhone = rawJid.split('@')[0].split(':')[0].replace(/\D/g, '') || canonicalPhone;
+            resolvedLidDigits = rawJid.split('@')[0].split(':')[0].replace(/\D/g, '') || null;
+            if (resolvedLidDigits) variantPhones.add(resolvedLidDigits);
             try {
                 const pn = await sock?.signalRepository?.lidMapping?.getPNForLID?.(rawJid);
                 if (pn) {
                     const pnDigits = String(pn).split('@')[0].split(':')[0].replace(/\D/g, '');
+                    if (!resolvedRealPhone && isPlausibleRealPhone(pnDigits, `${pn}`.includes('@') ? pn : '@s.whatsapp.net')) {
+                        resolvedRealPhone = pnDigits;
+                    }
                     getBrazilianPhoneVariants(pnDigits).forEach(v => variantPhones.add(v));
                 }
             } catch {}
+            canonicalPhone = resolvedRealPhone || resolvedLidDigits || canonicalPhone;
         } else if (!remoteJid) {
             const jidInfo = await resolveBrazilianWhatsAppJid(sock, rawPhone);
             remoteJid = jidInfo.jid || `${rawPhone}@s.whatsapp.net`;
             canonicalPhone = jidInfo.phoneDigits || rawPhone;
+            if (isPlausibleRealPhone(canonicalPhone, remoteJid)) {
+                resolvedRealPhone = canonicalPhone;
+            }
             (jidInfo.allVariants || []).forEach(v => variantPhones.add(v));
             if (jidInfo.lid) {
-                variantPhones.add(jidInfo.lid.split('@')[0].split(':')[0].replace(/\D/g, ''));
+                resolvedLidDigits = jidInfo.lid.split('@')[0].split(':')[0].replace(/\D/g, '') || null;
+                if (resolvedLidDigits) variantPhones.add(resolvedLidDigits);
             }
+        } else {
+            const jidDigits = rawJid.split('@')[0].split(':')[0].replace(/\D/g, '');
+            if (jidDigits) variantPhones.add(jidDigits);
+            if (!resolvedRealPhone && isPlausibleRealPhone(jidDigits, rawJid)) {
+                resolvedRealPhone = jidDigits;
+            }
+            canonicalPhone = resolvedRealPhone || canonicalPhone || jidDigits;
         }
-        variantPhones.add(canonicalPhone);
+        if (canonicalPhone) variantPhones.add(canonicalPhone);
+        if (resolvedRealPhone) getBrazilianPhoneVariants(resolvedRealPhone).forEach(v => variantPhones.add(v));
 
         // Cancelar todos os timers e agendamentos de cobrança para todas as variantes desse lead
         for (const pVar of variantPhones) {
@@ -8816,14 +9451,32 @@ app.post('/api/admin/manual-pix-approve', async (req, res) => {
                 botId,
                 userJid: remoteJid,
                 userPhone: canonicalPhone,
+                realPhone: resolvedRealPhone || undefined,
+                lidDigits: resolvedLidDigits || undefined,
                 userName: pushName,
                 flowId: visualFlow.flow._id,
                 flowName: visualFlow.flow.name,
             };
         }
 
+        const bestRealPhone = resolvedRealPhone
+            || (isPlausibleRealPhone(session.realPhone) ? session.realPhone : null)
+            || (isPlausibleRealPhone(session.userPhone) ? session.userPhone : null);
+        const bestLidDigits = resolvedLidDigits || session.lidDigits || null;
+        canonicalPhone = bestRealPhone || canonicalPhone;
+
         session.userJid = remoteJid;
         session.userPhone = canonicalPhone;
+        if (bestRealPhone) session.realPhone = bestRealPhone;
+        if (bestLidDigits) session.lidDigits = bestLidDigits;
+        if (req.body?.campaignId || req.body?.adId || req.body?.sourceUrl) {
+            session.adData = {
+                ...(session.adData || {}),
+                ...(req.body.campaignId ? { campaignId: String(req.body.campaignId) } : {}),
+                ...(req.body.adId ? { adId: String(req.body.adId) } : {}),
+                ...(req.body.sourceUrl ? { sourceUrl: String(req.body.sourceUrl) } : {})
+            };
+        }
         session.userName = pushName !== 'Cliente' ? pushName : (session.userName || 'Cliente');
         session.flowId = visualFlow.flow._id;
         session.flowName = visualFlow.flow.name;
@@ -8841,10 +9494,7 @@ app.post('/api/admin/manual-pix-approve', async (req, res) => {
             session.currentNodeId = verifierNode.nodeId;
         }
 
-        store.userSessions[sessionKey] = session;
-        for (const pVar of variantPhones) {
-            if (pVar) store.userSessions[`${botId}:${pVar}`] = session;
-        }
+        syncSessionAliases(botId, session, Array.from(variantPhones));
         saveStore(store);
 
         const verifierNodeId = verifierNode ? verifierNode.nodeId : session.currentNodeId;
@@ -8885,17 +9535,23 @@ app.get('/api/meta/config', (_req, res) => {
     res.json({
         success: true,
         pixelId: cfg.pixelId || process.env.META_PIXEL_ID || null,
+        pageId: cfg.pageId || process.env.META_PAGE_ID || DEFAULT_META_PAGE_ID,
+        wabaId: cfg.wabaId || process.env.META_WABA_ID || null,
+        messagingDatasetId: cfg.messagingDatasetId || process.env.META_MESSAGING_DATASET_ID || null,
         hasAccessToken: Boolean(cfg.accessToken || process.env.META_ACCESS_TOKEN),
         facehubWebhookUrl: cfg.facehubWebhookUrl || process.env.FACEHUB_WEBHOOK_URL || null
     });
 });
 
 app.post('/api/meta/config', (req, res) => {
-    const { pixelId, accessToken, facehubWebhookUrl } = req.body || {};
+    const { pixelId, accessToken, facehubWebhookUrl, pageId, wabaId, messagingDatasetId } = req.body || {};
     store.metaConfig = store.metaConfig || {};
     if (pixelId !== undefined) store.metaConfig.pixelId = pixelId;
     if (accessToken !== undefined) store.metaConfig.accessToken = accessToken;
     if (facehubWebhookUrl !== undefined) store.metaConfig.facehubWebhookUrl = facehubWebhookUrl;
+    if (pageId !== undefined) store.metaConfig.pageId = pageId;
+    if (wabaId !== undefined) store.metaConfig.wabaId = wabaId;
+    if (messagingDatasetId !== undefined) store.metaConfig.messagingDatasetId = messagingDatasetId;
     saveStore(store);
     res.json({ success: true, message: 'Configurações da Meta salvas com sucesso!' });
 });
@@ -9280,15 +9936,49 @@ app.get('/api/meta/billing', async (_req, res) => {
 
 app.post('/api/funnels/simulate-pix', async (req, res) => {
     try {
-        const { funnelId, amount, phone, name, campaignId, adId } = req.body || {};
+        const {
+            funnelId,
+            amount,
+            phone,
+            realPhone,
+            name,
+            campaignId,
+            adId,
+            ctwaClid,
+            conversionData,
+            sourceUrl,
+            sourceId,
+            testEventCode,
+            dryRun
+        } = req.body || {};
         const funnel = FUNNELS_CATALOG.find(f => f.id === funnelId) || FUNNELS_CATALOG[0];
         const paidValue = Number(amount || funnel.expectedAmount);
         const txId = 'tx_sim_' + Date.now();
         const now = new Date();
+        const isDryRun = Boolean(dryRun || testEventCode);
+
+        const decodedConv = decodeCtwaConversionData(conversionData || ctwaClid);
+        let adContext = {
+            ...(campaignId ? { campaignId: String(campaignId) } : {}),
+            ...(adId ? { adId: String(adId) } : {}),
+            ...(sourceId ? { sourceId: String(sourceId), adId: adId ? String(adId) : String(sourceId) } : {}),
+            ...(sourceUrl ? { sourceUrl: String(sourceUrl) } : {}),
+            ...(decodedConv.decodedToken && decodedConv.isOpaquePayload ? { ctwaPayload: decodedConv.decodedToken } : {}),
+            ...(decodedConv.decodedToken && !decodedConv.isOpaquePayload ? { ctwaClid: decodedConv.decodedToken } : {})
+        };
+        if ((adContext.sourceUrl || adContext.sourceId || adContext.adId) && (!adContext.campaignId || !adContext.accountId)) {
+            adContext = await resolveMetaAdAttribution(adContext);
+        }
+
+        const fallbackCamp = (!adContext.campaignId && !sourceUrl && !sourceId && !isDryRun) ? '1202084910284' : undefined;
+        const fallbackAd = (!adContext.adId && !sourceUrl && !sourceId && !isDryRun) ? '1202084910285' : undefined;
+        const finalCampId = adContext.campaignId || fallbackCamp || null;
+        const finalAdId = adContext.adId || fallbackAd || null;
 
         const transactionRecord = {
             id: txId,
             timestamp: now.toISOString(),
+            time: Date.now(),
             timeFormatted: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
             dateFormatted: now.toLocaleDateString('pt-BR'),
             botId: 'bot_whatsapp_principal',
@@ -9296,29 +9986,48 @@ app.post('/api/funnels/simulate-pix', async (req, res) => {
             funnelName: funnel.name,
             amount: paidValue,
             beneficiary: funnel.beneficiary,
-            userPhone: phone || '5511999999999',
+            userPhone: realPhone || phone || '5511999999999',
+            realPhone: realPhone || undefined,
             pushName: name || 'Lead Simulado FaceHub',
-            campaignId: campaignId || '1202084910284',
-            adId: adId || '1202084910285',
-            adTag: `ref_${campaignId || '1202084910284'}_${adId || '1202084910285'}`,
-            isCtwa: true,
+            accountId: adContext.accountId || undefined,
+            campaignId: finalCampId,
+            campaignName: adContext.campaignName || undefined,
+            adId: finalAdId,
+            adName: adContext.adName || undefined,
+            adTag: finalCampId ? `ref_${finalCampId}_${finalAdId || ''}` : undefined,
+            sourceUrl: adContext.sourceUrl || undefined,
+            creativeVideoId: adContext.creativeVideoId || undefined,
+            ctwaClid: adContext.ctwaClid || undefined,
+            ctwaPayload: adContext.ctwaPayload || undefined,
+            isCtwa: Boolean(sourceUrl || sourceId || conversionData || ctwaClid || !isDryRun),
             status: 'APROVADO_PIX',
             capiStatus: 'PENDING'
         };
 
-        const capiRes = await sendMetaCapiConversion(transactionRecord);
+        const capiRes = await sendMetaCapiConversion(transactionRecord, testEventCode ? { testEventCode } : {});
+        transactionRecord.capiMode = capiRes.capiMode || undefined;
+        transactionRecord.capiMatchKeys = capiRes.matchKeys || undefined;
+        transactionRecord.capiRealPhoneMatched = Boolean(capiRes.realPhoneMatched);
         transactionRecord.capiStatus = capiRes.success ? 'ENVIADO_CAPI_OK' : (capiRes.skipped ? 'CAPI_CONFIG_PENDENTE' : 'ERRO_CAPI: ' + capiRes.error);
 
-        store.funnelTransactions = store.funnelTransactions || [];
-        store.funnelTransactions.unshift(transactionRecord);
-        store.funnelStats.convertedCount = (store.funnelStats.convertedCount || 0) + 1;
-        store.funnelStats.totalRevenue = Number(((store.funnelStats.totalRevenue || 0) + paidValue).toFixed(2));
-        saveStore(store);
+        if (!isDryRun) {
+            store.funnelTransactions = store.funnelTransactions || [];
+            store.funnelTransactions.unshift(transactionRecord);
+            store.funnelStats.convertedCount = (store.funnelStats.convertedCount || 0) + 1;
+            store.funnelStats.totalRevenue = Number(((store.funnelStats.totalRevenue || 0) + paidValue).toFixed(2));
+            saveStore(store);
 
-        notifyFaceHubWebhook(transactionRecord).catch(() => {});
-        sendNtfyNotification(transactionRecord).catch(() => {});
+            notifyFaceHubWebhook(transactionRecord).catch(() => {});
+            sendNtfyNotification(transactionRecord).catch(() => {});
+        }
 
-        res.json({ success: true, transaction: transactionRecord });
+        res.json({
+            success: true,
+            dryRun: isDryRun,
+            attribution: adContext,
+            capiResult: capiRes,
+            transaction: transactionRecord
+        });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
