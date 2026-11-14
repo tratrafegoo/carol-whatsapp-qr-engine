@@ -282,14 +282,17 @@ function extractAdContext(msg, textContent) {
         adData.ctwaClid = String(contextInfo.ctwaClid).trim();
     }
 
-    // Identificação de tags inseridas no texto de mensagem (Ex: [ref_1202084910284_1202084910285] ou [ref:1202084910284])
+    // Identificação de tags inseridas no texto de mensagem (Ex: [ref_1202084910284_1202084910285], [ref:1202084910284], [act_1969034740425762])
     if (textContent) {
-        const refMatch = textContent.match(/\[(?:ref:?_?|Ref:?\s*|ref\s+)?([0-9a-zA-Z_\-]+)\]/i);
+        const refMatch = textContent.match(/\[(?:ref:?_?|Ref:?\s*|ref\s+)?([0-9a-zA-Z_\-:]+)\]/i);
         if (refMatch && refMatch[1]) {
             const rawRef = refMatch[1].trim();
             adData.rawTag = rawRef;
+            const accMatch = rawRef.match(/^(?:act_|acc:|conta:)(\d{6,})$/i);
             const parts = rawRef.split('_');
-            if (parts.length >= 2 && /^\d+$/.test(parts[0]) && /^\d+$/.test(parts[1])) {
+            if (accMatch && accMatch[1]) {
+                adData.accountId = `act_${accMatch[1]}`;
+            } else if (parts.length >= 2 && /^\d+$/.test(parts[0]) && /^\d+$/.test(parts[1])) {
                 adData.campaignId = parts[0];
                 adData.adId = parts[1];
             } else if (/^\d+$/.test(rawRef)) {
@@ -315,9 +318,80 @@ function normalizeInstagramPermalink(url) {
     }
 }
 
-async function getMetaCreativeAttributionIndex() {
+function collectAdVideoIds(creative = {}) {
+    const ids = new Set();
+    const pushId = (v) => {
+        const s = String(v || '').trim();
+        if (s && /^\d+$/.test(s)) ids.add(s);
+    };
+    pushId(creative.video_id);
+    pushId(creative.object_story_spec?.video_data?.video_id);
+    if (Array.isArray(creative.asset_feed_spec?.videos)) {
+        for (const v of creative.asset_feed_spec.videos) {
+            pushId(v?.video_id);
+        }
+    }
+    return Array.from(ids);
+}
+
+function pickAttributionFromMatches(matches = [], adData = {}, extra = {}) {
+    if (!Array.isArray(matches) || matches.length === 0) return null;
+    const normAcc = adData.accountId ? `act_${String(adData.accountId).replace(/^act_/, '')}` : '';
+    const scopedMatches = normAcc
+        ? matches.filter(m => m.accountId === normAcc)
+        : matches;
+    const baseList = scopedMatches.length > 0 ? scopedMatches : matches;
+    const activeMatches = baseList.filter(m => m.effectiveStatus === 'ACTIVE');
+    const pool = activeMatches.length > 0 ? activeMatches : baseList;
+    if (pool.length === 1) {
+        return { ...adData, ...extra, ...pool[0] };
+    }
+
+    const uniqueAccounts = [...new Set(pool.map(m => m.accountId).filter(Boolean))];
+    const uniqueCampaigns = [...new Set(pool.map(m => m.campaignId).filter(Boolean))];
+    const uniqueAdsets = [...new Set(pool.map(m => m.adsetId).filter(Boolean))];
+    const firstWithCamp = pool.find(m => m.campaignName) || pool[0];
+
+    return {
+        ...adData,
+        ...extra,
+        ...(uniqueAccounts.length === 1 ? { accountId: uniqueAccounts[0] } : {}),
+        ...(uniqueCampaigns.length === 1 ? {
+            campaignId: uniqueCampaigns[0],
+            campaignName: firstWithCamp?.campaignName || undefined
+        } : {}),
+        ...(uniqueAdsets.length === 1 ? { adsetId: uniqueAdsets[0] } : {}),
+        creativeName: pool[0]?.adName || undefined,
+    };
+}
+
+async function fetchAccountAdsPaginated(accId, token) {
+    const allAds = [];
+    const allowedStatuses = [
+        'ACTIVE', 'PAUSED', 'CAMPAIGN_PAUSED', 'ADSET_PAUSED',
+        'PENDING_BILLING_INFO', 'WITH_ISSUES', 'IN_PROCESS',
+        'PREAPPROVED', 'DISAPPROVED', 'PENDING_REVIEW'
+    ];
+    let nextUrl = `https://graph.facebook.com/v21.0/${accId}/ads`;
+    let params = {
+        fields: 'id,name,effective_status,campaign_id,campaign{id,name},adset_id,account_id,creative{id,video_id,instagram_permalink_url,object_story_spec{video_data{video_id}},asset_feed_spec{videos{video_id}}}',
+        filtering: JSON.stringify([{ field: 'effective_status', operator: 'IN', value: allowedStatuses }]),
+        limit: 100,
+        access_token: token
+    };
+
+    for (let page = 0; page < 6 && nextUrl; page += 1) {
+        const res = await axios.get(nextUrl, { ...(page === 0 ? { params } : {}), timeout: 9000 });
+        const rows = res.data?.data || [];
+        allAds.push(...rows);
+        nextUrl = res.data?.paging?.next || '';
+    }
+    return allAds;
+}
+
+async function getMetaCreativeAttributionIndex(forceRefresh = false) {
     const now = Date.now();
-    if (metaCreativeIndexCache.timestamp > 0 && now - metaCreativeIndexCache.timestamp < 10 * 60 * 1000) {
+    if (!forceRefresh && metaCreativeIndexCache.timestamp > 0 && now - metaCreativeIndexCache.timestamp < 10 * 60 * 1000) {
         return metaCreativeIndexCache;
     }
     if (metaCreativeIndexPromise) return metaCreativeIndexPromise;
@@ -344,22 +418,12 @@ async function getMetaCreativeAttributionIndex() {
             const byIgUrl = new Map();
             const byVideoId = new Map();
             const adsResults = await Promise.allSettled(
-                Array.from(accountIds).map(accId =>
-                    axios.get(`https://graph.facebook.com/v21.0/${accId}/ads`, {
-                        params: {
-                            fields: 'id,name,effective_status,campaign_id,campaign{id,name},adset_id,account_id,creative{id,video_id,instagram_permalink_url,object_story_spec{video_data{video_id}}}',
-                            filtering: JSON.stringify([{ field: 'effective_status', operator: 'IN', value: ['ACTIVE', 'PAUSED'] }]),
-                            limit: 30,
-                            access_token: token
-                        },
-                        timeout: 7000
-                    })
-                )
+                Array.from(accountIds).map(accId => fetchAccountAdsPaginated(accId, token))
             );
 
             for (const res of adsResults) {
                 if (res.status !== 'fulfilled') continue;
-                for (const ad of (res.value.data?.data || [])) {
+                for (const ad of (res.value || [])) {
                     const info = {
                         adId: ad.id,
                         adName: ad.name || '',
@@ -375,16 +439,16 @@ async function getMetaCreativeAttributionIndex() {
                         list.push(info);
                         byIgUrl.set(igKey, list);
                     }
-                    const vid = ad.creative?.video_id || ad.creative?.object_story_spec?.video_data?.video_id;
-                    if (vid) {
-                        const list = byVideoId.get(String(vid)) || [];
+                    for (const vid of collectAdVideoIds(ad.creative)) {
+                        const list = byVideoId.get(vid) || [];
                         list.push(info);
-                        byVideoId.set(String(vid), list);
+                        byVideoId.set(vid, list);
                     }
                 }
             }
 
             metaCreativeIndexCache = { timestamp: Date.now(), byIgUrl, byVideoId };
+            console.log(`[Atribuição Meta Graph] 📊 Índice atualizado: ${accountIds.size} contas, ${byIgUrl.size} links IG, ${byVideoId.size} vídeos.`);
         } catch (err) {
             console.warn('[Atribuição Meta Graph] Aviso ao indexar criativos:', err?.message);
         } finally {
@@ -463,13 +527,9 @@ async function resolveMetaAdAttribution(adData) {
 
             if (srcUrl.includes('instagram.com/')) {
                 const igKey = normalizeInstagramPermalink(srcUrl);
-                const matches = index.byIgUrl.get(igKey) || [];
-                const activeMatches = matches.filter(m => m.effectiveStatus === 'ACTIVE');
-                const pool = activeMatches.length > 0 ? activeMatches : matches;
-                if (pool.length === 1) {
-                    return { ...adData, ...pool[0] };
-                }
-            } else if (/^https?:\/\/(fb\.me|www\.facebook\.com|facebook\.com)\//i.test(srcUrl)) {
+                const resolved = pickAttributionFromMatches(index.byIgUrl.get(igKey) || [], adData);
+                if (resolved) return resolved;
+            } else if (/^https?:\/\/(fb\.me|www\.facebook\.com|facebook\.com|l\.facebook\.com)\//i.test(srcUrl)) {
                 let targetUrl = srcUrl;
                 if (/^https?:\/\/fb\.me\//i.test(srcUrl)) {
                     const cacheKey = `fbme:${srcUrl}`;
@@ -477,7 +537,7 @@ async function resolveMetaAdAttribution(adData) {
                     if (cachedUrl) {
                         targetUrl = cachedUrl.url;
                     } else {
-                        const r = await axios.get(srcUrl, { maxRedirects: 0, validateStatus: s => s >= 200 && s < 400, timeout: 4000 }).catch(e => e.response);
+                        const r = await axios.get(srcUrl, { maxRedirects: 0, validateStatus: s => s >= 200 && s < 400, timeout: 4500 }).catch(e => e.response);
                         const loc = r?.headers?.location || '';
                         if (loc) {
                             targetUrl = loc;
@@ -487,22 +547,15 @@ async function resolveMetaAdAttribution(adData) {
                 }
                 const fbidMatch =
                     targetUrl.match(/story_fbid=(\d+)/i) ||
-                    targetUrl.match(/\/(?:reel|videos)\/(\d+)/i);
+                    targetUrl.match(/\/(?:reel|videos|watch\/?\?v=)\/?(\d+)/i);
                 if (fbidMatch && fbidMatch[1]) {
                     const videoId = fbidMatch[1];
-                    const matches = index.byVideoId.get(videoId) || [];
-                    const activeMatches = matches.filter(m => m.effectiveStatus === 'ACTIVE');
-                    const pool = activeMatches.length > 0 ? activeMatches : matches;
-                    if (pool.length === 1) {
-                        return { ...adData, creativeVideoId: videoId, ...pool[0] };
-                    }
-                    if (pool.length > 1) {
-                        return {
-                            ...adData,
-                            creativeVideoId: videoId,
-                            creativeName: pool[0].adName || undefined
-                        };
-                    }
+                    const resolved = pickAttributionFromMatches(
+                        index.byVideoId.get(videoId) || [],
+                        adData,
+                        { creativeVideoId: videoId }
+                    );
+                    if (resolved) return resolved;
                 }
             }
         }
@@ -523,6 +576,31 @@ async function sendMetaCapiConversion(transactionRecord, options = {}) {
     if (!metaPixelId || !metaAccessToken) {
         console.log(`[Meta CAPI] ⚠️ Pixel ID ou Access Token da Meta não configurados no Chatbot. Conversão registrada localmente.`);
         return { success: false, skipped: true, reason: 'Pixel ID ou Access Token ausente', capiMode: 'skipped' };
+    }
+
+    const isTestEvent = Boolean(options?.testEventCode);
+    const eventId = String(transactionRecord?.id || '').trim();
+    const leadIdNorm = normalizePhoneDigits(transactionRecord?.realPhone || transactionRecord?.userPhone || transactionRecord?.lidDigits);
+    const amountCents = Math.round(Number(transactionRecord?.amount || 0) * 100);
+    const leadDedupKey = (!isTestEvent && !options?.allowDuplicateForLead && leadIdNorm)
+        ? `lead:${leadIdNorm}:${transactionRecord?.funnelId || 'default'}:${amountCents}`
+        : '';
+
+    store.capiDispatchedEvents = store.capiDispatchedEvents || {};
+    if (!isTestEvent && !options?.forceResend) {
+        if (
+            transactionRecord?.capiStatus === 'ENVIADO_CAPI_OK' ||
+            transactionRecord?.capiDispatchedAt ||
+            (eventId && store.capiDispatchedEvents[eventId])
+        ) {
+            console.log(`[Meta CAPI] 🛡️ Idempotência: evento ${eventId || '-'} já disparado anteriormente. Ignorando reenvio.`);
+            return { success: true, deduplicated: true, skippedDuplicate: true, capiMode: 'deduplicated' };
+        }
+        const recentLeadAt = leadDedupKey ? Number(store.capiDispatchedEvents[leadDedupKey] || 0) : 0;
+        if (recentLeadAt && (Date.now() - recentLeadAt < 180 * 1000)) {
+            console.log(`[Meta CAPI] 🛡️ Idempotência por janela (3min): venda similar para ${leadIdNorm} já enviada. Ignorando duplicata.`);
+            return { success: true, deduplicated: true, skippedDuplicate: true, capiMode: 'deduplicated_window' };
+        }
     }
 
     try {
@@ -621,6 +699,20 @@ async function sendMetaCapiConversion(transactionRecord, options = {}) {
 
         const capiUrl = `https://graph.facebook.com/v21.0/${targetDatasetId}/events?access_token=${metaAccessToken}`;
         const res = await axios.post(capiUrl, payload, { timeout: 10000 });
+        if (!isTestEvent) {
+            store.capiDispatchedEvents = store.capiDispatchedEvents || {};
+            const nowMs = Date.now();
+            if (eventId) store.capiDispatchedEvents[eventId] = nowMs;
+            if (leadDedupKey) store.capiDispatchedEvents[leadDedupKey] = nowMs;
+            const keys = Object.keys(store.capiDispatchedEvents);
+            if (keys.length > 3000) {
+                keys.slice(0, keys.length - 3000).forEach(k => delete store.capiDispatchedEvents[k]);
+            }
+            if (transactionRecord && typeof transactionRecord === 'object') {
+                transactionRecord.capiDispatchedAt = new Date(nowMs).toISOString();
+            }
+            saveStore(store);
+        }
         console.log(`[Meta CAPI] ✅ Evento Purchase (${capiMode}) enviado para ${targetDatasetId}! Recebidos: ${res.data?.events_received || 1} | MatchKeys: ${Object.keys(eventObj.user_data).join(',')} | fbtrace_id: ${res.data?.fbtrace_id || '-'}`);
         return {
             success: true,
@@ -797,26 +889,63 @@ function parseGeminiJsonResponse(rawText) {
     return JSON.parse(cleaned);
 }
 
-function clearScheduledJobsForLead(botId, remoteJid = '', candidatePhones = []) {
-    if (!Array.isArray(store.scheduledJobs) || store.scheduledJobs.length === 0) return;
+function normalizePlainText(text) {
+    return String(text || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+}
+
+function parsePixNumericAmount(rawVal) {
+    if (typeof rawVal === 'number') {
+        return Number.isFinite(rawVal) ? rawVal : NaN;
+    }
+    if (typeof rawVal === 'string') {
+        let cleaned = rawVal.replace(/[^\d.,-]/g, '').trim();
+        if (!cleaned) return NaN;
+        if (cleaned.includes(',') && cleaned.includes('.')) {
+            cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+        } else if (cleaned.includes(',')) {
+            cleaned = cleaned.replace(',', '.');
+        }
+        const n = Number(cleaned);
+        return Number.isFinite(n) ? n : NaN;
+    }
+    return NaN;
+}
+
+function collectLeadPhoneVariants(source = {}, extraPhones = []) {
     const variantSet = new Set();
-    for (const candidate of candidatePhones) {
-        const digits = String(candidate || '').split('@')[0].split(':')[0].replace(/\D/g, '');
-        if (!digits) continue;
+    const inspect = (raw) => {
+        const digits = String(raw || '').split('@')[0].split(':')[0].replace(/\D/g, '');
+        if (!digits) return;
         variantSet.add(digits);
         if (typeof getBrazilianPhoneVariants === 'function') {
             getBrazilianPhoneVariants(digits).forEach(v => variantSet.add(v));
         }
+    };
+    if (source && typeof source === 'object') {
+        inspect(source.userPhone);
+        inspect(source.realPhone);
+        inspect(source.lidDigits);
+        inspect(source.userJid);
+        inspect(source.remoteJid);
+    } else if (source) {
+        inspect(source);
     }
-    const remoteDigits = String(remoteJid || '').split('@')[0].split(':')[0].replace(/\D/g, '');
-    if (remoteDigits) {
-        variantSet.add(remoteDigits);
-        if (typeof getBrazilianPhoneVariants === 'function') {
-            getBrazilianPhoneVariants(remoteDigits).forEach(v => variantSet.add(v));
-        }
-    }
+    for (const extra of (extraPhones || [])) inspect(extra);
+    return variantSet;
+}
+
+function clearScheduledJobsForLead(botId, remoteJid = '', candidatePhones = [], options = {}) {
+    if (!Array.isArray(store.scheduledJobs) || store.scheduledJobs.length === 0) return;
+    const variantSet = collectLeadPhoneVariants({ remoteJid }, candidatePhones);
+    const hasPixTimeoutFilter = typeof options?.onlyPixTimeout === 'boolean';
     store.scheduledJobs = store.scheduledJobs.filter(j => {
         if (j?.botId && botId && j.botId !== botId) return true;
+        if (hasPixTimeoutFilter && Boolean(j?.isPixTimeout) !== options.onlyPixTimeout) return true;
+        if (options?.flowId && j?.flowId && j.flowId !== options.flowId) return true;
         const jPhone = String(j?.userPhone || '').replace(/\D/g, '');
         const jJidDigits = String(j?.remoteJid || '').split('@')[0].split(':')[0].replace(/\D/g, '');
         if (remoteJid && j?.remoteJid === remoteJid) return false;
@@ -891,29 +1020,36 @@ async function getMediaBuffer(msg, sock) {
 
 function detectPaymentRefusal(text) {
     if (!text || typeof text !== 'string') return false;
-    const norm = text
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase()
-        .trim();
+    const norm = normalizePlainText(text);
+    if (!norm) return false;
 
-    const patterns = [
-        /\b(nao|nunca)\s+(vou|posso|consigo|quero)\s+(pagar|comprar|fazer|enviar)\b/i,
-        /\b(nao\s+vou\s+querer|nao\s+quero\s+mais|nao\s+tenho\s+interesse|perdi\s+o\s+interesse)\b/i,
+    const hardRefusalPatterns = [
+        /\b(nao|nunca)\s+(vou|posso|consigo|quero|deu)\s+(pagar|comprar|fazer|enviar)\b/i,
+        /\b(nao\s+consigo|nao\s+tenho\s+como|nao\s+deu\s+certo|nao\s+vou\s+conseguir|sem\s+saldo)\b/i,
+        /\b(nao\s+vou\s+querer|nao\s+quero\s+mais|nao\s+tenho\s+interesse|perdi\s+o\s+interesse|nao\s+preciso)\b/i,
         /\b(muito|achei|ta|tava)\s+caro\b/i,
         /\b(caro\s+demais|puxado|sem\s+condicoes)\b/i,
         /\b(sem\s+dinheiro|sem\s+grana|nao\s+tenho\s+dinheiro|to\s+sem\s+dinheiro|to\s+liso|sem\s+limite)\b/i,
         /\b(cancela|cancelar|cancelamento|cancela\s+ai|pode\s+cancelar)\b/i,
         /\b(deixa\s+pra\s+la|deixa\s+quieto|esquece|esquece\s+isso|desisto|desisti)\b/i,
-        /\b(pensei|achei|achava)\s+que\s+(era|fosse)\s+gratis\b/i,
-        /\b(pensei|achei|achava)\s+que\s+(era|fosse)\s+de\s+graca\b/i,
+        /\b(pensei|achei|achava)\s+que\s+(era|fosse)\s+(gratis|de\s+graca)\b/i,
         /\b(e\s+pago|tem\s+que\s+pagar|cobrando)\b/i,
-        /\b(nao\s+vou\s+levar|nao\s+tenho\s+interesse)\b/i,
-        /\b(golpe|fraude|enganacao)\b/i,
+        /\b(nao\s+vou\s+levar)\b/i,
+        /\b(golpe|golpista|fraude|enganacao|estelionato|estelionatario|charlatao|piramide|picareta|pilantra|mentira|mentiroso)\b/i,
+        /\b(par[ae]\s+de\s+(mandar|enviar|cobrar|me\s+mandar)|nao\s+me\s+mand[ae]|tira(r)?\s+(meu|o)\s+numero|me\s+tir[ae]\s+da\s+lista|vou\s+bloquear)\b/i,
         /\b(nao\s+obrigado|nao\s+obrigada|obrigado\s+mas\s+nao|obrigada\s+mas\s+nao|nao\s+vlw|nao\s+valeu)\b/i
     ];
+    if (hardRefusalPatterns.some(pat => pat.test(norm))) return true;
 
-    return patterns.some(pat => pat.test(norm));
+    const isImmediateAction = /\b(agora|ja\s+vou|ja\s+estou|estou\s+fazendo|to\s+fazendo|daqui\s+a\s+pouco|so\s+um\s+(segundo|minuto|instante))\b/i.test(norm);
+    if (isImmediateAction) return false;
+
+    const deferralPatterns = [
+        /\b(na\s+)?(segunda|terca|quarta|quinta|sexta|sabado|domingo)(-feira)?\s+(eu\s+)?(pago|faco|acerto|envio|mando|deposito|vejo|transfero)\b/i,
+        /\b(eu\s+)?(pago|faco|acerto|envio|mando|deposito|transfero)\s+(na\s+|no\s+|so\s+)?(segunda|terca|quarta|quinta|sexta|sabado|domingo|amanha|semana\s+que\s+vem|mes\s+que\s+vem|proximo\s+mes|fim\s+do\s+mes|final\s+do\s+mes|dia\s+\d{1,2})\b/i,
+        /\b(so\s+(na\s+|no\s+)?(semana|mes)\s+que\s+vem|so\s+(no\s+)?dia\s+\d{1,2}|quando\s+(eu\s+)?receber|assim\s+que\s+(eu\s+)?receber|ainda\s+nao\s+recebi|esperando\s+(cair|receber|pagamento|salario|beneficio|aposentadoria))\b/i
+    ];
+    return deferralPatterns.some(pat => pat.test(norm));
 }
 
 async function auditAudioRefusalWithGemini(audioBuffer, mimeType = 'audio/ogg') {
@@ -1001,7 +1137,7 @@ Retorne EXCLUSIVAMENTE um objeto JSON válido no formato:
     return { isRefusal: false, transcript: '', refusalReason: null };
 }
 
-async function auditPixReceiptWithGemini(mediaBuffer, mimeType, expectedAmount = 19.90, beneficiary = '') {
+async function auditPixReceiptWithGemini(mediaBuffer, mimeType, expectedAmount = 19.90, beneficiary = '', expectedPixKey = '') {
     if (!GEMINI_API_KEY) {
         console.warn('[PIX Auditor] Nenhuma chave GEMINI_API_KEY configurada.');
         sendNtfyEmergencyAlert({
@@ -1012,7 +1148,7 @@ async function auditPixReceiptWithGemini(mediaBuffer, mimeType, expectedAmount =
             alertKey: 'missing_gemini_key',
             cooldownSec: 300
         }).catch(() => {});
-        return { isValid: false, reason: 'Chave da IA não configurada no servidor.' };
+        return { isValid: false, rejectCode: 'IA_CONFIG', reason: 'Chave da IA não configurada no servidor.' };
     }
 
     try {
@@ -1065,67 +1201,94 @@ async function auditPixReceiptWithGemini(mediaBuffer, mimeType, expectedAmount =
         const parsed = parseGeminiJsonResponse(textOutput);
         console.log(`[PIX Auditor] 🧠 Resultado da IA (${usedModel}):`, JSON.stringify(parsed));
 
-        if (parsed.status !== 'CONCLUIDO') {
+        const statusUpper = String(parsed.status || '').trim().toUpperCase();
+        const parsedValor = parsePixNumericAmount(parsed.valor);
+
+        if (statusUpper === 'AGENDADO') {
             return {
                 isValid: false,
-                reason: 'O comprovante enviado parece ser um agendamento ou ainda não foi concluído.',
+                rejectCode: 'SCHEDULED_PIX',
+                reason: parsed.rejectionReason || 'O comprovante enviado parece ser um agendamento e ainda não foi efetivado.',
                 details: parsed,
             };
         }
 
-        if (typeof parsed.valor === 'number') {
+        if (parsed.isValidPix === false || (statusUpper && statusUpper !== 'CONCLUIDO')) {
+            return {
+                isValid: false,
+                rejectCode: 'NOT_VALID_RECEIPT',
+                reason: parsed.rejectionReason || 'A imagem ou documento enviado não parece ser um comprovante de PIX concluído.',
+                details: parsed,
+            };
+        }
+
+        if (Number.isFinite(parsedValor) && parsedValor > 0) {
             const minAllowed = expectedAmount <= 25 ? 4.50 : expectedAmount * 0.95;
-            if (parsed.valor < minAllowed) {
+            if (parsedValor < minAllowed) {
                 return {
                     isValid: false,
-                    reason: `O valor do comprovante (R$ ${parsed.valor.toFixed(2).replace('.', ',')}) é inferior à contribuição mínima aceita.`,
+                    rejectCode: 'LOW_AMOUNT',
+                    reason: `O valor do comprovante (R$ ${parsedValor.toFixed(2).replace('.', ',')}) é inferior à contribuição mínima aceita (R$ ${expectedAmount.toFixed(2).replace('.', ',')}).`,
                     details: parsed,
                 };
             }
         }
 
-        if (parsed.destinatario && typeof parsed.destinatario === 'string') {
-            const destLower = parsed.destinatario.toLowerCase();
-            const isKnownUtility = ['celesc', 'enel', 'sabesp', 'copel', 'cemig', 'cpfl', 'claro', 'vivo', 'tim'].some(u => destLower.includes(u));
+        const destNorm = normalizePlainText(parsed.destinatario);
+        const keyNorm = normalizePlainText(parsed.chavePix);
+        if (destNorm) {
+            const isKnownUtility = ['celesc', 'enel', 'sabesp', 'copel', 'cemig', 'cpfl', 'claro', 'vivo', 'tim', 'energisa', 'equatorial', 'sanepar'].some(u => destNorm.includes(u));
             if (isKnownUtility) {
                 return {
                     isValid: false,
+                    rejectCode: 'UTILITY_BILL',
                     reason: `O destinatário do comprovante (${parsed.destinatario}) parece ser uma conta de consumo e não o PIX esperado.`,
                     details: parsed,
                 };
             }
 
-            const cleanBen = String(beneficiary || '').trim().toLowerCase();
-            if (cleanBen) {
-                const ignoredWords = new Set(['pastor', 'missionaria', 'missionário', 'missionario', 'igreja', 'projeto', 'editora', 'guia', 'ltda', 'digital', 'digitais']);
+            const cleanBen = normalizePlainText(beneficiary);
+            const cleanExpectedKey = normalizePlainText(expectedPixKey);
+            if (cleanBen || cleanExpectedKey) {
+                const ignoredWords = new Set(['pastor', 'missionaria', 'missionario', 'igreja', 'projeto', 'editora', 'guia', 'ltda', 'digital', 'digitais']);
                 const benTokens = cleanBen
                     .split(/[\s\-_()/,]+/)
                     .map(t => t.trim())
                     .filter(t => t.length >= 3 && !ignoredWords.has(t));
 
-                const matchesToken = benTokens.length === 0 || benTokens.some(tok => destLower.includes(tok));
+                const matchesToken = benTokens.length > 0 && benTokens.some(tok => destNorm.includes(tok));
+                const matchesPixKey = Boolean(cleanExpectedKey && keyNorm && (keyNorm.includes(cleanExpectedKey) || cleanExpectedKey.includes(keyNorm)));
+                const knownMerchantAliases = [
+                    'guilherme', 'joao gabriel', 'joao antonio', 'pastorguilhermeigreja',
+                    'gps', 'ebooks', 'digitais', '67039217', 'carol', 'pagamento',
+                    'junior campos', 'thaise', 'viva luz', 'rp empreendimentos', 'dayza'
+                ];
                 const isKnownMerchant =
-                    destLower.includes(cleanBen) ||
+                    matchesPixKey ||
+                    (cleanBen && destNorm.includes(cleanBen)) ||
                     matchesToken ||
-                    destLower.includes('guilherme') ||
-                    destLower.includes('gps') ||
-                    destLower.includes('ebooks') ||
-                    destLower.includes('digitais') ||
-                    destLower.includes('67039217') ||
-                    destLower.includes('carol') ||
-                    destLower.includes('pagamento');
+                    knownMerchantAliases.some(alias => destNorm.includes(alias));
 
                 if (!isKnownMerchant) {
+                    sendNtfyEmergencyAlert({
+                        title: '⚠️ ALERTA X1: PIX COM FAVORECIDO DIVERGENTE',
+                        message: `Comprovante recebido com destinatário não reconhecido automaticamente:\nDestinatário lido: ${parsed.destinatario || '-'}\nChave lida: ${parsed.chavePix || '-'}\nValor: R$ ${Number.isFinite(parsedValor) ? parsedValor.toFixed(2) : parsed.valor || '-'}\nEsperado no nó: ${beneficiary || '-'} (${expectedPixKey || '-'})`,
+                        priority: 'high',
+                        tags: 'warning,moneybag',
+                        alertKey: `pix_beneficiary_${destNorm.slice(0, 20)}`,
+                        cooldownSec: 60
+                    }).catch(() => {});
                     return {
                         isValid: false,
-                        reason: `O destinatário do comprovante (${parsed.destinatario}) não corresponde ao beneficiário esperado (${beneficiary}).`,
+                        rejectCode: 'BENEFICIARY_MISMATCH',
+                        reason: `O destinatário do comprovante (${parsed.destinatario}) não corresponde ao beneficiário esperado (${beneficiary || expectedPixKey}).`,
                         details: parsed,
                     };
                 }
             }
         }
 
-        const paidAmount = (typeof parsed.valor === 'number' && parsed.valor > 0) ? parsed.valor : Number(expectedAmount || 19.90);
+        const paidAmount = (Number.isFinite(parsedValor) && parsedValor > 0) ? parsedValor : Number(expectedAmount || 19.90);
         return { isValid: true, paidAmount, details: parsed };
     } catch (err) {
         const errorDetail = err?.response?.data?.error?.message || err?.message;
@@ -1138,7 +1301,7 @@ async function auditPixReceiptWithGemini(mediaBuffer, mimeType, expectedAmount =
             alertKey: 'gemini_api_error',
             cooldownSec: 120
         }).catch(() => {});
-        return { isValid: false, reason: 'Não foi possível ler com nitidez as informações do comprovante.' };
+        return { isValid: false, rejectCode: 'IA_ERROR', reason: 'Não foi possível ler com nitidez as informações do comprovante.' };
     }
 }
 
@@ -1360,6 +1523,7 @@ function loadStore() {
         userSessions: {},
         conversations: [],
         funnelLeadJourneys: {},
+        capiDispatchedEvents: {},
         funnelStats: {
             startedCount: 0,
             materialDeliveredCount: 0,
@@ -1487,6 +1651,18 @@ function mergeJourneyRecord(target = {}, source = {}) {
         paidAmount: Number(target.paidAmount || source.paidAmount || 0) || undefined,
     };
     if (merged.realPhone) merged.canonicalLeadId = normalizePhoneDigits(merged.realPhone);
+    if (!merged.receiptReceivedAt && merged.paidAt) {
+        merged.receiptReceivedAt = merged.paidAt;
+    }
+    if (!merged.pixSentAt && (merged.receiptReceivedAt || merged.paidAt)) {
+        merged.pixSentAt = earliestIso(merged.receiptReceivedAt, merged.paidAt);
+    }
+    if (!merged.materialDeliveredAt && (merged.pixSentAt || merged.receiptReceivedAt || merged.paidAt)) {
+        merged.materialDeliveredAt = earliestIso(
+            merged.pixSentAt,
+            earliestIso(merged.receiptReceivedAt, merged.paidAt)
+        );
+    }
     if (!merged.enteredAt) {
         merged.enteredAt = earliestIso(
             merged.materialDeliveredAt,
@@ -1735,6 +1911,7 @@ function buildRuntimeStatePayload(botId = 'bot_whatsapp_principal') {
         scheduledJobs: Array.isArray(store.scheduledJobs) ? store.scheduledJobs : [],
         conversations: Array.isArray(store.conversations) ? store.conversations.slice(-500) : [],
         funnelLeadJourneys: store.funnelLeadJourneys || {},
+        capiDispatchedEvents: store.capiDispatchedEvents || {},
         funnelStats: store.funnelStats || {},
         funnelTransactions: Array.isArray(store.funnelTransactions) ? store.funnelTransactions : [],
     };
@@ -1750,6 +1927,7 @@ function computeRuntimeHash(payload) {
             lc: payload.conversations?.[(payload.conversations || []).length - 1]?._id || '',
             tc: (payload.funnelTransactions || []).length,
             lj: Object.keys(payload.funnelLeadJourneys || {}).length,
+            ce: Object.keys(payload.capiDispatchedEvents || {}).length,
             fs: payload.funnelStats || {},
         });
     } catch {
@@ -1939,15 +2117,35 @@ function mergeRuntimeState(stateData = {}, options = {}) {
             store.conversations = mergedMsgs.slice(-500);
         }
 
+        if (stateData.capiDispatchedEvents && typeof stateData.capiDispatchedEvents === 'object') {
+            store.capiDispatchedEvents = {
+                ...(store.capiDispatchedEvents || {}),
+                ...stateData.capiDispatchedEvents,
+            };
+        }
+
         if (Array.isArray(stateData.scheduledJobs) && stateData.scheduledJobs.length > 0) {
             store.scheduledJobs = store.scheduledJobs || [];
+            const resolveJobCanonicalKey = (job) => {
+                const jBot = job.botId || 'bot_whatsapp_principal';
+                const variants = collectLeadPhoneVariants(job);
+                for (const v of variants) {
+                    const matchedSess = store.userSessions?.[`${jBot}:${v}`];
+                    if (matchedSess) {
+                        const canon = normalizePhoneDigits(matchedSess.realPhone || matchedSess.userPhone || matchedSess.lidDigits) || v;
+                        return { canon, sess: matchedSess };
+                    }
+                }
+                return { canon: normalizePhoneDigits(job.userPhone || job.remoteJid), sess: null };
+            };
+            const buildJobDedup = (j, canon) => `${canon || j.userPhone}:${j.targetNodeId || ''}:${Boolean(j.isPixTimeout)}`;
             const seenJobKeys = new Set(
-                store.scheduledJobs.map(j => `${j.userPhone}:${j.targetNodeId || ''}:${Boolean(j.isPixTimeout)}`)
+                store.scheduledJobs.map(j => buildJobDedup(j, resolveJobCanonicalKey(j).canon))
             );
             for (const job of stateData.scheduledJobs) {
-                const sKey = `${job.botId || 'bot_whatsapp_principal'}:${job.userPhone}`;
-                if (store.userSessions?.[sKey]?.paid) continue;
-                const dedup = `${job.userPhone}:${job.targetNodeId || ''}:${Boolean(job.isPixTimeout)}`;
+                const { canon, sess } = resolveJobCanonicalKey(job);
+                if (sess?.paid || sess?.rejectedPayment) continue;
+                const dedup = buildJobDedup(job, canon);
                 if (!seenJobKeys.has(dedup)) {
                     store.scheduledJobs.push(job);
                     seenJobKeys.add(dedup);
@@ -2148,6 +2346,80 @@ function consolidateFunnelLeadJourneys(botId = 'bot_whatsapp_principal') {
     return consolidatedCount + removals.length;
 }
 
+async function reconcileUnattributedSessionsAndJourneys(botId = 'bot_whatsapp_principal', options = {}) {
+    await getMetaCreativeAttributionIndex(Boolean(options?.forceRefreshIndex));
+    const uniqueSessions = new Set(Object.values(store.userSessions || {}).filter(Boolean));
+    let updatedSessions = 0;
+    let updatedJourneys = 0;
+    let updatedTransactions = 0;
+
+    for (const s of uniqueSessions) {
+        if (!s || (s.botId && s.botId !== botId)) continue;
+        if (s.adData && (s.adData.sourceUrl || s.adData.sourceId || s.adData.adId || s.adData.campaignId) && (!s.adData.accountId || !s.adData.campaignId)) {
+            const enriched = await resolveMetaAdAttribution({ ...s.adData });
+            const changed =
+                (enriched.accountId && enriched.accountId !== s.adData.accountId) ||
+                (enriched.campaignId && enriched.campaignId !== s.adData.campaignId) ||
+                (enriched.adId && enriched.adId !== s.adData.adId);
+            if (changed) {
+                s.adData = { ...s.adData, ...enriched };
+                updatedSessions += 1;
+            }
+        }
+        if (s.adData && (s.adData.accountId || s.adData.campaignId)) {
+            syncLeadJourneyAttribution(botId, s, s.adData);
+        }
+    }
+
+    // Reconcilia transações que ainda não possuem accountId ou campaignId completo
+    for (const tx of (store.funnelTransactions || [])) {
+        if (!tx || (tx.botId && tx.botId !== botId)) continue;
+        if (tx.accountId && tx.campaignId) continue;
+
+        let resolved = null;
+        if (tx.sourceUrl || tx.adId || tx.campaignId) {
+            resolved = await resolveMetaAdAttribution({
+                sourceUrl: tx.sourceUrl,
+                adId: tx.adId,
+                campaignId: tx.campaignId,
+                accountId: tx.accountId,
+            });
+        }
+        const leadVariants = collectLeadPhoneVariants(tx);
+        for (const s of uniqueSessions) {
+            if (!s?.adData) continue;
+            const sVariants = collectLeadPhoneVariants(s);
+            if ([...sVariants].some(v => leadVariants.has(v)) && (s.adData.accountId || s.adData.campaignId)) {
+                resolved = { ...(resolved || {}), ...s.adData };
+                break;
+            }
+        }
+        if (resolved && ((resolved.accountId && !tx.accountId) || (resolved.campaignId && !tx.campaignId))) {
+            if (!tx.accountId && resolved.accountId) tx.accountId = resolved.accountId;
+            if (!tx.campaignId && resolved.campaignId) tx.campaignId = resolved.campaignId;
+            if (!tx.campaignName && resolved.campaignName) tx.campaignName = resolved.campaignName;
+            if (!tx.adId && resolved.adId) tx.adId = resolved.adId;
+            if (!tx.adName && resolved.adName) tx.adName = resolved.adName;
+            updatedTransactions += 1;
+        }
+    }
+
+    backfillFunnelLeadJourneys(botId);
+    updatedJourneys += consolidateFunnelLeadJourneys(botId);
+
+    if (updatedSessions > 0 || updatedJourneys > 0 || updatedTransactions > 0) {
+        saveStore(store);
+        await flushRuntimeStateBackupNow(botId, true).catch(() => {});
+    }
+    return {
+        updatedSessions,
+        updatedJourneys,
+        updatedTransactions,
+        indexedIgUrls: metaCreativeIndexCache.byIgUrl?.size || 0,
+        indexedVideos: metaCreativeIndexCache.byVideoId?.size || 0,
+    };
+}
+
 async function restoreRuntimeStateFromCloudKv(botId = 'bot_whatsapp_principal') {
     try {
         const res = await axios.get(`${CLOUD_WORKER_URL}/api/cloud-kv/runtime-state?botId=${encodeURIComponent(botId)}`, {
@@ -2161,6 +2433,7 @@ async function restoreRuntimeStateFromCloudKv(botId = 'bot_whatsapp_principal') 
             saveStore(store);
             lastRuntimeBackupHash = computeRuntimeHash(buildRuntimeStatePayload(botId));
             console.log(`[Cloud KV Runtime] ☁️ Estado de runtime restaurado do KV (${summary.mergedSessions} sessões, ${summary.mergedJobs} jobs, ${store.conversations?.length || 0} msgs, ${Object.keys(store.funnelLeadJourneys || {}).length} jornadas)`);
+            reconcileUnattributedSessionsAndJourneys(botId).catch(() => {});
             return true;
         }
     } catch (err) {
@@ -7376,7 +7649,7 @@ async function recoverSessionIdentityAndAttribution(botId, sock, session, candid
     if (session.adData && (!session.adData.campaignId || !session.adData.accountId)) {
         const enriched = await Promise.race([
             resolveMetaAdAttribution(session.adData),
-            new Promise((resolve) => setTimeout(() => resolve(session.adData), 2500))
+            new Promise((resolve) => setTimeout(() => resolve(session.adData), 9000))
         ]);
         if (enriched && (enriched.campaignId || enriched.adId || enriched.accountId || enriched.creativeVideoId)) {
             session.adData = Object.assign(session.adData, enriched);
@@ -7608,17 +7881,19 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
 
         if (!session.adData.campaignId || !session.adData.accountId) {
             const adTargetRef = session.adData;
-            const journeyCtx = {
-                userPhone,
-                realPhone: identity.realPhone || session?.realPhone,
-                lidDigits: identity.lidDigits || session?.lidDigits,
-                flowId: session?.flowId,
-                flowName: session?.flowName,
-            };
+            const liveSessionKey = sessionKey;
             resolveMetaAdAttribution(adTargetRef)
                 .then((enriched) => {
                     if (enriched && adTargetRef && (enriched.campaignId || enriched.adId || enriched.accountId || enriched.creativeVideoId)) {
                         Object.assign(adTargetRef, enriched);
+                        const liveSession = store.userSessions?.[liveSessionKey] || session;
+                        const journeyCtx = {
+                            userPhone: liveSession?.userPhone || userPhone,
+                            realPhone: identity.realPhone || liveSession?.realPhone,
+                            lidDigits: identity.lidDigits || liveSession?.lidDigits,
+                            flowId: liveSession?.flowId,
+                            flowName: liveSession?.flowName,
+                        };
                         syncLeadJourneyAttribution(botId, journeyCtx, adTargetRef);
                         saveStore(store);
                         if (enriched.campaignId || enriched.adId) {
@@ -7761,11 +8036,12 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
                 const verifierAmount = Number(verifierNode?.config?.expectedAmount || 0);
                 const latestAmount = Number(session.latestPixAmount || session.expectedAmount || verifierAmount || 19.90);
                 const expectedAmount = verifierAmount > 0 ? Math.min(verifierAmount, latestAmount) : latestAmount;
-                const beneficiary = String(verifierNode?.config?.beneficiaryName || verifierNode?.config?.beneficiary || '').trim();
+                const beneficiary = String(verifierNode?.config?.beneficiaryName || verifierNode?.config?.beneficiary || session.beneficiary || '').trim();
+                const expectedPixKey = String(verifierNode?.config?.pixKey || session.pixKey || '').trim();
 
                 if (mediaBuffer) {
                     const mime = resolveReceiptMimeType(msg, 'image/jpeg');
-                    auditResult = await auditPixReceiptWithGemini(mediaBuffer, mime, expectedAmount, beneficiary);
+                    auditResult = await auditPixReceiptWithGemini(mediaBuffer, mime, expectedAmount, beneficiary, expectedPixKey);
                 }
 
                 if (auditResult && auditResult.isValid) {
@@ -7817,7 +8093,18 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
                     } else {
                         session.waitingFor = 'PIX_RECEIPT';
                         saveStore(store);
-                        await sendRealisticText(botId, sock, remoteJid, userPhone, 'Não consegui identificar o valor ou destinatário com clareza na imagem enviada. Poderia me enviar o comprovante oficial completo em PDF ou imagem nítida, por favor? 🙏');
+                        const code = auditResult?.rejectCode || '';
+                        let contextualReply = 'Não consegui identificar o valor ou destinatário com clareza na imagem enviada. Poderia me enviar o comprovante oficial completo em PDF ou imagem nítida, por favor? 🙏';
+                        if (code === 'SCHEDULED_PIX') {
+                            contextualReply = 'Vi aqui que o comprovante enviado parece ser de um *PIX agendado*, ou seja, ainda não caiu na hora ⏳. Assim que a transferência for concluída, me envie o comprovante efetivado que já libero seu acesso! 🙏';
+                        } else if (code === 'LOW_AMOUNT') {
+                            contextualReply = `${auditResult.reason} Por favor, envie o comprovante oficial completo no valor combinado para liberarmos seu material! 🙏`;
+                        } else if (code === 'BENEFICIARY_MISMATCH' || code === 'UTILITY_BILL') {
+                            contextualReply = `${auditResult.reason} Por favor, confira se enviou para a nossa chave PIX oficial e me mande o comprovante correto por aqui! 🙏`;
+                        } else if (code === 'NOT_VALID_RECEIPT') {
+                            contextualReply = 'Essa imagem não aparece como um comprovante de PIX concluído. Por favor, me envie o comprovante oficial em PDF ou print completo da transferência realizada para eu liberar seu acesso! 🙏';
+                        }
+                        await sendRealisticText(botId, sock, remoteJid, userPhone, contextualReply);
                         return;
                     }
                 }
@@ -8545,7 +8832,7 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
         }
 
         if (auditResult.isValid) {
-            const paidValue = auditResult.details?.valor || expectedAmount;
+            const paidValue = auditResult.paidAmount || auditResult.details?.valor || expectedAmount;
             store.funnelStats.convertedCount = (store.funnelStats.convertedCount || 0) + 1;
             store.funnelStats.totalRevenue = Number(((store.funnelStats.totalRevenue || 0) + paidValue).toFixed(2));
             store.funnelStats.recentConversions.unshift({
@@ -8846,8 +9133,11 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
             const resumeAt = Date.now() + (totalSeconds * 1000);
 
             store.scheduledJobs = store.scheduledJobs || [];
-            // Remove jobs anteriores de delay deste usuário e fluxo para evitar duplicações (preservando o timer de expiração isPixTimeout)
-            store.scheduledJobs = store.scheduledJobs.filter(j => !(j.userPhone === session.userPhone && j.flowId === session.flowId && !j.isPixTimeout));
+            // Remove jobs anteriores de delay deste lead (todas variantes LID/PN) para evitar duplicações (preservando isPixTimeout)
+            clearScheduledJobsForLead(botId, remoteJid, Array.from(collectLeadPhoneVariants(session)), {
+                onlyPixTimeout: false,
+                flowId: session.flowId
+            });
 
             const newJob = {
                 jobId: `job_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
@@ -9026,6 +9316,7 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
             session.expectedAmount = numericAmount;
             session.latestPixAmount = numericAmount;
             session.beneficiary = beneficiaryName;
+            session.pixKey = pixKey;
             session.hasReceivedPix = true;
             // Se este bloco PIX está sendo executado dentro de um fluxo de recuperação
             // (após vácuo/timeout ou após recusa/fail), reativa a escuta de comprovante!
@@ -9074,7 +9365,7 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
             const timeoutHours = Number(config.timeoutHours || 24);
             if (enableTimeoutLimit && timeoutHours > 0) {
                 store.scheduledJobs = store.scheduledJobs || [];
-                store.scheduledJobs = store.scheduledJobs.filter(j => !(j.userPhone === session.userPhone && j.isPixTimeout));
+                clearScheduledJobsForLead(botId, remoteJid, Array.from(collectLeadPhoneVariants(session)), { onlyPixTimeout: true });
                 const expireResumeAt = Date.now() + (timeoutHours * 3600 * 1000);
                 const expireJob = {
                     jobId: `pix_timeout_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
@@ -9262,12 +9553,32 @@ function initSchedulerWorker(intervalMs = 15000) {
                 store.scheduledJobs = store.scheduledJobs.filter(j => j.jobId !== job.jobId);
                 saveStore(store);
 
-                const sessionKey = `${job.botId}:${job.userPhone}`;
-                const session = store.userSessions ? store.userSessions[sessionKey] : null;
+                const variants = collectLeadPhoneVariants(job);
+                const sessions = store.userSessions || {};
+                const jBot = job.botId || 'bot_whatsapp_principal';
+                let session = null;
+                for (const v of variants) {
+                    if (sessions[`${jBot}:${v}`]) {
+                        session = sessions[`${jBot}:${v}`];
+                        break;
+                    }
+                }
+                if (!session) {
+                    for (const s of Object.values(sessions)) {
+                        if (!s || (s.botId && s.botId !== jBot)) continue;
+                        const sVars = collectLeadPhoneVariants(s);
+                        if ([...variants].some(v => sVars.has(v))) {
+                            session = s;
+                            break;
+                        }
+                    }
+                }
 
-                // Se o lead já pagou, descarta a continuação da fila de remarketing
-                if (session && session.paid) {
-                    console.log(`[Visual Flow Scheduler] ⏩ Ignorando job ${job.jobId} para ${job.userPhone}: Lead já pagou.`);
+                // Se o lead já pagou ou recusou/adiou pagamento, descarta a continuação da fila de remarketing em todos aliases
+                if (session && (session.paid || session.rejectedPayment)) {
+                    console.log(`[Visual Flow Scheduler] ⏩ Ignorando job ${job.jobId} para ${job.userPhone}: Lead ${session.paid ? 'já pagou' : 'recusou/adiou pagamento'}.`);
+                    clearScheduledJobsForLead(jBot, job.remoteJid, Array.from(collectLeadPhoneVariants(session, [job.userPhone])));
+                    saveStore(store);
                     continue;
                 }
 
@@ -10138,6 +10449,52 @@ app.post('/api/funnels/reset', (_req, res) => {
     res.json({ success: true, message: 'Funil e métricas zerados com sucesso para início da operação real!' });
 });
 
+app.post('/api/funnels/reconcile-attribution', async (req, res) => {
+    try {
+        const botId = String(req.body?.botId || req.query.botId || 'bot_whatsapp_principal');
+        const beforeJobs = (store.scheduledJobs || []).length;
+        // Limpa jobs duplicados ou de leads que já pagaram/recusaram considerando todos aliases LID/PN
+        if (Array.isArray(store.scheduledJobs) && store.scheduledJobs.length > 0) {
+            const seenJobs = new Set();
+            const cleanedJobs = [];
+            for (const job of store.scheduledJobs) {
+                const variants = collectLeadPhoneVariants(job);
+                let canon = normalizePhoneDigits(job.userPhone || job.remoteJid);
+                let skipJob = false;
+                for (const s of Object.values(store.userSessions || {})) {
+                    if (!s || (s.botId && s.botId !== (job.botId || botId))) continue;
+                    const sVars = collectLeadPhoneVariants(s);
+                    if ([...variants].some(v => sVars.has(v))) {
+                        canon = normalizePhoneDigits(s.realPhone || s.userPhone || s.lidDigits) || canon;
+                        if (s.paid || s.rejectedPayment) {
+                            skipJob = true;
+                        }
+                        break;
+                    }
+                }
+                if (skipJob) continue;
+                const dedupKey = `${job.botId || botId}:${canon}:${job.targetNodeId || ''}:${Boolean(job.isPixTimeout)}`;
+                if (!seenJobs.has(dedupKey)) {
+                    seenJobs.add(dedupKey);
+                    cleanedJobs.push(job);
+                }
+            }
+            store.scheduledJobs = cleanedJobs;
+        }
+        const removedJobs = Math.max(0, beforeJobs - (store.scheduledJobs || []).length);
+        const result = await reconcileUnattributedSessionsAndJourneys(botId, {
+            forceRefreshIndex: Boolean(req.body?.forceRefreshIndex),
+        });
+        if (removedJobs > 0) {
+            saveStore(store);
+            await flushRuntimeStateBackupNow(botId, true).catch(() => {});
+        }
+        res.json({ success: true, removedDuplicateJobs: removedJobs, remainingJobs: (store.scheduledJobs || []).length, ...result });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err?.message || 'Erro ao reconciliar atribuições' });
+    }
+});
+
 app.get('/api/admin/runtime-state', (req, res) => {
     const botId = String(req.query.botId || 'bot_whatsapp_principal');
     res.json({
@@ -10881,13 +11238,14 @@ app.post('/api/funnels/simulate-pix', async (req, res) => {
             sourceUrl,
             sourceId,
             testEventCode,
-            dryRun
+            dryRun,
+            allowLiveCapiWithoutTestCode
         } = req.body || {};
         const funnel = FUNNELS_CATALOG.find(f => f.id === funnelId) || FUNNELS_CATALOG[0];
         const paidValue = Number(amount || funnel.expectedAmount);
         const txId = 'tx_sim_' + Date.now();
         const now = new Date();
-        const isDryRun = Boolean(dryRun || testEventCode);
+        const isDryRun = Boolean(dryRun || testEventCode || allowLiveCapiWithoutTestCode !== true);
 
         const decodedConv = decodeCtwaConversionData(conversionData || ctwaClid);
         let adContext = {
@@ -10936,7 +11294,15 @@ app.post('/api/funnels/simulate-pix', async (req, res) => {
             capiStatus: 'PENDING'
         };
 
-        const capiRes = await sendMetaCapiConversion(transactionRecord, testEventCode ? { testEventCode } : {});
+        const shouldSendCapi = Boolean(testEventCode) || Boolean(allowLiveCapiWithoutTestCode === true && !dryRun);
+        const capiRes = shouldSendCapi
+            ? await sendMetaCapiConversion(transactionRecord, testEventCode ? { testEventCode } : {})
+            : {
+                success: false,
+                skipped: true,
+                capiMode: 'simulation_blocked',
+                reason: 'Modo simulação protegido: informe testEventCode para disparar evento de teste na Meta sem poluir campanhas reais.'
+            };
         transactionRecord.capiMode = capiRes.capiMode || undefined;
         transactionRecord.capiMatchKeys = capiRes.matchKeys || undefined;
         transactionRecord.capiRealPhoneMatched = Boolean(capiRes.realPhoneMatched);
@@ -11234,6 +11600,8 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Motor QR Code + Cloud KV Sync rodando em http://localhost:${PORT}`);
     startQrSession('bot_whatsapp_principal', false).catch(console.error);
     initSchedulerWorker();
+    setTimeout(() => getMetaCreativeAttributionIndex().catch(() => {}), 5000);
+    setInterval(() => getMetaCreativeAttributionIndex(true).catch(() => {}), 9 * 60 * 1000);
 });
 
 // ─── Rotina Keep-Alive Anti-Sleep Universal (Render Free Tier) ───
