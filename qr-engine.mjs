@@ -6,6 +6,7 @@ import pino from 'pino';
 import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
+import zlib from 'zlib';
 import { fileURLToPath } from 'url';
 import * as baileysPkg from '@whiskeysockets/baileys';
 
@@ -305,8 +306,95 @@ function extractAdContext(msg, textContent) {
 }
 
 const metaAdLookupCache = new Map();
+const metaHourlyDeliveryCache = new Map();
 let metaCreativeIndexCache = { timestamp: 0, byIgUrl: new Map(), byVideoId: new Map() };
 let metaCreativeIndexPromise = null;
+
+function getBrtHour(dateInput) {
+    try {
+        const dt = dateInput instanceof Date ? dateInput : new Date(dateInput);
+        if (Number.isNaN(dt.getTime())) return null;
+        const hStr = new Intl.DateTimeFormat('en-GB', {
+            timeZone: 'America/Sao_Paulo',
+            hour: '2-digit',
+            hour12: false,
+        }).format(dt);
+        const h = parseInt(hStr, 10);
+        return Number.isFinite(h) ? (h % 24) : null;
+    } catch {
+        return null;
+    }
+}
+
+async function getAdHourlyDeliveryForAccounts(accountIds = [], dayKey = '', token = '') {
+    if (!token || !dayKey || !Array.isArray(accountIds) || accountIds.length === 0) return new Map();
+    const todayKey = toBrtDateKey(Date.now());
+    const ttlMs = (dayKey === todayKey) ? (8 * 60 * 1000) : (6 * 3600 * 1000);
+    const now = Date.now();
+
+    const uniqueAccIds = [...new Set(
+        accountIds
+            .map(a => (a ? (String(a).startsWith('act_') ? String(a) : `act_${a}`) : ''))
+            .filter(Boolean)
+    )];
+
+    const toFetch = uniqueAccIds.filter((accId) => {
+        const cached = metaHourlyDeliveryCache.get(`${accId}|${dayKey}`);
+        return !cached || (now - cached.ts > ttlMs);
+    });
+
+    if (toFetch.length > 0) {
+        await Promise.allSettled(toFetch.map(async (accId) => {
+            const cacheKey = `${accId}|${dayKey}`;
+            try {
+                const url = `https://graph.facebook.com/v21.0/${accId}/insights`;
+                const res = await axios.get(url, {
+                    params: {
+                        level: 'ad',
+                        time_range: JSON.stringify({ since: dayKey, until: dayKey }),
+                        time_increment: 1,
+                        breakdowns: 'hourly_stats_aggregated_by_advertiser_time_zone',
+                        fields: 'ad_id,impressions,spend,actions',
+                        limit: 200,
+                        access_token: token,
+                    },
+                    timeout: 6000,
+                });
+                const byAdHour = new Map();
+                for (const row of (res.data?.data || [])) {
+                    const adId = String(row.ad_id || '').trim();
+                    const hourStr = String(row.hourly_stats_aggregated_by_advertiser_time_zone || '');
+                    const hourMatch = hourStr.match(/^(\d{2})/);
+                    if (!adId || !hourMatch) continue;
+                    const hour = parseInt(hourMatch[1], 10);
+                    const impressions = Number(row.impressions || 0);
+                    const spend = Number(row.spend || 0);
+                    let messagingStarted = 0;
+                    for (const a of (row.actions || [])) {
+                        if (String(a.action_type || '').includes('messaging_conversation_started')) {
+                            messagingStarted += Number(a.value || 0);
+                        }
+                    }
+                    byAdHour.set(`${adId}|${hour}`, { impressions, spend, messagingStarted });
+                }
+                metaHourlyDeliveryCache.set(cacheKey, { ts: Date.now(), byAdHour });
+            } catch {
+                metaHourlyDeliveryCache.set(cacheKey, { ts: Date.now() - ttlMs + 60000, byAdHour: new Map() });
+            }
+        }));
+    }
+
+    const combined = new Map();
+    for (const accId of uniqueAccIds) {
+        const entry = metaHourlyDeliveryCache.get(`${accId}|${dayKey}`);
+        if (entry?.byAdHour) {
+            for (const [k, v] of entry.byAdHour.entries()) {
+                combined.set(k, v);
+            }
+        }
+    }
+    return combined;
+}
 
 function normalizeInstagramPermalink(url) {
     if (!url) return '';
@@ -334,34 +422,159 @@ function collectAdVideoIds(creative = {}) {
     return Array.from(ids);
 }
 
-function pickAttributionFromMatches(matches = [], adData = {}, extra = {}) {
+async function pickAttributionFromMatches(matches = [], adData = {}, extra = {}, options = {}) {
     if (!Array.isArray(matches) || matches.length === 0) return null;
     const normAcc = adData.accountId ? `act_${String(adData.accountId).replace(/^act_/, '')}` : '';
     const scopedMatches = normAcc
         ? matches.filter(m => m.accountId === normAcc)
         : matches;
     const baseList = scopedMatches.length > 0 ? scopedMatches : matches;
-    const activeMatches = baseList.filter(m => m.effectiveStatus === 'ACTIVE');
-    const pool = activeMatches.length > 0 ? activeMatches : baseList;
-    if (pool.length === 1) {
-        return { ...adData, ...extra, ...pool[0] };
+    const uniqueBaseAccounts = [...new Set(baseList.map(m => m.accountId).filter(Boolean))];
+
+    // 1) Se todas as ocorrências do criativo pertencem a apenas 1 conta, a atribuição de conta é inequívoca
+    if (uniqueBaseAccounts.length <= 1) {
+        const activeInAccount = baseList.filter(m => m.effectiveStatus === 'ACTIVE');
+        const pool = activeInAccount.length > 0 ? activeInAccount : baseList;
+        if (pool.length === 1) {
+            return { ...adData, ...extra, ...pool[0], attributionMethod: 'sourceUrl_single_account' };
+        }
+        const uniqueCampaigns = [...new Set(pool.map(m => m.campaignId).filter(Boolean))];
+        const uniqueAdsets = [...new Set(pool.map(m => m.adsetId).filter(Boolean))];
+        const firstWithCamp = pool.find(m => m.campaignName) || pool[0];
+        return {
+            ...adData,
+            ...extra,
+            ...(uniqueBaseAccounts.length === 1 ? { accountId: uniqueBaseAccounts[0] } : {}),
+            ...(uniqueCampaigns.length === 1 ? {
+                campaignId: uniqueCampaigns[0],
+                campaignName: firstWithCamp?.campaignName || undefined
+            } : {}),
+            ...(uniqueAdsets.length === 1 ? { adsetId: uniqueAdsets[0] } : {}),
+            creativeName: pool[0]?.adName || undefined,
+            attributionMethod: 'sourceUrl_single_account',
+        };
     }
 
-    const uniqueAccounts = [...new Set(pool.map(m => m.accountId).filter(Boolean))];
-    const uniqueCampaigns = [...new Set(pool.map(m => m.campaignId).filter(Boolean))];
-    const uniqueAdsets = [...new Set(pool.map(m => m.adsetId).filter(Boolean))];
-    const firstWithCamp = pool.find(m => m.campaignName) || pool[0];
+    // 2) Múltiplas contas compartilham o mesmo videoId/link IG:
+    // Desempata pela veiculação real (Meta Insights por hora) na janela de entrada do lead.
+    const rawEventTs = options?.eventTimeMs || adData?.eventTimeMs || adData?.capturedAt || 0;
+    const parsedTs = typeof rawEventTs === 'number' ? rawEventTs : new Date(rawEventTs).getTime();
+    const eventTimeMs = Number.isFinite(parsedTs) && parsedTs > 0 ? parsedTs : 0;
+    const ageMs = eventTimeMs > 0 ? Math.max(0, Date.now() - eventTimeMs) : Infinity;
+    const token = options?.token || getMetaAccessToken(false);
 
+    if (eventTimeMs > 0 && token) {
+        const dayKey = toBrtDateKey(eventTimeMs);
+        const eventHour = getBrtHour(eventTimeMs);
+        if (dayKey && eventHour !== null) {
+            const hourlyStats = await getAdHourlyDeliveryForAccounts(uniqueBaseAccounts, dayKey, token);
+            let prevDayStats = null;
+            if (eventHour === 0) {
+                const prevDayKey = shiftBrtDateKeyBackend(dayKey, -1);
+                if (prevDayKey) prevDayStats = await getAdHourlyDeliveryForAccounts(uniqueBaseAccounts, prevDayKey, token);
+            }
+
+            const getWindowMetrics = (adId) => {
+                let messagingStarted = 0;
+                let impressions = 0;
+                let spend = 0;
+                const hoursToCheck = eventHour > 0 ? [eventHour, eventHour - 1] : [0];
+                for (const h of hoursToCheck) {
+                    const row = hourlyStats.get(`${adId}|${h}`);
+                    if (row) {
+                        messagingStarted += row.messagingStarted || 0;
+                        impressions += row.impressions || 0;
+                        spend += row.spend || 0;
+                    }
+                }
+                if (eventHour === 0 && prevDayStats) {
+                    const prevRow = prevDayStats.get(`${adId}|23`);
+                    if (prevRow) {
+                        messagingStarted += prevRow.messagingStarted || 0;
+                        impressions += prevRow.impressions || 0;
+                        spend += prevRow.spend || 0;
+                    }
+                }
+                return { messagingStarted, impressions, spend };
+            };
+
+            const msgMatches = [];
+            const impMatches = [];
+            for (const m of baseList) {
+                const st = getWindowMetrics(m.adId);
+                if (st.messagingStarted > 0) msgMatches.push(m);
+                if (st.impressions > 0 || st.spend > 0) impMatches.push(m);
+            }
+
+            const winnerList = msgMatches.length > 0 ? msgMatches : impMatches;
+            if (winnerList.length > 0) {
+                const winnerAccounts = [...new Set(winnerList.map(m => m.accountId).filter(Boolean))];
+                if (winnerAccounts.length === 1) {
+                    const uniqueCampaigns = [...new Set(winnerList.map(m => m.campaignId).filter(Boolean))];
+                    const uniqueAdsets = [...new Set(winnerList.map(m => m.adsetId).filter(Boolean))];
+                    const picked = winnerList.length === 1
+                        ? winnerList[0]
+                        : (winnerList.find(m => m.effectiveStatus === 'ACTIVE') || winnerList[0]);
+                    return {
+                        ...adData,
+                        ...extra,
+                        ...(picked ? {
+                            adId: picked.adId,
+                            adName: picked.adName,
+                            effectiveStatus: picked.effectiveStatus,
+                        } : {}),
+                        accountId: winnerAccounts[0],
+                        ...(uniqueCampaigns.length === 1 ? {
+                            campaignId: uniqueCampaigns[0],
+                            campaignName: picked?.campaignName || undefined,
+                        } : {}),
+                        ...(uniqueAdsets.length === 1 ? { adsetId: uniqueAdsets[0] } : {}),
+                        attributionMethod: msgMatches.length > 0 ? 'sourceUrl_hourly_msg' : 'sourceUrl_hourly_imp',
+                    };
+                }
+                // Mais de 1 conta entregando na mesma hora: NÃO forçar atribuição falsa em uma única conta
+                return {
+                    ...adData,
+                    ...extra,
+                    ambiguousAccounts: winnerAccounts,
+                    attributionMethod: 'sourceUrl_ambiguous',
+                };
+            }
+        }
+    }
+
+    // 3) Somente para clique ao vivo recente (<= 45 min, onde o insight horário da Meta ainda pode estar processando):
+    // permite usar ACTIVE se apenas 1 conta estiver com o criativo ACTIVE no momento.
+    if (ageMs <= 45 * 60 * 1000) {
+        const activeMatches = baseList.filter(m => m.effectiveStatus === 'ACTIVE');
+        const activeAccounts = [...new Set(activeMatches.map(m => m.accountId).filter(Boolean))];
+        if (activeMatches.length > 0 && activeAccounts.length === 1) {
+            const uniqueCampaigns = [...new Set(activeMatches.map(m => m.campaignId).filter(Boolean))];
+            const uniqueAdsets = [...new Set(activeMatches.map(m => m.adsetId).filter(Boolean))];
+            const picked = activeMatches[0];
+            return {
+                ...adData,
+                ...extra,
+                ...(activeMatches.length === 1 ? picked : {
+                    accountId: activeAccounts[0],
+                    ...(uniqueCampaigns.length === 1 ? {
+                        campaignId: uniqueCampaigns[0],
+                        campaignName: picked?.campaignName || undefined,
+                    } : {}),
+                    ...(uniqueAdsets.length === 1 ? { adsetId: uniqueAdsets[0] } : {}),
+                    creativeName: picked?.adName || undefined,
+                }),
+                attributionMethod: 'sourceUrl_live_active',
+            };
+        }
+    }
+
+    // Caso histórico/ambíguo sem prova horária inequívoca: mantém criativo sem atribuir conta errada
     return {
         ...adData,
         ...extra,
-        ...(uniqueAccounts.length === 1 ? { accountId: uniqueAccounts[0] } : {}),
-        ...(uniqueCampaigns.length === 1 ? {
-            campaignId: uniqueCampaigns[0],
-            campaignName: firstWithCamp?.campaignName || undefined
-        } : {}),
-        ...(uniqueAdsets.length === 1 ? { adsetId: uniqueAdsets[0] } : {}),
-        creativeName: pool[0]?.adName || undefined,
+        ambiguousAccounts: uniqueBaseAccounts,
+        attributionMethod: 'sourceUrl_ambiguous',
     };
 }
 
@@ -460,7 +673,7 @@ async function getMetaCreativeAttributionIndex(forceRefresh = false) {
     return metaCreativeIndexPromise;
 }
 
-async function resolveMetaAdAttribution(adData) {
+async function resolveMetaAdAttribution(adData, options = {}) {
     if (!adData || typeof adData !== 'object') return adData;
     if (adData.campaignId && adData.accountId) return adData;
 
@@ -527,7 +740,7 @@ async function resolveMetaAdAttribution(adData) {
 
             if (srcUrl.includes('instagram.com/')) {
                 const igKey = normalizeInstagramPermalink(srcUrl);
-                const resolved = pickAttributionFromMatches(index.byIgUrl.get(igKey) || [], adData);
+                const resolved = await pickAttributionFromMatches(index.byIgUrl.get(igKey) || [], adData, {}, { ...options, token });
                 if (resolved) return resolved;
             } else if (/^https?:\/\/(fb\.me|www\.facebook\.com|facebook\.com|l\.facebook\.com)\//i.test(srcUrl)) {
                 let targetUrl = srcUrl;
@@ -550,10 +763,11 @@ async function resolveMetaAdAttribution(adData) {
                     targetUrl.match(/\/(?:reel|videos|watch\/?\?v=)\/?(\d+)/i);
                 if (fbidMatch && fbidMatch[1]) {
                     const videoId = fbidMatch[1];
-                    const resolved = pickAttributionFromMatches(
+                    const resolved = await pickAttributionFromMatches(
                         index.byVideoId.get(videoId) || [],
                         adData,
-                        { creativeVideoId: videoId }
+                        { creativeVideoId: videoId },
+                        { ...options, token }
                     );
                     if (resolved) return resolved;
                 }
@@ -1361,24 +1575,34 @@ async function restoreSessionFromCloudKv(botId, sessionFolder) {
 }
 
 let backupDebounceTimer = null;
+let lastAuthBackupHash = '';
 function scheduleCloudKvAuthBackup(botId, sessionFolder) {
     if (backupDebounceTimer) clearTimeout(backupDebounceTimer);
+    const delayMs = getQrStatus(botId)?.status === 'CONNECTED' ? 20000 : 2500;
     backupDebounceTimer = setTimeout(async () => {
         try {
             if (!fs.existsSync(sessionFolder)) return;
-            const files = fs.readdirSync(sessionFolder).filter((f) => f.endsWith('.json'));
+            const files = fs.readdirSync(sessionFolder)
+                .filter((f) => f.endsWith('.json') && (!f.startsWith('session-') || f.startsWith('session-551152291989')))
+                .sort();
             if (!files.includes('creds.json')) return;
             const filesMap = {};
+            const hasher = crypto.createHash('sha1');
             for (const f of files) {
-                filesMap[f] = fs.readFileSync(path.join(sessionFolder, f), 'utf-8');
+                const content = fs.readFileSync(path.join(sessionFolder, f), 'utf-8');
+                filesMap[f] = content;
+                hasher.update(f).update(':').update(content).update('\n');
             }
+            const nextHash = hasher.digest('hex');
+            if (nextHash === lastAuthBackupHash) return;
             await axios.post(
                 `${CLOUD_WORKER_URL}/api/cloud-kv/auth?botId=${encodeURIComponent(botId)}`,
                 { authData: filesMap },
                 { timeout: 8000 }
             );
+            lastAuthBackupHash = nextHash;
         } catch {}
-    }, 1500);
+    }, delayMs);
 }
 
 async function clearCloudKvAuth(botId) {
@@ -2357,14 +2581,31 @@ async function reconcileUnattributedSessionsAndJourneys(botId = 'bot_whatsapp_pr
 
     for (const s of uniqueSessions) {
         if (!s || (s.botId && s.botId !== botId)) continue;
+        const sEventMs = new Date(s.adData?.capturedAt || s.journeyStages?.enteredAt || s.updatedAt || 0).getTime() || 0;
         if (s.adData && (s.adData.sourceUrl || s.adData.sourceId || s.adData.adId || s.adData.campaignId) && (!s.adData.accountId || !s.adData.campaignId)) {
-            const enriched = await resolveMetaAdAttribution({ ...s.adData });
+            const enriched = await resolveMetaAdAttribution({ ...s.adData }, { eventTimeMs: sEventMs });
             const changed =
                 (enriched.accountId && enriched.accountId !== s.adData.accountId) ||
                 (enriched.campaignId && enriched.campaignId !== s.adData.campaignId) ||
                 (enriched.adId && enriched.adId !== s.adData.adId);
             if (changed) {
                 s.adData = { ...s.adData, ...enriched };
+                updatedSessions += 1;
+            }
+        } else if (s.adData?.sourceUrl && s.adData.creativeVideoId && s.adData.effectiveStatus && !s.adData.rawTag && !s.adData.sourceId) {
+            const reverified = await resolveMetaAdAttribution(
+                { sourceUrl: s.adData.sourceUrl, creativeVideoId: s.adData.creativeVideoId },
+                { eventTimeMs: sEventMs }
+            );
+            if (reverified?.attributionMethod === 'sourceUrl_ambiguous' && s.adData.accountId) {
+                delete s.adData.accountId;
+                delete s.adData.campaignId;
+                delete s.adData.campaignName;
+                delete s.adData.adId;
+                delete s.adData.adName;
+                delete s.adData.adsetId;
+                delete s.adData.effectiveStatus;
+                s.adData.attributionMethod = 'sourceUrl_ambiguous';
                 updatedSessions += 1;
             }
         }
@@ -2376,6 +2617,25 @@ async function reconcileUnattributedSessionsAndJourneys(botId = 'bot_whatsapp_pr
     // Reconcilia transações que ainda não possuem accountId ou campaignId completo
     for (const tx of (store.funnelTransactions || [])) {
         if (!tx || (tx.botId && tx.botId !== botId)) continue;
+        const txEventMs = new Date(tx.time || tx.timestamp || 0).getTime() || 0;
+
+        // Remove atribuição falsa herdada caso a transação traga tag explícita de ambiguidade histórica sem rawTag/conversionData
+        if (tx.sourceUrl && tx.accountId && /\bou\b/i.test(String(tx.adTag || '')) && !tx.conversionData && !tx.rawTag) {
+            const reverifiedTx = await resolveMetaAdAttribution(
+                { sourceUrl: tx.sourceUrl, creativeVideoId: tx.creativeVideoId },
+                { eventTimeMs: txEventMs }
+            );
+            if (reverifiedTx?.attributionMethod === 'sourceUrl_ambiguous') {
+                delete tx.accountId;
+                delete tx.campaignId;
+                delete tx.campaignName;
+                delete tx.adId;
+                delete tx.adName;
+                updatedTransactions += 1;
+                continue;
+            }
+        }
+
         if (tx.accountId && tx.campaignId) continue;
 
         let resolved = null;
@@ -2385,7 +2645,7 @@ async function reconcileUnattributedSessionsAndJourneys(botId = 'bot_whatsapp_pr
                 adId: tx.adId,
                 campaignId: tx.campaignId,
                 accountId: tx.accountId,
-            });
+            }, { eventTimeMs: txEventMs });
         }
         const leadVariants = collectLeadPhoneVariants(tx);
         for (const s of uniqueSessions) {
@@ -2650,14 +2910,22 @@ async function pushCloudHeartbeat(botId = 'bot_whatsapp_principal') {
     if (isPushingHeartbeat) return;
     isPushingHeartbeat = true;
     try {
+        const rawStatus = getQrStatus(botId);
+        const compactStatus = rawStatus ? {
+            botId: rawStatus.botId || botId,
+            status: rawStatus.status || 'DISCONNECTED',
+            qrCodeDataUrl: rawStatus.status === 'QR_READY' ? (rawStatus.qrCodeDataUrl || null) : null,
+            phoneNumber: rawStatus.phoneNumber || null,
+            profileName: rawStatus.profileName || null,
+            lastError: rawStatus.lastError || null,
+            updatedAt: rawStatus.updatedAt || new Date().toISOString(),
+        } : { botId, status: 'DISCONNECTED' };
         const res = await axios.post(
             `${CLOUD_WORKER_URL}/api/cloud-kv/heartbeat`,
             {
                 botId,
-                status: getQrStatus(botId),
+                status: compactStatus,
                 engineUrl: PUBLIC_ENGINE_URL,
-                conversations: store.conversations,
-                funnelStats: store.funnelStats,
             },
             { timeout: 5000 }
         );
@@ -2699,7 +2967,7 @@ async function pushCloudHeartbeat(botId = 'bot_whatsapp_principal') {
 
 setInterval(() => {
     pushCloudHeartbeat('bot_whatsapp_principal').catch(() => {});
-}, 3000);
+}, 15000);
 
 function formatJidPhone(jid) {
     const raw = jid.split('@')[0].split(':')[0];
@@ -2727,7 +2995,6 @@ function logConversation(botId, userPhoneNumber, sender, messageType, messageCon
         store.conversations = store.conversations.slice(-500);
     }
     saveStore(store);
-    pushCloudHeartbeat(botId).catch(() => {});
 }
 
 // ============================================================
@@ -7649,8 +7916,9 @@ async function recoverSessionIdentityAndAttribution(botId, sock, session, candid
     }
 
     if (session.adData && (!session.adData.campaignId || !session.adData.accountId)) {
+        const sEventMs = new Date(session.adData?.capturedAt || session.journeyStages?.enteredAt || session.updatedAt || Date.now()).getTime() || Date.now();
         const enriched = await Promise.race([
-            resolveMetaAdAttribution(session.adData),
+            resolveMetaAdAttribution(session.adData, { eventTimeMs: sEventMs }),
             new Promise((resolve) => setTimeout(() => resolve(session.adData), 9000))
         ]);
         if (enriched && (enriched.campaignId || enriched.adId || enriched.accountId || enriched.creativeVideoId)) {
@@ -7884,7 +8152,8 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
         if (!session.adData.campaignId || !session.adData.accountId) {
             const adTargetRef = session.adData;
             const liveSessionKey = sessionKey;
-            resolveMetaAdAttribution(adTargetRef)
+            const msgEventMs = Number(msg?.messageTimestamp ? Number(msg.messageTimestamp) * 1000 : 0) || Date.now();
+            resolveMetaAdAttribution(adTargetRef, { eventTimeMs: msgEventMs })
                 .then((enriched) => {
                     if (enriched && adTargetRef && (enriched.campaignId || enriched.adId || enriched.accountId || enriched.creativeVideoId)) {
                         Object.assign(adTargetRef, enriched);
@@ -9671,6 +9940,27 @@ app.use((req, res, next) => {
 });
 
 app.use(cors({ origin: true, credentials: true }));
+app.use('/api', (req, res, next) => {
+    const acceptEnc = String(req.headers['accept-encoding'] || '');
+    if (!acceptEnc.includes('gzip')) return next();
+    const origJson = res.json.bind(res);
+    res.json = (body) => {
+        try {
+            const raw = JSON.stringify(body);
+            if (Buffer.byteLength(raw) < 1024 || res.headersSent) {
+                return origJson(body);
+            }
+            const gz = zlib.gzipSync(raw);
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.setHeader('Content-Encoding', 'gzip');
+            res.setHeader('Vary', 'Accept-Encoding');
+            return res.send(gz);
+        } catch {
+            return origJson(body);
+        }
+    };
+    next();
+});
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -9766,11 +10056,32 @@ app.get('/api/bots/:botId/whatsapp/qr/status', (req, res) => {
 
 app.get('/api/bots/:botId/whatsapp/qr/data', (req, res) => {
     const botId = String(req.params.botId || 'bot_whatsapp_principal');
+    const allConvs = store.conversations || [];
+    const lastMessageId = allConvs.length > 0 ? allConvs[allConvs.length - 1]._id : null;
+    const compact = req.query.compact === '1' || req.query.compact === 'true';
+    const sinceId = String(req.query.sinceId || '').trim();
+
+    let conversations = allConvs;
+    let deltaOnly = false;
+    if (compact) {
+        conversations = [];
+        deltaOnly = true;
+    } else if (sinceId) {
+        const idx = allConvs.findIndex(m => m && m._id === sinceId);
+        if (idx >= 0) {
+            conversations = allConvs.slice(idx + 1);
+            deltaOnly = true;
+        }
+    }
+
     res.json({
         success: true,
         data: {
             status: getQrStatus(botId),
-            conversations: store.conversations || [],
+            conversations,
+            deltaOnly,
+            lastMessageId,
+            totalConversations: allConvs.length,
             funnelStats: store.funnelStats || {},
         },
     });
