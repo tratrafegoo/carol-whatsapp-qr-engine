@@ -1258,8 +1258,10 @@ async function auditPixReceiptWithGemini(mediaBuffer, mimeType, expectedAmount =
 
                 const matchesToken = benTokens.length > 0 && benTokens.some(tok => destNorm.includes(tok));
                 const matchesPixKey = Boolean(cleanExpectedKey && keyNorm && (keyNorm.includes(cleanExpectedKey) || cleanExpectedKey.includes(keyNorm)));
+                const destCompact = destNorm.replace(/[.\-]/g, ' ').replace(/\s+/g, ' ').trim();
                 const knownMerchantAliases = [
-                    'guilherme', 'joao gabriel', 'joao antonio', 'pastorguilhermeigreja',
+                    'guilherme', 'guilherme pereira de almeida', 'pereira de almeida', 'g p de almeida', 'g p almeida',
+                    'joao gabriel', 'joao antonio', 'pastorguilhermeigreja',
                     'gps', 'ebooks', 'digitais', '67039217', 'carol', 'pagamento',
                     'junior campos', 'thaise', 'viva luz', 'rp empreendimentos', 'dayza'
                 ];
@@ -1267,7 +1269,7 @@ async function auditPixReceiptWithGemini(mediaBuffer, mimeType, expectedAmount =
                     matchesPixKey ||
                     (cleanBen && destNorm.includes(cleanBen)) ||
                     matchesToken ||
-                    knownMerchantAliases.some(alias => destNorm.includes(alias));
+                    knownMerchantAliases.some(alias => destNorm.includes(alias) || destCompact.includes(alias));
 
                 if (!isKnownMerchant) {
                     sendNtfyEmergencyAlert({
