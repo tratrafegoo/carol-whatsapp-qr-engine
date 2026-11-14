@@ -2001,12 +2001,151 @@ function mergeRuntimeState(stateData = {}, options = {}) {
             reconstructed = reconstructMissingSessionsFromHistory('bot_whatsapp_principal');
         }
         backfillFunnelLeadJourneys('bot_whatsapp_principal');
+        consolidateFunnelLeadJourneys('bot_whatsapp_principal');
 
         saveStore(store);
         return { mergedSessions, mergedJobs, reconstructed };
     } finally {
         isRestoringRuntimeState = false;
     }
+}
+
+function consolidateFunnelLeadJourneys(botId = 'bot_whatsapp_principal') {
+    const journeys = store.funnelLeadJourneys || {};
+    if (!store.funnelLeadJourneys) store.funnelLeadJourneys = journeys;
+
+    const parent = new Map();
+    const explicitRealIds = new Set();
+    const find = (x) => {
+        if (!parent.has(x)) parent.set(x, x);
+        let root = x;
+        while (parent.get(root) !== root) root = parent.get(root);
+        let cur = x;
+        while (cur !== root) {
+            const nxt = parent.get(cur);
+            parent.set(cur, root);
+            cur = nxt;
+        }
+        return root;
+    };
+    const unionIds = (ids = []) => {
+        const clean = ids.map(v => normalizePhoneDigits(v)).filter(v => v && v.length >= 8);
+        clean.forEach(id => find(id));
+        for (let i = 1; i < clean.length; i++) {
+            const r0 = find(clean[0]);
+            const ri = find(clean[i]);
+            if (r0 !== ri) parent.set(ri, r0);
+        }
+        return clean;
+    };
+
+    for (const t of (store.funnelTransactions || [])) {
+        if (!t || (t.botId && t.botId !== botId)) continue;
+        const r = normalizePhoneDigits(t.realPhone);
+        if (r && r.length >= 10) explicitRealIds.add(r);
+        unionIds([t.realPhone, t.userPhone, t.lidDigits]);
+    }
+    for (const [k, s] of Object.entries(store.userSessions || {})) {
+        if (!s || (!k.startsWith(`${botId}:`) && s.botId && s.botId !== botId)) continue;
+        const keyPhone = k.includes(':') ? k.split(':')[1] : '';
+        const r = normalizePhoneDigits(s.realPhone);
+        if (r && r.length >= 10) explicitRealIds.add(r);
+        unionIds([keyPhone, s.realPhone, s.userPhone, s.userJid, s.lidDigits]);
+    }
+    for (const [k, j] of Object.entries(journeys)) {
+        if (!j || (!k.startsWith(`${botId}:`) && j.botId && j.botId !== botId)) continue;
+        const r = normalizePhoneDigits(j.realPhone);
+        if (r && r.length >= 10) explicitRealIds.add(r);
+        unionIds([j.canonicalLeadId, j.realPhone, j.userPhone, j.lidDigits]);
+    }
+
+    // Equivalência BR 9º dígito (55 + DDD + 9 + 8 dígitos === 55 + DDD + 8 dígitos)
+    const allKnownIds = Array.from(parent.keys());
+    const knownSet = new Set(allKnownIds);
+    for (const id of allKnownIds) {
+        const m13 = id.match(/^(55\d{2})9(\d{8})$/);
+        if (m13) {
+            const id12 = `${m13[1]}${m13[2]}`;
+            if (knownSet.has(id12)) unionIds([id, id12]);
+        }
+    }
+
+    const clusters = new Map();
+    for (const id of allKnownIds) {
+        const root = find(id);
+        if (!clusters.has(root)) clusters.set(root, []);
+        clusters.get(root).push(id);
+    }
+
+    const pickPrimaryForRoot = new Map();
+    for (const [root, members] of clusters.entries()) {
+        const sorted = [...members].sort((a, b) => {
+            const aExp = explicitRealIds.has(a) ? 1 : 0;
+            const bExp = explicitRealIds.has(b) ? 1 : 0;
+            if (aExp !== bExp) return bExp - aExp;
+            const aBr = /^55\d{10,11}$/.test(a) ? 1 : 0;
+            const bBr = /^55\d{10,11}$/.test(b) ? 1 : 0;
+            if (aBr !== bBr) return bBr - aBr;
+            const a13 = /^55\d{2}9\d{8}$/.test(a) ? 1 : 0;
+            const b13 = /^55\d{2}9\d{8}$/.test(b) ? 1 : 0;
+            if (a13 !== b13) return b13 - a13;
+            return a.length - b.length;
+        });
+        pickPrimaryForRoot.set(root, sorted[0]);
+    }
+
+    const resolvePrimary = (rawId) => {
+        const d = normalizePhoneDigits(rawId);
+        if (!d) return '';
+        if (!parent.has(d)) return d;
+        return pickPrimaryForRoot.get(find(d)) || d;
+    };
+
+    let consolidatedCount = 0;
+    const rebuilt = {};
+    const removals = [];
+    for (const [k, j] of Object.entries(journeys)) {
+        if (!j || typeof j !== 'object') continue;
+        if (!k.startsWith(`${botId}:`) && j.botId && j.botId !== botId) {
+            rebuilt[k] = j;
+            continue;
+        }
+        const candidates = [j.canonicalLeadId, j.realPhone, j.userPhone, j.lidDigits]
+            .map(normalizePhoneDigits)
+            .filter(Boolean);
+        const primaryId = resolvePrimary(candidates[0] || '');
+        if (!primaryId) {
+            rebuilt[k] = j;
+            continue;
+        }
+        const groupKey = resolveJourneyGroupKey(botId, j.flowId, j.flowName);
+        const targetKey = `${botId}:${primaryId}:${groupKey}`;
+        const clusterMembers = parent.has(primaryId) ? (clusters.get(find(primaryId)) || [primaryId]) : [primaryId];
+        const discoveredReal = j.realPhone || (/^55\d{10,11}$/.test(primaryId) ? primaryId : clusterMembers.find(m => /^55\d{10,11}$/.test(m)) || '');
+        const discoveredLid = j.lidDigits || clusterMembers.find(m => m.length >= 14 && !/^55\d{10,11}$/.test(m)) || '';
+
+        const normalizedRecord = {
+            ...j,
+            canonicalLeadId: primaryId,
+            userPhone: primaryId,
+            ...(discoveredReal ? { realPhone: discoveredReal } : {}),
+            ...(discoveredLid ? { lidDigits: discoveredLid } : {}),
+        };
+
+        if (rebuilt[targetKey]) {
+            rebuilt[targetKey] = mergeJourneyRecord(rebuilt[targetKey], normalizedRecord);
+            consolidatedCount += 1;
+        } else {
+            rebuilt[targetKey] = normalizedRecord;
+            if (targetKey !== k) consolidatedCount += 1;
+        }
+        if (targetKey !== k) removals.push(k);
+    }
+
+    if (consolidatedCount > 0 || removals.length > 0) {
+        store.funnelLeadJourneys = rebuilt;
+    }
+    return consolidatedCount + removals.length;
 }
 
 async function restoreRuntimeStateFromCloudKv(botId = 'bot_whatsapp_principal') {
@@ -2018,6 +2157,7 @@ async function restoreRuntimeStateFromCloudKv(botId = 'bot_whatsapp_principal') 
         if (kvState && typeof kvState === 'object') {
             const summary = mergeRuntimeState(kvState, { reconstructMissingSessions: false });
             backfillFunnelLeadJourneys(botId);
+            consolidateFunnelLeadJourneys(botId);
             saveStore(store);
             lastRuntimeBackupHash = computeRuntimeHash(buildRuntimeStatePayload(botId));
             console.log(`[Cloud KV Runtime] ☁️ Estado de runtime restaurado do KV (${summary.mergedSessions} sessões, ${summary.mergedJobs} jobs, ${store.conversations?.length || 0} msgs, ${Object.keys(store.funnelLeadJourneys || {}).length} jornadas)`);
@@ -2027,6 +2167,7 @@ async function restoreRuntimeStateFromCloudKv(botId = 'bot_whatsapp_principal') 
         console.warn('[Cloud KV Runtime] Aviso ao restaurar estado runtime do KV:', err?.message);
     } finally {
         backfillFunnelLeadJourneys(botId);
+        consolidateFunnelLeadJourneys(botId);
         runtimeStateBootRestored = true;
     }
     return false;
@@ -2180,6 +2321,7 @@ try {
         console.log(`[Store Init] 🚀 Funis Visuais V12 Carregados com Preservação Anti-Perda (Total: ${store.flows['bot_whatsapp_principal'].length} funis)!`);
     }
     backfillFunnelLeadJourneys('bot_whatsapp_principal');
+    consolidateFunnelLeadJourneys('bot_whatsapp_principal');
     restoreFunnelModeFromCloudKv('bot_whatsapp_principal').catch(() => {});
     restoreFlowsFromCloudKv('bot_whatsapp_principal').then(() => {
         scheduleCloudKvFlowsBackup('bot_whatsapp_principal');
@@ -9882,6 +10024,9 @@ app.get('/api/funnels/metrics', (req, res) => {
     const accountId = String(req.query.accountId || 'ALL').trim();
     const range = resolveBackendPeriodRange(period, req.query.since, req.query.until);
 
+    if (consolidateFunnelLeadJourneys('bot_whatsapp_principal') > 0) {
+        saveStore(store);
+    }
     const journeys = Object.values(store.funnelLeadJourneys || {});
     const filteredJourneys = journeys.filter(j =>
         j &&
@@ -10686,12 +10831,17 @@ app.get('/api/meta/billing', async (req, res) => {
             metaBillingCache = { timestamp: now, data: baseCharges, totals: baseTotals };
         }
 
-        const charges = hasDateFilter
-            ? baseCharges.filter(c => isBrtInRange(c.eventTime, sinceDate, untilDate))
+        const periodParam = String(req.query.period || '').trim().toUpperCase();
+        const billingRange = hasDateFilter
+            ? { since: sinceDate, until: untilDate }
+            : (periodParam && periodParam !== 'MAX' ? resolveBackendPeriodRange(periodParam, sinceParam, untilParam) : null);
+        const isRangeFiltered = Boolean(billingRange && (billingRange.since || billingRange.until));
+        const charges = isRangeFiltered
+            ? baseCharges.filter(c => isBrtInRange(c.eventTime, billingRange))
             : baseCharges;
 
         let filteredTotals = baseTotals;
-        if (hasDateFilter) {
+        if (isRangeFiltered) {
             let fNet = 0;
             let fTax = 0;
             let fDebited = 0;
