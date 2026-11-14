@@ -485,7 +485,9 @@ async function resolveMetaAdAttribution(adData) {
                         }
                     }
                 }
-                const fbidMatch = targetUrl.match(/story_fbid=(\d+)/);
+                const fbidMatch =
+                    targetUrl.match(/story_fbid=(\d+)/i) ||
+                    targetUrl.match(/\/(?:reel|videos)\/(\d+)/i);
                 if (fbidMatch && fbidMatch[1]) {
                     const videoId = fbidMatch[1];
                     const matches = index.byVideoId.get(videoId) || [];
@@ -717,17 +719,125 @@ async function sendNtfyEmergencyAlert({ title, message, priority = 'urgent', tag
 }
 
 
+const GEMINI_AUDIT_MODELS = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-flash-lite-latest', 'gemini-4-hydrogen'];
+
+function formatBrazilDateTime(dateInput = new Date()) {
+    const dt = dateInput instanceof Date ? dateInput : new Date(dateInput);
+    return {
+        dateFormatted: dt.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+        timeFormatted: dt.toLocaleTimeString('pt-BR', {
+            timeZone: 'America/Sao_Paulo',
+            hour: '2-digit',
+            minute: '2-digit'
+        }),
+        fullFormatted: dt.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })
+    };
+}
+
+function unwrapWhatsAppMessage(message) {
+    let m = message || {};
+    let depth = 0;
+    while (
+        depth < 6 &&
+        (m.ephemeralMessage ||
+            m.viewOnceMessage ||
+            m.viewOnceMessageV2 ||
+            m.viewOnceMessageV2Extension ||
+            m.documentWithCaptionMessage ||
+            m.editedMessage)
+    ) {
+        m =
+            m.ephemeralMessage?.message ||
+            m.viewOnceMessage?.message ||
+            m.viewOnceMessageV2?.message ||
+            m.viewOnceMessageV2Extension?.message ||
+            m.documentWithCaptionMessage?.message ||
+            m.editedMessage?.message ||
+            m;
+        depth += 1;
+    }
+    return m;
+}
+
+function normalizeGeminiInlineMime(rawMime = 'image/jpeg') {
+    const clean = String(rawMime || '').split(';')[0].trim().toLowerCase();
+    if (clean === 'application/pdf' || clean.includes('pdf')) return 'application/pdf';
+    if (clean === 'image/png') return 'image/png';
+    if (clean === 'image/webp') return 'image/webp';
+    return 'image/jpeg';
+}
+
+function resolveReceiptMimeType(msg, fallback = 'image/jpeg') {
+    const m = unwrapWhatsAppMessage(msg?.message);
+    if (m.imageMessage) {
+        return normalizeGeminiInlineMime(m.imageMessage.mimetype || 'image/jpeg');
+    }
+    if (m.documentMessage) {
+        const docMime = String(m.documentMessage.mimetype || '').toLowerCase();
+        const fileName = String(m.documentMessage.fileName || '').toLowerCase();
+        if (docMime.startsWith('image/')) return normalizeGeminiInlineMime(docMime);
+        if (docMime.includes('pdf') || fileName.endsWith('.pdf')) return 'application/pdf';
+        if (/\.(png|webp|jpe?g)$/.test(fileName)) {
+            if (fileName.endsWith('.png')) return 'image/png';
+            if (fileName.endsWith('.webp')) return 'image/webp';
+            return 'image/jpeg';
+        }
+        return 'application/pdf';
+    }
+    return normalizeGeminiInlineMime(fallback);
+}
+
+function parseGeminiJsonResponse(rawText) {
+    if (!rawText || typeof rawText !== 'string') return null;
+    const cleaned = rawText
+        .replace(/^```json\s*/i, '')
+        .replace(/^```\s*/i, '')
+        .replace(/```\s*$/i, '')
+        .trim();
+    return JSON.parse(cleaned);
+}
+
+function clearScheduledJobsForLead(botId, remoteJid = '', candidatePhones = []) {
+    if (!Array.isArray(store.scheduledJobs) || store.scheduledJobs.length === 0) return;
+    const variantSet = new Set();
+    for (const candidate of candidatePhones) {
+        const digits = String(candidate || '').split('@')[0].split(':')[0].replace(/\D/g, '');
+        if (!digits) continue;
+        variantSet.add(digits);
+        if (typeof getBrazilianPhoneVariants === 'function') {
+            getBrazilianPhoneVariants(digits).forEach(v => variantSet.add(v));
+        }
+    }
+    const remoteDigits = String(remoteJid || '').split('@')[0].split(':')[0].replace(/\D/g, '');
+    if (remoteDigits) {
+        variantSet.add(remoteDigits);
+        if (typeof getBrazilianPhoneVariants === 'function') {
+            getBrazilianPhoneVariants(remoteDigits).forEach(v => variantSet.add(v));
+        }
+    }
+    store.scheduledJobs = store.scheduledJobs.filter(j => {
+        if (j?.botId && botId && j.botId !== botId) return true;
+        const jPhone = String(j?.userPhone || '').replace(/\D/g, '');
+        const jJidDigits = String(j?.remoteJid || '').split('@')[0].split(':')[0].replace(/\D/g, '');
+        if (remoteJid && j?.remoteJid === remoteJid) return false;
+        if (jPhone && variantSet.has(jPhone)) return false;
+        if (jJidDigits && variantSet.has(jJidDigits)) return false;
+        return true;
+    });
+}
+
 const AUDIT_PROMPT = `
 Você é um auditor financeiro sênior especializado em validar comprovantes de transferência PIX brasileiros para e-commerce e infoprodutos.
 Sua missão é analisar meticulosamente a imagem ou PDF do comprovante anexado e verificar se a transferência PIX foi REALMENTE EFETIVADA e CONCLUÍDA.
 
 REGRAS CRÍTICAS DE AUDITORIA:
-1. Status: Se estiver escrito "Agendamento", "Agendado", "Em processamento" ou indicar uma data futura, o status DEVE ser "AGENDADO" e isValidPix DEVE ser false. Agendamento NÃO é pagamento realizado!
-2. Só aprove ("isValidPix": true) se houver termos claros como "Comprovante de Transferência PIX", "PIX Realizado", "Pagamento Efetuado", "Concluído", "Sucesso" ou código de autenticação/id de transação comprovada.
-3. Extraia o valor numérico exato pago (ex: se for R$ 415,66, retorne 415.66).
-4. Extraia o nome do destinatário / favorecido e o banco se legíveis.
+1. Status / Agendamento: Só classifique como "AGENDADO" ("isValidPix": false) se o documento contiver PALAVRAS EXPLÍCITAS de agendamento/pendência (ex: "Agendamento", "Agendado", "Agendada", "Transferência programada", "Em processamento", "Aguardando efetivação") OU se o DIA do pagamento (dia/mês/ano) for de um dia calendário ESTRITAMENTE FUTURO posterior à data atual de Brasília informada abaixo.
+2. PROIBIDO REJEITAR POR HORÁRIO OU DATA PASSADA/ATUAL: NUNCA compare horas, minutos ou segundos (ex: relógios de bancos e prints variam), e NUNCA considere datas de hoje ou dias anteriores como futuras. Se a data for hoje ou passada e NÃO houver texto explícito de "Agendamento"/"Agendado", NÃO é agendamento!
+3. APROVE ("isValidPix": true, "status": "CONCLUIDO") sempre que o comprovante mostrar um valor PIX legítimo com termos como "Comprovante de Transferência PIX", "PIX Realizado", "Transferência recebida", "Transferência realizada", "Pagamento Efetuado", "Concluído", "Efetivado", "Sucesso", ou código/ID de transação comprovada (inclusive prints de tela de recebimento ou comprovante do banco).
+4. Extraia o valor numérico exato pago (ex: se for R$ 415,66, retorne 415.66; se for R$ 30,00, retorne 30).
+5. Extraia o nome do destinatário / favorecido / pagador visível e o banco se legíveis.
 
-Retorne EXCLUSIVAMENTE um JSON:
+Retorne EXCLUSIVAMENTE um JSON válido:
 {
   "isValidPix": boolean,
   "status": "CONCLUIDO" | "AGENDADO" | "FALHOU",
@@ -740,6 +850,11 @@ Retorne EXCLUSIVAMENTE um JSON:
   "rejectionReason": string | null
 }
 `;
+
+function buildPixAuditPrompt(referenceDate = new Date()) {
+    const brNow = formatBrazilDateTime(referenceDate);
+    return `${AUDIT_PROMPT.trim()}\n\nREFERÊNCIA DE DATA ATUAL EM BRASÍLIA (America/Sao_Paulo):\n- Hoje é ${brNow.dateFormatted} (agora são ${brNow.timeFormatted} BRT).\n- Qualquer comprovante do dia ${brNow.dateFormatted} ou de dias anteriores (ex: 09/11/2026, 12/11/2026) é passado/presente VÁLIDO. Só considere data futura se o DIA/MÊS/ANO for maior que ${brNow.dateFormatted}.`;
+}
 
 async function getMediaBuffer(msg, sock) {
     if (downloadMediaMessage) {
@@ -754,9 +869,9 @@ async function getMediaBuffer(msg, sock) {
             console.warn('[Media Download] downloadMediaMessage aviso:', e.message);
         }
     }
-    const messageContent = msg.message;
-    const type = messageContent?.imageMessage ? 'image' : 
-                 messageContent?.documentMessage ? 'document' : 
+    const messageContent = unwrapWhatsAppMessage(msg?.message);
+    const type = messageContent?.imageMessage ? 'image' :
+                 messageContent?.documentMessage ? 'document' :
                  messageContent?.audioMessage ? 'audio' : null;
     const mediaObj = messageContent?.imageMessage || messageContent?.documentMessage || messageContent?.audioMessage;
     if (downloadContentFromMessage && type && mediaObj) {
@@ -810,7 +925,7 @@ async function auditAudioRefusalWithGemini(audioBuffer, mimeType = 'audio/ogg') 
     try {
         const base64Audio = audioBuffer.toString('base64');
         const cleanMime = (mimeType && mimeType.includes('mp4')) ? 'audio/mp4' : 'audio/ogg';
-        const modelsToTry = ['gemini-3.5-flash-lite', 'gemini-4-hydrogen', 'gemini-3.6-flash'];
+        const modelsToTry = GEMINI_AUDIT_MODELS;
         const prompt = `Você é uma inteligência artificial especialista em vendas no WhatsApp para infoprodutos.
 O lead enviou esta mensagem de áudio (nota de voz gravada no WhatsApp) após receber a chave PIX e a oferta.
 Analise o áudio e realize duas tarefas:
@@ -867,7 +982,7 @@ Retorne EXCLUSIVAMENTE um objeto JSON válido no formato:
 
         const rawJson = response?.data?.candidates?.[0]?.content?.parts?.[0]?.text;
         if (rawJson) {
-            const parsed = JSON.parse(rawJson);
+            const parsed = parseGeminiJsonResponse(rawJson);
             const transcript = parsed.transcript || '';
             const isGeminiRefusal = Boolean(parsed.isRefusal);
             const isTextRefusal = detectPaymentRefusal(transcript);
@@ -902,7 +1017,9 @@ async function auditPixReceiptWithGemini(mediaBuffer, mimeType, expectedAmount =
 
     try {
         const base64Data = mediaBuffer.toString('base64');
-        const modelsToTry = ['gemini-3.5-flash-lite', 'gemini-4-hydrogen', 'gemini-3.6-flash'];
+        const modelsToTry = GEMINI_AUDIT_MODELS;
+        const dynamicPrompt = buildPixAuditPrompt();
+        const safeInlineMime = normalizeGeminiInlineMime(mimeType);
         let response = null;
         let usedModel = null;
         let lastErr = null;
@@ -916,10 +1033,10 @@ async function auditPixReceiptWithGemini(mediaBuffer, mimeType, expectedAmount =
                         contents: [
                             {
                                 parts: [
-                                    { text: AUDIT_PROMPT },
+                                    { text: dynamicPrompt },
                                     {
                                         inline_data: {
-                                            mime_type: (mimeType && mimeType.includes('pdf')) ? 'application/pdf' : 'image/jpeg',
+                                            mime_type: safeInlineMime,
                                             data: base64Data,
                                         },
                                     },
@@ -930,7 +1047,7 @@ async function auditPixReceiptWithGemini(mediaBuffer, mimeType, expectedAmount =
                             response_mime_type: 'application/json',
                         },
                     },
-                    { headers: { 'Content-Type': 'application/json' }, timeout: 18000 }
+                    { headers: { 'Content-Type': 'application/json' }, timeout: 22000 }
                 );
                 if (response?.data?.candidates?.[0]?.content?.parts?.[0]?.text) {
                     usedModel = modelName;
@@ -945,7 +1062,7 @@ async function auditPixReceiptWithGemini(mediaBuffer, mimeType, expectedAmount =
         if (!response && lastErr) throw lastErr;
 
         const textOutput = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
-        const parsed = JSON.parse(textOutput);
+        const parsed = parseGeminiJsonResponse(textOutput);
         console.log(`[PIX Auditor] 🧠 Resultado da IA (${usedModel}):`, JSON.stringify(parsed));
 
         if (parsed.status !== 'CONCLUIDO') {
@@ -1509,12 +1626,19 @@ function mergeRuntimeState(stateData = {}, options = {}) {
         }
 
         if (Array.isArray(stateData.funnelTransactions) && stateData.funnelTransactions.length > 0) {
-            const seenTx = new Set((store.funnelTransactions || []).map(t => t.id));
             store.funnelTransactions = store.funnelTransactions || [];
+            const txIndexById = new Map();
+            store.funnelTransactions.forEach((existingTx, idx) => {
+                if (existingTx?.id) txIndexById.set(existingTx.id, idx);
+            });
             for (const tx of stateData.funnelTransactions) {
-                if (tx?.id && !seenTx.has(tx.id)) {
+                if (!tx?.id) continue;
+                if (txIndexById.has(tx.id)) {
+                    const idx = txIndexById.get(tx.id);
+                    store.funnelTransactions[idx] = { ...store.funnelTransactions[idx], ...tx };
+                } else {
+                    txIndexById.set(tx.id, store.funnelTransactions.length);
                     store.funnelTransactions.push(tx);
-                    seenTx.add(tx.id);
                 }
             }
             store.funnelTransactions.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
@@ -7035,6 +7159,7 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
     if (isAnyTestTrigger) {
         console.log(`[Universal Trigger Reset] 🔄 Gatilho explícito "${normalizedText}" recebido de ${pushName} (${userPhone}). Resetando sessão presa e timers!`);
         cancelAllTimers();
+        clearScheduledJobsForLead(botId, remoteJid, [userPhone, identity?.realPhone, ...(identity?.altPhones || [])]);
         session = null;
         delete store.userSessions[sessionKey];
         for (const altP of (identity.altPhones || [])) {
@@ -7058,6 +7183,7 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
         if (session.waitingFor !== 'USER_REPLY' || (Date.now() - updatedMs > 60 * 60 * 1000)) {
             console.log(`[Modo Funil Único] 🔄 Sessão antiga (${session.flowId || 'legado'}) encerrada para iniciar funil ativo ${activeSingleFlowIdNormalized}`);
             cancelAllTimers();
+            clearScheduledJobsForLead(botId, remoteJid, [userPhone, identity?.realPhone, ...(identity?.altPhones || [])]);
             session = null;
             delete store.userSessions[sessionKey];
             for (const altP of (identity.altPhones || [])) {
@@ -7126,7 +7252,7 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
                 const beneficiary = String(verifierNode?.config?.beneficiaryName || verifierNode?.config?.beneficiary || '').trim();
 
                 if (mediaBuffer) {
-                    const mime = msg.message.imageMessage ? 'image/jpeg' : 'application/pdf';
+                    const mime = resolveReceiptMimeType(msg, 'image/jpeg');
                     auditResult = await auditPixReceiptWithGemini(mediaBuffer, mime, expectedAmount, beneficiary);
                 }
 
@@ -7134,9 +7260,7 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
                     const paidValue = Number(auditResult.paidAmount || session.latestPixAmount || session.expectedAmount || expectedAmount || 19.90);
                     console.log(`[Visual Flow] ✅ Comprovante APROVADO para ${userPhone}! Valor contabilizado: R$ ${paidValue.toFixed(2)}`);
                     cancelAllTimers();
-                    if (store.scheduledJobs) {
-                        store.scheduledJobs = store.scheduledJobs.filter(j => j.userPhone !== userPhone);
-                    }
+                    clearScheduledJobsForLead(botId, remoteJid, [userPhone, session.realPhone, ...(identity?.altPhones || [])]);
                     session.wasInRecovery = Boolean(session.wasInRecovery || session.rejectedPayment || session.expired);
                     session.paidAmount = paidValue;
                     session.expectedAmount = paidValue;
@@ -7149,19 +7273,23 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
                     session.currentNodeId = verifierNodeId;
                     saveStore(store);
 
+                    // Garantia Dupla PRÉ-ENTREGA: registra venda + dispara Meta CAPI + persiste no KV
+                    // ANTES de enviar os bônus pelo WhatsApp para nunca perder conversão se o envio falhar.
+                    if (!session.capiFired) {
+                        await recordAndFireFunnelConversion(botId, session, paidValue, flow.name);
+                    }
+
                     const successEdge =
                         edges.find(e => (e.sourceNodeId || e.source) === verifierNodeId && e.sourceHandle === 'success') ||
                         edges.find(e => (e.sourceNodeId || e.source) === verifierNodeId && (!e.sourceHandle || e.sourceHandle === 'default')) ||
                         edges.find(e => (e.sourceNodeId || e.source) === session.currentNodeId);
 
                     if (successEdge) {
-                        await executeFromNode(botId, sock, remoteJid, session, successEdge.targetNodeId || successEdge.target, nodes, edges);
-                    }
-
-                    // Garantia Dupla: se o fluxo (ou ramo de recuperação) não passou por um bloco META_CAPI,
-                    // dispara a conversão no Meta Ads (CAPI) e registra no Dashboard da Operação automaticamente!
-                    if (!session.capiFired) {
-                        await recordAndFireFunnelConversion(botId, session, paidValue, flow.name);
+                        try {
+                            await executeFromNode(botId, sock, remoteJid, session, successEdge.targetNodeId || successEdge.target, nodes, edges);
+                        } catch (bonusErr) {
+                            console.error(`[Visual Flow] ⚠️ Erro ao entregar bônus pós-aprovação para ${userPhone} (venda/CAPI já contabilizadas):`, bonusErr.message);
+                        }
                     }
                     return;
                 } else {
@@ -7175,6 +7303,8 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
                         await executeFromNode(botId, sock, remoteJid, session, failEdge.targetNodeId || failEdge.target, nodes, edges);
                         return;
                     } else {
+                        session.waitingFor = 'PIX_RECEIPT';
+                        saveStore(store);
                         await sendRealisticText(botId, sock, remoteJid, userPhone, 'Não consegui identificar o valor ou destinatário com clareza na imagem enviada. Poderia me enviar o comprovante oficial completo em PDF ou imagem nítida, por favor? 🙏');
                         return;
                     }
@@ -7188,15 +7318,13 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
                     console.log(`[Visual Flow] 🎙️ Lead ${userPhone} enviou áudio durante espera do comprovante. Analisando com Gemini...`);
                     const audioBuffer = await getMediaBuffer(msg, sock);
                     if (audioBuffer) {
-                        const audioMime = msg.message.audioMessage?.mimetype || 'audio/ogg';
+                        const audioMime = unwrapWhatsAppMessage(msg?.message)?.audioMessage?.mimetype || 'audio/ogg';
                         const audioAudit = await auditAudioRefusalWithGemini(audioBuffer, audioMime);
 
                         if (audioAudit.isRefusal && !session.rejectedPayment) {
                             console.warn(`[Visual Flow] 🛑 Lead ${userPhone} expressou recusa/objeção via ÁUDIO: "${audioAudit.transcript}" (${audioAudit.refusalReason})`);
                             cancelAllTimers();
-                            if (store.scheduledJobs) {
-                                store.scheduledJobs = store.scheduledJobs.filter(j => j.userPhone !== userPhone);
-                            }
+                            clearScheduledJobsForLead(botId, remoteJid, [userPhone, session.realPhone, ...(identity?.altPhones || [])]);
 
                             const verifierNodeId = verifierNode ? verifierNode.nodeId : session.currentNodeId;
                             const failEdge = edges.find(e => (e.sourceNodeId || e.source) === verifierNodeId && e.sourceHandle === 'fail');
@@ -7235,9 +7363,7 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
                 if (isRefusal && !session.rejectedPayment) {
                     console.warn(`[Visual Flow] 🛑 Lead ${userPhone} expressou recusa/objeção de pagamento: "${textContent}"`);
                     cancelAllTimers();
-                    if (store.scheduledJobs) {
-                        store.scheduledJobs = store.scheduledJobs.filter(j => j.userPhone !== userPhone);
-                    }
+                    clearScheduledJobsForLead(botId, remoteJid, [userPhone, session.realPhone, ...(identity?.altPhones || [])]);
 
                     const verifierNodeId = verifierNode ? verifierNode.nodeId : session.currentNodeId;
                     const failEdge = edges.find(e => (e.sourceNodeId || e.source) === verifierNodeId && e.sourceHandle === 'fail');
@@ -7823,7 +7949,7 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
 
         await sendRealisticText(botId, sock, remoteJid, userPhone, '⏳ Recebi o seu comprovante! Estou validando com a nossa IA, só um instante...');
 
-        const mimeType = msg.message?.imageMessage?.mimetype || msg.message?.documentMessage?.mimetype || 'image/jpeg';
+        const mimeType = resolveReceiptMimeType(msg, 'image/jpeg');
         let mediaBuffer = null;
         try {
             mediaBuffer = await getMediaBuffer(msg, sock);
@@ -7921,12 +8047,13 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
             const adInfo = session.adData || {};
             const txId = 'tx_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
             const now = new Date();
+            const brNow = formatBrazilDateTime(now);
             const transactionRecord = {
                 id: txId,
                 timestamp: now.toISOString(),
                 time: Date.now(),
-                timeFormatted: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-                dateFormatted: now.toLocaleDateString('pt-BR'),
+                timeFormatted: brNow.timeFormatted,
+                dateFormatted: brNow.dateFormatted,
                 botId,
                 funnelId: session.funnel || 'funil1',
                 funnelName,
@@ -7966,10 +8093,11 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
             store.funnelTransactions = store.funnelTransactions || [];
             store.funnelTransactions.unshift(transactionRecord);
             if (store.funnelTransactions.length > 500) store.funnelTransactions.pop();
+            saveStore(store);
+            await flushRuntimeStateBackupNow(botId, true).catch(() => {});
 
             // Notificar Webhook FaceHub se configurado
             notifyFaceHubWebhook(transactionRecord).catch(() => {});
-        sendNtfyNotification(transactionRecord).catch(() => {});
 
             // Notificação Push no Celular via ntfy
             sendNtfyNotification(transactionRecord).catch(() => {});
@@ -8475,12 +8603,13 @@ async function recordAndFireFunnelConversion(botId, session, paidValue, customLa
 
     const value = Number(paidValue || session.paidAmount || session.latestPixAmount || session.expectedAmount || 19.90);
     const now = new Date();
+    const brNow = formatBrazilDateTime(now);
     const transactionRecord = {
         id: `tx_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
         timestamp: now.toISOString(),
         time: Date.now(),
-        dateFormatted: now.toLocaleDateString('pt-BR'),
-        timeFormatted: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        dateFormatted: brNow.dateFormatted,
+        timeFormatted: brNow.timeFormatted,
         botId,
         userPhone: resolvedPhone,
         realPhone: session.realPhone || undefined,
@@ -8522,9 +8651,11 @@ async function recordAndFireFunnelConversion(botId, session, paidValue, customLa
 
     store.funnelTransactions = store.funnelTransactions || [];
     store.funnelTransactions.unshift(transactionRecord);
+    if (store.funnelTransactions.length > 500) store.funnelTransactions.pop();
     store.funnelStats.convertedCount = (store.funnelStats.convertedCount || 0) + 1;
     store.funnelStats.totalRevenue = Number(((store.funnelStats.totalRevenue || 0) + value).toFixed(2));
     saveStore(store);
+    await flushRuntimeStateBackupNow(botId, true).catch(() => {});
 
     notifyFaceHubWebhook(transactionRecord).catch(() => {});
     sendNtfyNotification(transactionRecord).catch(() => {});
@@ -9426,13 +9557,7 @@ app.post('/api/admin/manual-pix-approve', async (req, res) => {
             if (!pVar) continue;
             cancelAllUserTimers(botId, pVar);
         }
-        if (Array.isArray(store.scheduledJobs)) {
-            store.scheduledJobs = store.scheduledJobs.filter(j => {
-                const jp = String(j.userPhone || '').replace(/\D/g, '');
-                const jJidDigits = String(j.remoteJid || '').split('@')[0].split(':')[0].replace(/\D/g, '');
-                return !variantPhones.has(jp) && !variantPhones.has(jJidDigits) && j.remoteJid !== remoteJid;
-            });
-        }
+        clearScheduledJobsForLead('', remoteJid, Array.from(variantPhones));
 
         const visualFlow = getVisualFlowById(botId, flowId) || getVisualFlowById(botId, 'flow_1794362249148');
         if (!visualFlow) {
@@ -9979,8 +10104,8 @@ app.post('/api/funnels/simulate-pix', async (req, res) => {
             id: txId,
             timestamp: now.toISOString(),
             time: Date.now(),
-            timeFormatted: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-            dateFormatted: now.toLocaleDateString('pt-BR'),
+            timeFormatted: formatBrazilDateTime(now).timeFormatted,
+            dateFormatted: formatBrazilDateTime(now).dateFormatted,
             botId: 'bot_whatsapp_principal',
             funnelId: funnel.id,
             funnelName: funnel.name,
