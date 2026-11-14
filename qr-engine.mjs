@@ -1359,6 +1359,7 @@ function loadStore() {
         },
         userSessions: {},
         conversations: [],
+        funnelLeadJourneys: {},
         funnelStats: {
             startedCount: 0,
             materialDeliveredCount: 0,
@@ -1378,6 +1379,334 @@ let isRestoringRuntimeState = false;
 let runtimeStateBootRestored = false;
 let runtimeBackupDebounceTimer = null;
 let lastRuntimeBackupHash = '';
+
+const BRAZIL_DATE_KEY_FMT = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+});
+
+function toBrtDateKey(dateInput) {
+    if (dateInput === null || dateInput === undefined || dateInput === '') return '';
+    try {
+        const dt = dateInput instanceof Date ? dateInput : new Date(dateInput);
+        if (Number.isNaN(dt.getTime())) return '';
+        return BRAZIL_DATE_KEY_FMT.format(dt);
+    } catch {
+        return '';
+    }
+}
+
+function shiftBrtDateKeyBackend(ymd, deltaDays = 0) {
+    if (!ymd || !/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return '';
+    const [y, m, d] = ymd.split('-').map(Number);
+    const dt = new Date(Date.UTC(y, m - 1, d + deltaDays, 12, 0, 0));
+    return dt.toISOString().slice(0, 10);
+}
+
+function extractCanonicalFunnelNumber(value = '') {
+    const raw = String(value || '').trim().toLowerCase();
+    if (!raw) return '';
+    const direct = raw.match(/^(?:flow_)?funil[_:\s-]*(\d+)$/i);
+    if (direct?.[1]) return `funil${direct[1]}`;
+    const inName = raw.match(/funil\s*[:\-]?\s*(\d+)/i);
+    if (inName?.[1]) return `funil${inName[1]}`;
+    if (raw === 'parabolas') return 'funil1';
+    return '';
+}
+
+function normalizePhoneDigits(raw = '') {
+    return String(raw || '').split('@')[0].split(':')[0].replace(/\D/g, '');
+}
+
+function resolveJourneyGroupKey(botId = 'bot_whatsapp_principal', flowId = '', flowName = '') {
+    const fId = String(flowId || '').trim();
+    if (fId) return fId;
+    const canon = extractCanonicalFunnelNumber(flowName);
+    return canon || '__pending__';
+}
+
+function findExistingJourneyKey(botId, candidates = [], groupKey = '') {
+    const journeys = store.funnelLeadJourneys || {};
+    const digits = candidates.map(normalizePhoneDigits).filter(Boolean);
+    if (digits.length === 0) return null;
+
+    if (groupKey && groupKey !== '__pending__') {
+        for (const d of digits) {
+            const exact = `${botId}:${d}:${groupKey}`;
+            if (journeys[exact]) return exact;
+        }
+        for (const d of digits) {
+            const pending = `${botId}:${d}:__pending__`;
+            if (journeys[pending]) return pending;
+        }
+    }
+
+    for (const [k, j] of Object.entries(journeys)) {
+        if (!j || (j.botId && j.botId !== botId)) continue;
+        const jIds = [j.canonicalLeadId, j.realPhone, j.userPhone, j.lidDigits]
+            .map(normalizePhoneDigits)
+            .filter(Boolean);
+        if (!jIds.some(id => digits.includes(id))) continue;
+        if (!groupKey || groupKey === '__pending__' || !j.flowId || j.flowId === '__pending__' || j.flowId === groupKey) {
+            return k;
+        }
+    }
+    return null;
+}
+
+function earliestIso(a, b) {
+    if (!a) return b || undefined;
+    if (!b) return a;
+    return new Date(a).getTime() <= new Date(b).getTime() ? a : b;
+}
+
+function mergeJourneyRecord(target = {}, source = {}) {
+    const merged = {
+        ...target,
+        botId: target.botId || source.botId || 'bot_whatsapp_principal',
+        canonicalLeadId: target.canonicalLeadId || source.canonicalLeadId || source.realPhone || source.userPhone || source.lidDigits || '',
+        userPhone: target.userPhone || source.userPhone || '',
+        realPhone: target.realPhone || source.realPhone || undefined,
+        lidDigits: target.lidDigits || source.lidDigits || undefined,
+        userName: (target.userName && target.userName !== 'Cliente') ? target.userName : (source.userName || target.userName || 'Cliente'),
+        flowId: (target.flowId && target.flowId !== '__pending__') ? target.flowId : (source.flowId || target.flowId || ''),
+        flowName: target.flowName || source.flowName || '',
+        accountId: target.accountId || source.accountId || undefined,
+        campaignId: target.campaignId || source.campaignId || undefined,
+        campaignName: target.campaignName || source.campaignName || undefined,
+        adId: target.adId || source.adId || undefined,
+        adName: target.adName || source.adName || undefined,
+        isCtwa: Boolean(target.isCtwa || source.isCtwa),
+        enteredAt: earliestIso(target.enteredAt, source.enteredAt),
+        materialDeliveredAt: earliestIso(target.materialDeliveredAt, source.materialDeliveredAt),
+        pixSentAt: earliestIso(target.pixSentAt, source.pixSentAt),
+        receiptReceivedAt: earliestIso(target.receiptReceivedAt, source.receiptReceivedAt),
+        paidAt: earliestIso(target.paidAt, source.paidAt),
+        paidAmount: Number(target.paidAmount || source.paidAmount || 0) || undefined,
+    };
+    if (merged.realPhone) merged.canonicalLeadId = normalizePhoneDigits(merged.realPhone);
+    if (!merged.enteredAt) {
+        merged.enteredAt = earliestIso(
+            merged.materialDeliveredAt,
+            earliestIso(merged.pixSentAt, earliestIso(merged.receiptReceivedAt, merged.paidAt))
+        );
+    }
+    return merged;
+}
+
+/**
+ * Registra o primeiro marco temporal de um lead unico na etapa do funil sem duplicar por evento repetido.
+ */
+function markLeadFunnelStage(botId = 'bot_whatsapp_principal', ctx = {}, stageName = '', timestampIso = null, extra = {}) {
+    store.funnelLeadJourneys = store.funnelLeadJourneys || {};
+    const realPhone = normalizePhoneDigits(ctx.realPhone);
+    const userPhone = normalizePhoneDigits(ctx.userPhone || ctx.userPhoneNumber);
+    const lidDigits = normalizePhoneDigits(ctx.lidDigits);
+    const canonicalLeadId = realPhone || userPhone || lidDigits;
+    if (!canonicalLeadId) return null;
+
+    const flowId = String(ctx.flowId || ctx.funnelId || '').trim();
+    const flowName = String(ctx.flowName || ctx.funnelName || '').trim();
+    const groupKey = resolveJourneyGroupKey(botId, flowId, flowName);
+    const targetKey = `${botId}:${canonicalLeadId}:${groupKey}`;
+
+    const existingKey = findExistingJourneyKey(botId, [realPhone, userPhone, lidDigits], groupKey);
+    let record = (existingKey && store.funnelLeadJourneys[existingKey]) ? { ...store.funnelLeadJourneys[existingKey] } : {};
+    if (existingKey && existingKey !== targetKey) {
+        delete store.funnelLeadJourneys[existingKey];
+    }
+
+    const adInfo = ctx.adData || {};
+    const nowIso = timestampIso || new Date().toISOString();
+    const patch = {
+        botId,
+        canonicalLeadId,
+        userPhone: userPhone || canonicalLeadId,
+        realPhone: realPhone || undefined,
+        lidDigits: lidDigits || undefined,
+        userName: ctx.userName || ctx.pushName || undefined,
+        flowId: flowId || (groupKey !== '__pending__' ? groupKey : undefined),
+        flowName: flowName || undefined,
+        accountId: extra.accountId || ctx.accountId || adInfo.accountId || undefined,
+        campaignId: extra.campaignId || ctx.campaignId || adInfo.campaignId || undefined,
+        campaignName: extra.campaignName || ctx.campaignName || adInfo.campaignName || undefined,
+        adId: extra.adId || ctx.adId || adInfo.adId || undefined,
+        adName: extra.adName || ctx.adName || adInfo.adName || undefined,
+        isCtwa: Boolean(ctx.isCtwa || adInfo.isCtwa || adInfo.ctwaClid || adInfo.sourceUrl || adInfo.sourceId),
+    };
+
+    if (stageName === 'enteredAt') patch.enteredAt = nowIso;
+    else if (stageName === 'materialDeliveredAt') patch.materialDeliveredAt = nowIso;
+    else if (stageName === 'pixSentAt') patch.pixSentAt = nowIso;
+    else if (stageName === 'receiptReceivedAt') patch.receiptReceivedAt = nowIso;
+    else if (stageName === 'paidAt') {
+        patch.paidAt = nowIso;
+        if (extra.paidAmount) patch.paidAmount = Number(extra.paidAmount);
+    }
+
+    record = mergeJourneyRecord(record, patch);
+    store.funnelLeadJourneys[targetKey] = record;
+
+    // Mantem espelho no objeto de sessao (garantido na persistencia do Cloud KV em userSessions)
+    if (ctx && typeof ctx === 'object' && ('waitingFor' in ctx || 'currentNodeId' in ctx || 'flowId' in ctx || 'userJid' in ctx)) {
+        ctx.journeyStages = {
+            ...(ctx.journeyStages || {}),
+            ...(record.enteredAt ? { enteredAt: record.enteredAt } : {}),
+            ...(record.materialDeliveredAt ? { materialDeliveredAt: record.materialDeliveredAt } : {}),
+            ...(record.pixSentAt ? { pixSentAt: record.pixSentAt } : {}),
+            ...(record.receiptReceivedAt ? { receiptReceivedAt: record.receiptReceivedAt } : {}),
+            ...(record.paidAt ? { paidAt: record.paidAt } : {}),
+        };
+    }
+
+    // Compacta limite maximo seguro (ate 5000 jornadas)
+    const keys = Object.keys(store.funnelLeadJourneys);
+    if (keys.length > 5000) {
+        keys.slice(0, keys.length - 5000).forEach(k => delete store.funnelLeadJourneys[k]);
+    }
+
+    return record;
+}
+
+function syncLeadJourneyAttribution(botId = 'bot_whatsapp_principal', ctx = {}, adData = {}) {
+    if (!adData || typeof adData !== 'object') return;
+    if (!adData.accountId && !adData.campaignId && !adData.adId && !adData.isCtwa) return;
+    markLeadFunnelStage(botId, { ...ctx, adData }, '', null, {
+        accountId: adData.accountId,
+        campaignId: adData.campaignId,
+        campaignName: adData.campaignName,
+        adId: adData.adId,
+        adName: adData.adName,
+    });
+}
+
+function backfillFunnelLeadJourneys(botId = 'bot_whatsapp_principal') {
+    store.funnelLeadJourneys = store.funnelLeadJourneys || {};
+    const activeDefaultFlowId = (store.singleFunnelMode && store.activeFunnelId)
+        ? normalizeVisualFlowId(store.activeFunnelId)
+        : 'flow_1794362249148';
+
+    const aliasToCanonical = new Map();
+    const registerSessionAliases = (s) => {
+        if (!s || typeof s !== 'object') return;
+        const canon = normalizePhoneDigits(s.realPhone || s.userPhone || s.lidDigits);
+        if (!canon) return;
+        for (const rawId of [s.realPhone, s.userPhone, s.lidDigits]) {
+            const d = normalizePhoneDigits(rawId);
+            if (d) aliasToCanonical.set(d, canon);
+        }
+    };
+
+    for (const s of Object.values(store.userSessions || {})) registerSessionAliases(s);
+    for (const tx of (store.funnelTransactions || [])) {
+        const canon = normalizePhoneDigits(tx.realPhone || tx.userPhone || tx.lidDigits);
+        if (!canon) continue;
+        for (const rawId of [tx.realPhone, tx.userPhone, tx.lidDigits]) {
+            const d = normalizePhoneDigits(rawId);
+            if (d) aliasToCanonical.set(d, canon);
+        }
+    }
+
+    const resolveCanonical = (raw) => {
+        const d = normalizePhoneDigits(raw);
+        return aliasToCanonical.get(d) || d;
+    };
+
+    // 1. Reconstruir marcos a partir do historico de conversas (primeiro contato, material, PIX, comprovante)
+    const convByLead = new Map();
+    for (const msg of (store.conversations || [])) {
+        if (!msg || (msg.botId && msg.botId !== botId)) continue;
+        const p = resolveCanonical(msg.userPhoneNumber || msg.userPhone);
+        if (!p) continue;
+        if (!convByLead.has(p)) convByLead.set(p, []);
+        convByLead.get(p).push(msg);
+    }
+
+    for (const [canonPhone, msgs] of convByLead.entries()) {
+        msgs.sort((a, b) => new Date(a.sentAt || 0) - new Date(b.sentAt || 0));
+        const sessionObj = Object.values(store.userSessions || {}).find(s => {
+            if (!s) return false;
+            return [s.realPhone, s.userPhone, s.lidDigits].map(normalizePhoneDigits).includes(canonPhone);
+        });
+        const flowId = sessionObj?.flowId || activeDefaultFlowId;
+        const flowName = sessionObj?.flowName || store.activeFunnelName || '';
+        const ctx = {
+            ...(sessionObj || {}),
+            userPhone: sessionObj?.userPhone || canonPhone,
+            realPhone: sessionObj?.realPhone || undefined,
+            lidDigits: sessionObj?.lidDigits || undefined,
+            flowId,
+            flowName,
+        };
+
+        const firstIn = msgs.find(m => m.sender === 'USER');
+        const firstMat = msgs.find(m => {
+            if (m.sender !== 'BOT') return false;
+            const txt = String(m.messageContent || '');
+            return (m.messageType === 'PDF' || txt.includes('[Arquivo Enviado]') || txt.includes('[PDF]:'))
+                && !/capa|cover|bonus|b[oô]nus/i.test(txt);
+        });
+        const firstPix = msgs.find(m => m.sender === 'BOT' && (
+            m.messageType === 'PIX' || String(m.messageContent || '').includes('Cartão PIX') || String(m.messageContent || '').includes('Chave PIX:')
+        ));
+        const firstPixTime = firstPix ? new Date(firstPix.sentAt || 0).getTime() : Infinity;
+        const firstReceipt = msgs.find(m =>
+            m.sender === 'USER' &&
+            (m.messageType === 'IMAGE' || m.messageType === 'DOCUMENT') &&
+            new Date(m.sentAt || 0).getTime() >= (Number.isFinite(firstPixTime) ? firstPixTime - 60000 : 0)
+        );
+
+        const earliest = firstIn?.sentAt || firstMat?.sentAt || firstPix?.sentAt || msgs[0]?.sentAt;
+        if (earliest) markLeadFunnelStage(botId, ctx, 'enteredAt', earliest);
+        if (firstMat?.sentAt) markLeadFunnelStage(botId, ctx, 'materialDeliveredAt', firstMat.sentAt);
+        if (firstPix?.sentAt) markLeadFunnelStage(botId, ctx, 'pixSentAt', firstPix.sentAt);
+        if (firstReceipt?.sentAt) markLeadFunnelStage(botId, ctx, 'receiptReceivedAt', firstReceipt.sentAt);
+    }
+
+    // 2. Garantir dados de userSessions (inclusive journeyStages preservado no KV e hasReceivedPix/paid)
+    for (const s of Object.values(store.userSessions || {})) {
+        if (!s || typeof s !== 'object') continue;
+        const ctx = {
+            ...s,
+            flowId: s.flowId || activeDefaultFlowId,
+            flowName: s.flowName || store.activeFunnelName || '',
+        };
+        const stg = s.journeyStages || {};
+        if (stg.enteredAt || s.updatedAt) markLeadFunnelStage(botId, ctx, 'enteredAt', stg.enteredAt || s.updatedAt);
+        if (stg.materialDeliveredAt) markLeadFunnelStage(botId, ctx, 'materialDeliveredAt', stg.materialDeliveredAt);
+        if (stg.pixSentAt || s.hasReceivedPix) markLeadFunnelStage(botId, ctx, 'pixSentAt', stg.pixSentAt || s.updatedAt);
+        if (stg.receiptReceivedAt || s.paid) markLeadFunnelStage(botId, ctx, 'receiptReceivedAt', stg.receiptReceivedAt || s.updatedAt);
+        if (stg.paidAt || s.paid) markLeadFunnelStage(botId, ctx, 'paidAt', stg.paidAt || s.updatedAt, { paidAmount: s.paidAmount });
+        syncLeadJourneyAttribution(botId, ctx, s.adData);
+    }
+
+    // 3. Reconciliar com transacoes aprovadas (data real do pagamento)
+    for (const tx of (store.funnelTransactions || [])) {
+        if (!tx) continue;
+        const ts = tx.timestamp || (tx.time ? new Date(tx.time).toISOString() : new Date().toISOString());
+        const ctx = {
+            userPhone: tx.userPhone,
+            realPhone: tx.realPhone,
+            lidDigits: tx.lidDigits,
+            userName: tx.pushName,
+            flowId: tx.funnelId || activeDefaultFlowId,
+            flowName: tx.funnelName || '',
+            adData: {
+                accountId: tx.accountId,
+                campaignId: tx.campaignId,
+                campaignName: tx.campaignName,
+                adId: tx.adId,
+                adName: tx.adName,
+                isCtwa: tx.isCtwa,
+            },
+        };
+        markLeadFunnelStage(botId, ctx, 'enteredAt', ts);
+        markLeadFunnelStage(botId, ctx, 'receiptReceivedAt', ts);
+        markLeadFunnelStage(botId, ctx, 'paidAt', ts, { paidAmount: tx.amount });
+    }
+}
 
 function sanitizeSessionsForBackup(userSessions = {}) {
     const cleaned = {};
@@ -1405,6 +1734,7 @@ function buildRuntimeStatePayload(botId = 'bot_whatsapp_principal') {
         userSessions: scopedSessions,
         scheduledJobs: Array.isArray(store.scheduledJobs) ? store.scheduledJobs : [],
         conversations: Array.isArray(store.conversations) ? store.conversations.slice(-500) : [],
+        funnelLeadJourneys: store.funnelLeadJourneys || {},
         funnelStats: store.funnelStats || {},
         funnelTransactions: Array.isArray(store.funnelTransactions) ? store.funnelTransactions : [],
     };
@@ -1414,11 +1744,12 @@ function computeRuntimeHash(payload) {
     try {
         return JSON.stringify({
             sc: Object.keys(payload.userSessions || {}).length,
-            su: Object.entries(payload.userSessions || {}).map(([k, v]) => [k, v.waitingFor, v.currentNodeId, v.paid, v.updatedAt]),
+            su: Object.entries(payload.userSessions || {}).map(([k, v]) => [k, v.waitingFor, v.currentNodeId, v.paid, v.updatedAt, Boolean(v.journeyStages?.paidAt)]),
             jc: (payload.scheduledJobs || []).map(j => [j.jobId, j.resumeAt, j.targetNodeId]),
             cc: (payload.conversations || []).length,
             lc: payload.conversations?.[(payload.conversations || []).length - 1]?._id || '',
             tc: (payload.funnelTransactions || []).length,
+            lj: Object.keys(payload.funnelLeadJourneys || {}).length,
             fs: payload.funnelStats || {},
         });
     } catch {
@@ -1644,6 +1975,14 @@ function mergeRuntimeState(stateData = {}, options = {}) {
             store.funnelTransactions.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
         }
 
+        if (stateData.funnelLeadJourneys && typeof stateData.funnelLeadJourneys === 'object') {
+            store.funnelLeadJourneys = store.funnelLeadJourneys || {};
+            for (const [k, incJ] of Object.entries(stateData.funnelLeadJourneys)) {
+                if (!incJ || typeof incJ !== 'object') continue;
+                store.funnelLeadJourneys[k] = mergeJourneyRecord(store.funnelLeadJourneys[k] || {}, incJ);
+            }
+        }
+
         if (stateData.funnelStats && typeof stateData.funnelStats === 'object') {
             store.funnelStats = store.funnelStats || {};
             const inc = stateData.funnelStats;
@@ -1661,6 +2000,7 @@ function mergeRuntimeState(stateData = {}, options = {}) {
         if (options.reconstructMissingSessions) {
             reconstructed = reconstructMissingSessionsFromHistory('bot_whatsapp_principal');
         }
+        backfillFunnelLeadJourneys('bot_whatsapp_principal');
 
         saveStore(store);
         return { mergedSessions, mergedJobs, reconstructed };
@@ -1677,13 +2017,16 @@ async function restoreRuntimeStateFromCloudKv(botId = 'bot_whatsapp_principal') 
         const kvState = res.data?.state;
         if (kvState && typeof kvState === 'object') {
             const summary = mergeRuntimeState(kvState, { reconstructMissingSessions: false });
+            backfillFunnelLeadJourneys(botId);
+            saveStore(store);
             lastRuntimeBackupHash = computeRuntimeHash(buildRuntimeStatePayload(botId));
-            console.log(`[Cloud KV Runtime] ☁️ Estado de runtime restaurado do KV (${summary.mergedSessions} sessões, ${summary.mergedJobs} jobs, ${store.conversations?.length || 0} msgs)`);
+            console.log(`[Cloud KV Runtime] ☁️ Estado de runtime restaurado do KV (${summary.mergedSessions} sessões, ${summary.mergedJobs} jobs, ${store.conversations?.length || 0} msgs, ${Object.keys(store.funnelLeadJourneys || {}).length} jornadas)`);
             return true;
         }
     } catch (err) {
         console.warn('[Cloud KV Runtime] Aviso ao restaurar estado runtime do KV:', err?.message);
     } finally {
+        backfillFunnelLeadJourneys(botId);
         runtimeStateBootRestored = true;
     }
     return false;
@@ -1836,6 +2179,7 @@ try {
         saveStore(store);
         console.log(`[Store Init] 🚀 Funis Visuais V12 Carregados com Preservação Anti-Perda (Total: ${store.flows['bot_whatsapp_principal'].length} funis)!`);
     }
+    backfillFunnelLeadJourneys('bot_whatsapp_principal');
     restoreFunnelModeFromCloudKv('bot_whatsapp_principal').catch(() => {});
     restoreFlowsFromCloudKv('bot_whatsapp_principal').then(() => {
         scheduleCloudKvFlowsBackup('bot_whatsapp_principal');
@@ -5188,6 +5532,7 @@ async function sendParabolasPhase1(botId, sock, remoteJid, userPhone, pushName) 
         waitingFor: 'CONFIRM_SEND_PARABOLAS',
         updatedAt: new Date().toISOString(),
     };
+    markLeadFunnelStage(botId, store.userSessions[sessionKey], 'enteredAt');
     store.funnelStats.startedCount = (store.funnelStats.startedCount || 0) + 1;
     saveStore(store);
 }
@@ -5305,6 +5650,7 @@ async function sendParabolasPhase2(botId, sock, remoteJid, userPhone, pushName, 
     // 10. Atualiza Sessão para aguardar comprovante
     const sessionKey = `${botId}:${userPhone}`;
     store.userSessions[sessionKey] = {
+        ...(store.userSessions[sessionKey] || {}),
         botId,
         userJid: remoteJid,
         userPhone,
@@ -5313,6 +5659,8 @@ async function sendParabolasPhase2(botId, sock, remoteJid, userPhone, pushName, 
         waitingFor: 'PIX_RECEIPT',
         updatedAt: new Date().toISOString(),
     };
+    markLeadFunnelStage(botId, store.userSessions[sessionKey], 'materialDeliveredAt');
+    markLeadFunnelStage(botId, store.userSessions[sessionKey], 'pixSentAt');
     store.funnelStats.materialDeliveredCount = (store.funnelStats.materialDeliveredCount || 0) + 1;
     store.funnelStats.pixSentCount = (store.funnelStats.pixSentCount || 0) + 1;
     saveStore(store);
@@ -7079,6 +7427,17 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
     const sessionKey = identity.sessionKey;
     let session = identity.session;
 
+    // Registrar entrada unica do lead no funil no momento da primeira mensagem (sem duplicar retornos)
+    markLeadFunnelStage(botId, {
+        userPhone,
+        realPhone: identity.realPhone || session?.realPhone,
+        lidDigits: identity.lidDigits || session?.lidDigits,
+        userName: pushName,
+        flowId: session?.flowId || ((store.singleFunnelMode && store.activeFunnelId) ? normalizeVisualFlowId(store.activeFunnelId) : undefined),
+        flowName: session?.flowName || store.activeFunnelName || undefined,
+        adData: session?.adData || undefined,
+    }, 'enteredAt');
+
     // Capturar contexto de anúncio (CTWA ou tags dinâmicas no texto)
     const detectedAd = extractAdContext(msg, textContent);
     if (detectedAd) {
@@ -7094,21 +7453,31 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
                 updatedAt: new Date().toISOString()
             };
             syncSessionAliases(botId, session, [identity.rawPrimaryPhone]);
+            syncLeadJourneyAttribution(botId, session, detectedAd);
             saveStore(store);
         } else {
             session.adData = { ...(session.adData || {}), ...detectedAd };
             if (identity.realPhone && !session.realPhone) session.realPhone = identity.realPhone;
             if (identity.lidDigits && !session.lidDigits) session.lidDigits = identity.lidDigits;
             syncSessionAliases(botId, session, [identity.rawPrimaryPhone]);
+            syncLeadJourneyAttribution(botId, session, session.adData);
         }
         console.log(`[Atribuição Meta Ads] 🎯 Detectado anúncio para ${userPhone}:`, session.adData);
 
         if (!session.adData.campaignId || !session.adData.accountId) {
             const adTargetRef = session.adData;
+            const journeyCtx = {
+                userPhone,
+                realPhone: identity.realPhone || session?.realPhone,
+                lidDigits: identity.lidDigits || session?.lidDigits,
+                flowId: session?.flowId,
+                flowName: session?.flowName,
+            };
             resolveMetaAdAttribution(adTargetRef)
                 .then((enriched) => {
                     if (enriched && adTargetRef && (enriched.campaignId || enriched.adId || enriched.accountId || enriched.creativeVideoId)) {
                         Object.assign(adTargetRef, enriched);
+                        syncLeadJourneyAttribution(botId, journeyCtx, adTargetRef);
                         saveStore(store);
                         if (enriched.campaignId || enriched.adId) {
                             console.log(`[Atribuição Meta Graph] ✅ Enriquecido para ${userPhone}: Camp=${enriched.campaignId || '-'} | Ad=${enriched.adId || '-'} | Conta=${enriched.accountId || '-'}`);
@@ -7241,6 +7610,7 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
 
             if (isWaitingReceipt && hasMediaReceipt) {
                 console.log(`[Visual Flow] 🧾 Auditando comprovante com IA Gemini para ${userPhone} (Recuperação=${Boolean(session.rejectedPayment || session.expired || session.wasInRecovery)})...`);
+                markLeadFunnelStage(botId, session, 'receiptReceivedAt');
                 store.funnelStats.receiptReceivedCount = (store.funnelStats.receiptReceivedCount || 0) + 1;
                 saveStore(store);
 
@@ -7435,6 +7805,7 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
             updatedAt: new Date().toISOString()
         };
         syncSessionAliases(botId, session, [identity.rawPrimaryPhone]);
+        markLeadFunnelStage(botId, session, 'enteredAt');
         saveStore(store);
 
         const firstEdge = visualFlowMatch.edges.find(e => (e.sourceNodeId || e.source) === visualFlowMatch.startNode.nodeId);
@@ -7944,6 +8315,7 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
         // Reage IMEDIATAMENTE com ❤️ na foto/PDF do comprovante
         await reactToMessage(sock, remoteJid, msg.key, '❤️');
 
+        markLeadFunnelStage(botId, { ...session, flowId: session.funnel || session.flowId }, 'receiptReceivedAt');
         store.funnelStats.receiptReceivedCount = (store.funnelStats.receiptReceivedCount || 0) + 1;
         saveStore(store);
 
@@ -8089,6 +8461,24 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
             } catch (capiErr) {
                 transactionRecord.capiStatus = 'ERRO_CAPI: ' + capiErr.message;
             }
+
+            markLeadFunnelStage(botId, {
+                ...session,
+                userPhone: resolvedTxPhone,
+                realPhone: session.realPhone || resolvedTxPhone,
+                lidDigits: session.lidDigits,
+                userName: pushName,
+                flowId: session.funnel || 'funil1',
+                flowName: funnelName,
+                adData: adInfo,
+            }, 'paidAt', new Date(transactionRecord.time).toISOString(), {
+                paidAmount: paidValue,
+                accountId: adInfo.accountId || null,
+                campaignId: adInfo.campaignId || null,
+                campaignName: adInfo.campaignName || null,
+                adId: adInfo.adId || null,
+                adName: adInfo.adName || null,
+            });
 
             store.funnelTransactions = store.funnelTransactions || [];
             store.funnelTransactions.unshift(transactionRecord);
@@ -8435,6 +8825,12 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
             } else if (caption) {
                 await sendRealisticText(botId, sock, remoteJid, session.userPhone, `📦 ${caption}`);
             }
+            const mediaNameHint = String(config.filename || media?.filename || node.title || '');
+            const isBonusMedia = /bonus|b[oô]nus/i.test(`${node.nodeId || node.id || ''} ${mediaNameHint}`);
+            const isCoverOnly = /capa|cover/i.test(mediaNameHint);
+            if (!session.paid && !isBonusMedia && !isCoverOnly && (media?.buffer || caption)) {
+                markLeadFunnelStage(botId, session, 'materialDeliveredAt');
+            }
             store.funnelStats.materialDeliveredCount += 1;
             saveStore(store);
             break;
@@ -8494,6 +8890,7 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
             if (!session.paid) {
                 session.waitingFor = 'PIX_RECEIPT';
             }
+            markLeadFunnelStage(botId, session, 'pixSentAt');
             store.funnelStats.pixSentCount += 1;
             saveStore(store);
 
@@ -8652,6 +9049,20 @@ async function recordAndFireFunnelConversion(botId, session, paidValue, customLa
     store.funnelTransactions = store.funnelTransactions || [];
     store.funnelTransactions.unshift(transactionRecord);
     if (store.funnelTransactions.length > 500) store.funnelTransactions.pop();
+    markLeadFunnelStage(botId, {
+        ...session,
+        flowId: transactionRecord.funnelId,
+        flowName: transactionRecord.funnelName,
+        adData: {
+            ...(session.adData || {}),
+            accountId: transactionRecord.accountId,
+            campaignId: transactionRecord.campaignId,
+            campaignName: transactionRecord.campaignName,
+            adId: transactionRecord.adId,
+            adName: transactionRecord.adName,
+            isCtwa: transactionRecord.isCtwa,
+        }
+    }, 'paidAt', transactionRecord.timestamp, { paidAmount: value });
     store.funnelStats.convertedCount = (store.funnelStats.convertedCount || 0) + 1;
     store.funnelStats.totalRevenue = Number(((store.funnelStats.totalRevenue || 0) + value).toFixed(2));
     saveStore(store);
@@ -9370,13 +9781,147 @@ app.get('/api/funnels/transactions', (req, res) => {
     });
 });
 
-app.get('/api/funnels/metrics', (_req, res) => {
-    const txs = store.funnelTransactions || [];
-    const totalRevenue = txs.reduce((acc, cur) => acc + (cur.amount || 0), 0);
+function resolveBackendPeriodRange(period = 'MAX', sinceParam = '', untilParam = '') {
+    const cleanSince = String(sinceParam || '').trim();
+    const cleanUntil = String(untilParam || '').trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(cleanSince) && /^\d{4}-\d{2}-\d{2}$/.test(cleanUntil)) {
+        return cleanSince <= cleanUntil
+            ? { since: cleanSince, until: cleanUntil }
+            : { since: cleanUntil, until: cleanSince };
+    }
+    const todayKey = toBrtDateKey(Date.now());
+    const p = String(period || 'MAX').toUpperCase();
+    if (p === 'TODAY') return { since: todayKey, until: todayKey };
+    if (p === 'YESTERDAY') {
+        const y = shiftBrtDateKeyBackend(todayKey, -1);
+        return { since: y, until: y };
+    }
+    if (p === 'LAST_7D') {
+        return { since: shiftBrtDateKeyBackend(todayKey, -7), until: shiftBrtDateKeyBackend(todayKey, -1) };
+    }
+    if (p === 'LAST_7D_TODAY') {
+        return { since: shiftBrtDateKeyBackend(todayKey, -6), until: todayKey };
+    }
+    if (p === 'LAST_14D') {
+        return { since: shiftBrtDateKeyBackend(todayKey, -13), until: todayKey };
+    }
+    if (p === 'LAST_30D') {
+        return { since: shiftBrtDateKeyBackend(todayKey, -30), until: shiftBrtDateKeyBackend(todayKey, -1) };
+    }
+    if (p === 'THIS_MONTH') {
+        return { since: `${todayKey.slice(0, 7)}-01`, until: todayKey };
+    }
+    if (p === 'LAST_MONTH') {
+        const [y, m] = todayKey.slice(0, 7).split('-').map(Number);
+        const prevYm = m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`;
+        const lastDay = new Date(Date.UTC(y, m - 1, 0)).getUTCDate();
+        return { since: `${prevYm}-01`, until: `${prevYm}-${String(lastDay).padStart(2, '0')}` };
+    }
+    return { since: '', until: '' };
+}
+
+function isBrtInRange(isoOrMs, range) {
+    if (isoOrMs === null || isoOrMs === undefined || isoOrMs === '') return false;
+    if (!range || (!range.since && !range.until)) return true;
+    const key = toBrtDateKey(isoOrMs);
+    if (!key) return false;
+    if (range.since && key < range.since) return false;
+    if (range.until && key > range.until) return false;
+    return true;
+}
+
+function journeyMatchesFunnelFilter(j, targetFunnelId = 'ALL') {
+    if (!targetFunnelId || targetFunnelId === 'ALL') return true;
+    const target = String(targetFunnelId).trim();
+    if (j.flowId && String(j.flowId) === target) return true;
+    const targetNum = extractCanonicalFunnelNumber(target);
+    if (targetNum) {
+        const jNum = extractCanonicalFunnelNumber(j.flowId || '') || extractCanonicalFunnelNumber(j.flowName || '');
+        if (jNum && jNum === targetNum) return true;
+    }
+    // Se selecionou uma copia do mesmo funil (ex: flow_1794362249148 = Funil 4), tenta casar o nome do fluxo no store
+    const flows = store.flows?.['bot_whatsapp_principal'] || [];
+    const targetFlow = flows.find(f => f._id === target);
+    if (targetFlow) {
+        const targetFlowNum = extractCanonicalFunnelNumber(targetFlow.name || targetFlow._id);
+        const jNum = extractCanonicalFunnelNumber(j.flowId || '') || extractCanonicalFunnelNumber(j.flowName || '');
+        if (targetFlowNum && jNum && targetFlowNum === jNum) return true;
+    }
+    return false;
+}
+
+function journeyMatchesAccountFilter(j, targetAccountId = 'ALL') {
+    if (!targetAccountId || targetAccountId === 'ALL') return true;
+    const cleanTarget = String(targetAccountId).replace('act_', '').trim();
+    const jAcc = j.accountId ? String(j.accountId).replace('act_', '').trim() : '';
+    return jAcc === cleanTarget;
+}
+
+function txMatchesFunnelAndAccount(t, funnelId = 'ALL', accountId = 'ALL', includeUnassignedOnAccount = false) {
+    if (funnelId && funnelId !== 'ALL') {
+        const target = String(funnelId).trim();
+        const exactMatch = String(t.funnelId || '') === target;
+        const tNum = extractCanonicalFunnelNumber(t.funnelId || '') || extractCanonicalFunnelNumber(t.funnelName || '');
+        const flows = store.flows?.['bot_whatsapp_principal'] || [];
+        const fObj = flows.find(f => f._id === target);
+        const targetNum = extractCanonicalFunnelNumber(target) || (fObj ? extractCanonicalFunnelNumber(fObj.name || '') : '');
+        if (!exactMatch && !(targetNum && tNum && targetNum === tNum)) return false;
+    }
+    if (accountId && accountId !== 'ALL') {
+        const cleanTarget = String(accountId).replace('act_', '').trim();
+        const tAcc = t.accountId ? String(t.accountId).replace('act_', '').trim() : '';
+        if (tAcc) return tAcc === cleanTarget;
+        return includeUnassignedOnAccount;
+    }
+    return true;
+}
+
+app.get('/api/funnels/metrics', (req, res) => {
+    const period = String(req.query.period || 'MAX').toUpperCase();
+    const funnelId = String(req.query.funnelId || 'ALL').trim();
+    const accountId = String(req.query.accountId || 'ALL').trim();
+    const range = resolveBackendPeriodRange(period, req.query.since, req.query.until);
+
+    const journeys = Object.values(store.funnelLeadJourneys || {});
+    const filteredJourneys = journeys.filter(j =>
+        j &&
+        journeyMatchesFunnelFilter(j, funnelId) &&
+        journeyMatchesAccountFilter(j, accountId)
+    );
+
+    const uniqueEnteredPhones = new Set();
+    const uniqueMaterialPhones = new Set();
+    const uniquePixPhones = new Set();
+    const uniqueReceiptPhones = new Set();
+    const uniquePaidPhones = new Set();
+
+    for (const j of filteredJourneys) {
+        const leadKey = j.canonicalLeadId || j.realPhone || j.userPhone || j.lidDigits;
+        if (!leadKey) continue;
+        if (j.enteredAt && isBrtInRange(j.enteredAt, range)) uniqueEnteredPhones.add(leadKey);
+        if (j.materialDeliveredAt && isBrtInRange(j.materialDeliveredAt, range)) uniqueMaterialPhones.add(leadKey);
+        if (j.pixSentAt && isBrtInRange(j.pixSentAt, range)) uniquePixPhones.add(leadKey);
+        if (j.receiptReceivedAt && isBrtInRange(j.receiptReceivedAt, range)) uniqueReceiptPhones.add(leadKey);
+        if (j.paidAt && isBrtInRange(j.paidAt, range)) uniquePaidPhones.add(leadKey);
+    }
+
+    const txs = (store.funnelTransactions || []).filter(t =>
+        isBrtInRange(t.timestamp || t.time, range) &&
+        txMatchesFunnelAndAccount(t, funnelId, accountId, false)
+    );
+    txs.forEach(t => {
+        const leadKey = normalizePhoneDigits(t.realPhone || t.userPhone || t.lidDigits);
+        if (leadKey) {
+            uniquePaidPhones.add(leadKey);
+            uniqueReceiptPhones.add(leadKey);
+        }
+    });
+
+    const totalRevenue = txs.reduce((acc, cur) => acc + (Number(cur.amount) || 0), 0);
     const totalSales = txs.length;
     const capiSuccess = txs.filter(t => t.capiStatus === 'ENVIADO_CAPI_OK').length;
-    
-    // Agrupamento por campanha
+
+    // Agrupamento por campanha do recorte
     const campaignMap = {};
     txs.forEach(t => {
         const campKey = t.campaignId || 'Orgânico / Sem Tag';
@@ -9384,25 +9929,29 @@ app.get('/api/funnels/metrics', (_req, res) => {
             campaignMap[campKey] = { campaignId: campKey, sales: 0, revenue: 0, funnels: {} };
         }
         campaignMap[campKey].sales += 1;
-        campaignMap[campKey].revenue += (t.amount || 0);
+        campaignMap[campKey].revenue += (Number(t.amount) || 0);
         campaignMap[campKey].funnels[t.funnelName] = (campaignMap[campKey].funnels[t.funnelName] || 0) + 1;
     });
 
-    const s = store.funnelStats || {};
-    const started = s.startedCount || 0;
-    const pixSent = s.pixSentCount || 0;
-    const converted = totalSales || s.convertedCount || 0;
+    const started = uniqueEnteredPhones.size;
+    const material = uniqueMaterialPhones.size;
+    const pixSent = uniquePixPhones.size;
+    const receipts = uniqueReceiptPhones.size;
+    const converted = Math.max(uniquePaidPhones.size, totalSales);
 
     const funnelStats = {
         startedCount: started,
-        materialDeliveredCount: s.materialDeliveredCount || 0,
+        materialDeliveredCount: material,
         pixSentCount: pixSent,
-        receiptReceivedCount: s.receiptReceivedCount || 0,
+        receiptReceivedCount: receipts,
         convertedCount: converted,
         totalRevenue: Number(totalRevenue.toFixed(2)),
         defaultRate: pixSent > 0 ? Math.max(0, Math.round(((pixSent - converted) / pixSent) * 100)) : 0,
         conversionRate: started > 0 ? Number(((converted / started) * 100).toFixed(1)) : 0,
-        recentConversions: txs.length > 0 ? txs.slice(0, 10) : []
+        iaAuditRate: receipts > 0 ? Number(Math.min(100, (converted / receipts) * 100).toFixed(1)) : (converted > 0 ? 100.0 : 0.0),
+        uniqueLeadMode: true,
+        periodRange: range,
+        recentConversions: txs.slice(0, 10)
     };
 
     res.json({
@@ -9412,13 +9961,24 @@ app.get('/api/funnels/metrics', (_req, res) => {
             totalRevenue: Number(totalRevenue.toFixed(2)),
             capiSuccess,
             campaignsTracked: Object.values(campaignMap),
-            funnelStats
+            funnelStats,
+            uniqueLeadStats: {
+                entered: started,
+                materialDelivered: material,
+                pixSent,
+                receiptReceived: receipts,
+                paid: converted,
+                revenue: Number(totalRevenue.toFixed(2)),
+                iaAuditRate: funnelStats.iaAuditRate,
+                range,
+            }
         }
     });
 });
 
 app.post('/api/funnels/reset', (_req, res) => {
     store.funnelTransactions = [];
+    store.funnelLeadJourneys = {};
     store.funnelStats = {
         startedCount: 0,
         materialDeliveredCount: 0,
@@ -9692,7 +10252,10 @@ const META_PERIOD_PRESET_MAP = {
     'TODAY': 'today',
     'YESTERDAY': 'yesterday',
     'LAST_7D': 'last_7d',
+    'LAST_14D': 'last_14d',
     'LAST_30D': 'last_30d',
+    'THIS_MONTH': 'this_month',
+    'LAST_MONTH': 'last_month',
     'MAX': 'maximum'
 };
 
@@ -9729,9 +10292,13 @@ function parseMetaInsightRow(row) {
     const spend = parseFloat(row.spend || 0);
     const impressions = parseInt(row.impressions || 0, 10);
     const clicks = parseInt(row.clicks || 0, 10);
+    const linkAction = (row.actions || []).find(a => a.action_type === 'link_click');
+    const linkClicks = parseInt(row.inline_link_clicks || linkAction?.value || 0, 10);
     const cpm = parseFloat(row.cpm || 0) || (impressions > 0 ? (spend / impressions) * 1000 : 0);
     const ctr = parseFloat(row.ctr || 0) || (impressions > 0 ? (clicks / impressions) * 100 : 0);
     const cpc = parseFloat(row.cpc || 0) || (clicks > 0 ? spend / clicks : 0);
+    const linkCtr = parseFloat(row.inline_link_click_ctr || 0) || (impressions > 0 ? (linkClicks / impressions) * 100 : 0);
+    const linkCpc = linkClicks > 0 ? spend / linkClicks : 0;
 
     const cplAction = (row.cost_per_action_type || []).find(a =>
         a.action_type === 'onsite_conversion.messaging_conversation_started_7d' ||
@@ -9750,8 +10317,11 @@ function parseMetaInsightRow(row) {
         cpm,
         ctr,
         cpc,
+        linkCtr,
+        linkCpc,
         impressions,
         clicks,
+        linkClicks,
         leads,
         cpl,
         purchases,
@@ -9817,13 +10387,32 @@ app.get('/api/meta/adaccounts', async (_req, res) => {
 app.get('/api/meta/insights', async (req, res) => {
     try {
         const periodPreset = String(req.query.period || 'TODAY').toUpperCase();
-        const metaPreset = META_PERIOD_PRESET_MAP[periodPreset] || 'today';
+        const sinceParam = String(req.query.since || '').trim();
+        const untilParam = String(req.query.until || '').trim();
         const forceRefresh = req.query.force === '1' || req.query.force === 'true';
         const now = Date.now();
 
-        const cached = metaInsightsCache.get(periodPreset);
+        const hasExplicitRange = /^\d{4}-\d{2}-\d{2}$/.test(sinceParam) && /^\d{4}-\d{2}-\d{2}$/.test(untilParam);
+        let timeRangeObj = null;
+        if (hasExplicitRange) {
+            timeRangeObj = sinceParam <= untilParam
+                ? { since: sinceParam, until: untilParam }
+                : { since: untilParam, until: sinceParam };
+        } else if (periodPreset === 'LAST_7D_TODAY' || periodPreset === 'CUSTOM' || periodPreset === 'THIS_MONTH' || periodPreset === 'LAST_MONTH') {
+            const resolved = resolveBackendPeriodRange(periodPreset, sinceParam, untilParam);
+            if (resolved.since && resolved.until) {
+                timeRangeObj = { since: resolved.since, until: resolved.until };
+            }
+        }
+
+        const metaPreset = META_PERIOD_PRESET_MAP[periodPreset] || 'today';
+        const cacheKey = timeRangeObj
+            ? `${periodPreset}:${timeRangeObj.since}:${timeRangeObj.until}`
+            : periodPreset;
+
+        const cached = metaInsightsCache.get(cacheKey);
         if (!forceRefresh && cached && now - cached.timestamp < 20000) {
-            return res.json({ success: true, period: periodPreset, accountsInsights: cached.data, cached: true });
+            return res.json({ success: true, period: periodPreset, timeRange: timeRangeObj, accountsInsights: cached.data, cached: true });
         }
 
         const token = process.env.META_ACCESS_TOKEN || 'EAAUO1JVtzLgBS9gj3E8dtMiX2KkICYQyjZAUuy0SJJmzWPZCZABlSDFUllmoDfB5h1lt7xHJ3ifoY5jOMuLRKG9Bkq7Ulw9V3vOG3PgXEWqZByjMrv1ZCozA2hnjKCWyjlcHAsm4hxzFZCptbgtD3WbzZBxzg8ZBWncHbjBVjOdRON9xfxhX9EoYMQj0Yf7XbG3FDQZDZD';
@@ -9834,7 +10423,7 @@ app.get('/api/meta/insights', async (req, res) => {
         }
 
         const accountsInsights = {};
-        const insightFields = 'campaign_id,campaign_name,objective,spend,cpm,ctr,cpc,impressions,clicks,actions,action_values,cost_per_action_type,purchase_roas';
+        const insightFields = 'campaign_id,campaign_name,objective,spend,cpm,ctr,cpc,impressions,clicks,inline_link_clicks,actions,action_values,cost_per_action_type,purchase_roas';
         const campaignFields = 'id,name,status,effective_status,objective,daily_budget,lifetime_budget,adsets.limit(50){id,status,effective_status,daily_budget,lifetime_budget}';
 
         await Promise.allSettled(
@@ -9842,7 +10431,10 @@ app.get('/api/meta/insights', async (req, res) => {
                 const cleanId = acc.account_id || (acc.id ? acc.id.replace('act_', '') : '');
                 const accCurrency = acc.currency || 'BRL';
                 const currencyOffset = getMetaCurrencyOffset(accCurrency);
-                const insightsUrl = `https://graph.facebook.com/v21.0/act_${cleanId}/insights?level=campaign&fields=${insightFields}&date_preset=${metaPreset}&limit=100&access_token=${token}`;
+                const timeParam = timeRangeObj
+                    ? `time_range=${encodeURIComponent(JSON.stringify(timeRangeObj))}`
+                    : `date_preset=${metaPreset}`;
+                const insightsUrl = `https://graph.facebook.com/v21.0/act_${cleanId}/insights?level=campaign&fields=${insightFields}&${timeParam}&limit=100&access_token=${token}`;
                 const campaignsUrl = `https://graph.facebook.com/v21.0/act_${cleanId}/campaigns?fields=${campaignFields}&limit=100&access_token=${token}`;
                 try {
                     const [insRes, campRes] = await Promise.allSettled([
@@ -9886,8 +10478,11 @@ app.get('/api/meta/insights', async (req, res) => {
                             cpm: 0,
                             ctr: 0,
                             cpc: 0,
+                            linkCtr: 0,
+                            linkCpc: 0,
                             impressions: 0,
                             clicks: 0,
+                            linkClicks: 0,
                             leads: 0,
                             cpl: 0,
                             purchases: 0,
@@ -9933,11 +10528,12 @@ app.get('/api/meta/insights', async (req, res) => {
                         return Number(b.daily_budget || b.adsets_daily_budget || 0) - Number(a.daily_budget || a.adsets_daily_budget || 0);
                     });
 
-                    let spend = 0, impressions = 0, clicks = 0, leads = 0, purchases = 0, revenue = 0;
+                    let spend = 0, impressions = 0, clicks = 0, linkClicks = 0, leads = 0, purchases = 0, revenue = 0;
                     campaigns.forEach(c => {
                         spend += c.spend;
                         impressions += c.impressions;
                         clicks += c.clicks;
+                        linkClicks += Number(c.linkClicks || 0);
                         leads += c.leads;
                         purchases += c.purchases;
                         revenue += c.revenue;
@@ -9945,6 +10541,8 @@ app.get('/api/meta/insights', async (req, res) => {
                     const cpm = impressions > 0 ? spend / (impressions / 1000) : 0;
                     const ctr = impressions > 0 ? (clicks / impressions) * 100 : 0;
                     const cpc = clicks > 0 ? spend / clicks : 0;
+                    const linkCtr = impressions > 0 ? (linkClicks / impressions) * 100 : 0;
+                    const linkCpc = linkClicks > 0 ? spend / linkClicks : 0;
                     const cpl = leads > 0 ? spend / leads : 0;
                     const roas = spend > 0 && revenue > 0 ? revenue / spend : 0;
 
@@ -9954,8 +10552,11 @@ app.get('/api/meta/insights', async (req, res) => {
                             cpm: +cpm.toFixed(2),
                             ctr: +ctr.toFixed(2),
                             cpc: +cpc.toFixed(2),
+                            linkCtr: +linkCtr.toFixed(2),
+                            linkCpc: +linkCpc.toFixed(2),
                             impressions,
                             clicks,
+                            linkClicks,
                             leads,
                             cpl: +cpl.toFixed(2),
                             purchases,
@@ -9968,91 +10569,147 @@ app.get('/api/meta/insights', async (req, res) => {
                     };
                 } catch (e) {
                     accountsInsights[cleanId] = {
-                        metrics: { spend: 0, cpm: 0, ctr: 0, cpc: 0, impressions: 0, clicks: 0, leads: 0, cpl: 0, purchases: 0, revenue: 0, roas: 0, currency: accCurrency, currency_offset: currencyOffset },
+                        metrics: { spend: 0, cpm: 0, ctr: 0, cpc: 0, linkCtr: 0, linkCpc: 0, impressions: 0, clicks: 0, linkClicks: 0, leads: 0, cpl: 0, purchases: 0, revenue: 0, roas: 0, currency: accCurrency, currency_offset: currencyOffset },
                         campaigns: []
                     };
                 }
             })
         );
 
-        metaInsightsCache.set(periodPreset, { timestamp: now, data: accountsInsights });
-        res.json({ success: true, period: periodPreset, accountsInsights });
+        metaInsightsCache.set(cacheKey, { timestamp: now, data: accountsInsights });
+        res.json({ success: true, period: periodPreset, timeRange: timeRangeObj, accountsInsights });
     } catch (err) {
         console.error('[API Proxy Meta Insights Error]:', err?.message);
         res.status(500).json({ success: false, error: err?.message });
     }
 });
 
-app.get('/api/meta/billing', async (_req, res) => {
+app.get('/api/meta/billing', async (req, res) => {
     try {
         const now = Date.now();
-        if (metaBillingCache.data.length > 0 && now - metaBillingCache.timestamp < 30000) {
-            return res.json({ success: true, charges: metaBillingCache.data, totals: metaBillingCache.totals, cached: true });
-        }
+        const forceRefresh = req.query.force === '1' || req.query.force === 'true';
+        const sinceParam = String(req.query.since || '').trim();
+        const untilParam = String(req.query.until || '').trim();
+        const hasDateFilter = /^\d{4}-\d{2}-\d{2}$/.test(sinceParam) || /^\d{4}-\d{2}-\d{2}$/.test(untilParam);
+        const sinceDate = /^\d{4}-\d{2}-\d{2}$/.test(sinceParam) ? sinceParam : '';
+        const untilDate = /^\d{4}-\d{2}-\d{2}$/.test(untilParam) ? untilParam : '';
 
-        const token = process.env.META_ACCESS_TOKEN || 'EAAUO1JVtzLgBS9gj3E8dtMiX2KkICYQyjZAUuy0SJJmzWPZCZABlSDFUllmoDfB5h1lt7xHJ3ifoY5jOMuLRKG9Bkq7Ulw9V3vOG3PgXEWqZByjMrv1ZCozA2hnjKCWyjlcHAsm4hxzFZCptbgtD3WbzZBxzg8ZBWncHbjBVjOdRON9xfxhX9EoYMQj0Yf7XbG3FDQZDZD';
-        let accounts = metaAccountsCache.data;
-        if (!accounts || accounts.length === 0) {
-            accounts = await fetchMetaAccountsFromApi();
-            if (accounts.length > 0) metaAccountsCache = { timestamp: now, data: accounts };
-        }
+        let baseCharges = metaBillingCache.data || [];
+        let baseTotals = metaBillingCache.totals || {};
+        let usedCache = false;
 
-        const allCharges = [];
-        let totalPendingBalanceCents = 0;
+        if (!forceRefresh && baseCharges.length > 0 && now - metaBillingCache.timestamp < 30000) {
+            usedCache = true;
+        } else {
+            const token = process.env.META_ACCESS_TOKEN || 'EAAUO1JVtzLgBS9gj3E8dtMiX2KkICYQyjZAUuy0SJJmzWPZCZABlSDFUllmoDfB5h1lt7xHJ3ifoY5jOMuLRKG9Bkq7Ulw9V3vOG3PgXEWqZByjMrv1ZCozA2hnjKCWyjlcHAsm4hxzFZCptbgtD3WbzZBxzg8ZBWncHbjBVjOdRON9xfxhX9EoYMQj0Yf7XbG3FDQZDZD';
+            let accounts = metaAccountsCache.data;
+            if (forceRefresh || !accounts || accounts.length === 0) {
+                accounts = await fetchMetaAccountsFromApi();
+                if (accounts.length > 0) metaAccountsCache = { timestamp: now, data: accounts };
+            }
 
-        accounts.forEach(acc => {
-            const bal = parseInt(acc.balance || 0, 10);
-            if (bal > 0) totalPendingBalanceCents += bal;
-        });
+            const chargeMap = new Map();
+            let totalPendingBalanceCents = 0;
 
-        await Promise.allSettled(
-            accounts.map(async (acc) => {
-                const rawId = acc.account_id || (acc.id ? acc.id.replace('act_', '') : '');
-                const url = `https://graph.facebook.com/v21.0/act_${rawId}/activities?fields=actor_name,event_time,event_type,extra_data,translated_event_type&limit=20&access_token=${token}`;
-                try {
-                    const r = await fetch(url, { signal: AbortSignal.timeout(6000) });
-                    const data = await r.json();
-                    if (data.data && Array.isArray(data.data)) {
-                        data.data.forEach(ev => {
-                            if (ev.event_type === 'ad_account_billing_charge') {
-                                let extra = ev.extra_data;
-                                if (typeof extra === 'string') {
-                                    try { extra = JSON.parse(extra); } catch (e) {}
-                                }
-                                const cardStr = acc.funding_source_details?.display_string || 'Mastercard *2017';
-                                allCharges.push({
-                                    accountId: rawId,
-                                    accountName: acc.name,
-                                    eventTime: ev.event_time,
-                                    currency: extra?.currency || 'BRL',
-                                    rawValue: extra?.new_value || 0,
-                                    transactionId: extra?.transaction_id || '',
-                                    card: cardStr,
+            accounts.forEach(acc => {
+                const bal = parseInt(acc.balance || 0, 10);
+                if (bal > 0) totalPendingBalanceCents += bal;
+            });
+
+            await Promise.allSettled(
+                accounts.map(async (acc) => {
+                    const rawId = acc.account_id || (acc.id ? acc.id.replace('act_', '') : '');
+                    let nextUrl = `https://graph.facebook.com/v21.0/act_${rawId}/activities?fields=actor_name,event_time,event_type,extra_data,translated_event_type&limit=100&access_token=${token}`;
+                    let pageCount = 0;
+                    try {
+                        while (nextUrl && pageCount < 5) {
+                            pageCount++;
+                            const r = await fetch(nextUrl, { signal: AbortSignal.timeout(8000) });
+                            const data = await r.json();
+                            if (data?.data && Array.isArray(data.data)) {
+                                data.data.forEach(ev => {
+                                    if (ev.event_type === 'ad_account_billing_charge') {
+                                        let extra = ev.extra_data;
+                                        if (typeof extra === 'string') {
+                                            try { extra = JSON.parse(extra); } catch (e) {}
+                                        }
+                                        const rawValue = Number(extra?.new_value || 0);
+                                        const txId = String(extra?.transaction_id || '').trim();
+                                        const dedupKey = txId || `${rawId}_${ev.event_time}_${rawValue}`;
+                                        const cardStr = acc.funding_source_details?.display_string || 'Cartão Meta cadastrado';
+                                        const netReal = +(rawValue / 100).toFixed(2);
+                                        const totalDebitedReal = +(netReal > 0 ? (netReal / (1 - 0.122)) : 0).toFixed(2);
+                                        const taxReal = +(Math.max(0, totalDebitedReal - netReal)).toFixed(2);
+                                        chargeMap.set(dedupKey, {
+                                            accountId: rawId,
+                                            accountName: acc.name,
+                                            eventTime: ev.event_time,
+                                            currency: extra?.currency || 'BRL',
+                                            rawValue,
+                                            netReal,
+                                            taxReal,
+                                            totalDebitedReal,
+                                            transactionId: txId,
+                                            card: cardStr,
+                                        });
+                                    }
                                 });
                             }
-                        });
-                    }
-                } catch (e) {}
-            })
-        );
+                            nextUrl = data?.paging?.next || null;
+                        }
+                    } catch (e) {}
+                })
+            );
 
-        allCharges.sort((a, b) => new Date(b.eventTime) - new Date(a.eventTime));
+            baseCharges = Array.from(chargeMap.values()).sort((a, b) => new Date(b.eventTime) - new Date(a.eventTime));
+            const totalPendingReal = +(totalPendingBalanceCents / 100).toFixed(2);
+            const totalPendingWithTaxReal = +(totalPendingReal > 0 ? (totalPendingReal / (1 - 0.122)) : 0).toFixed(2);
 
-        let totalDebitedReal = 0;
-        allCharges.forEach(charge => {
-            const netValue = (charge.rawValue || 0) / 100;
-            const debitedValue = netValue > 0 ? (netValue / (1 - 0.122)) : 0;
-            totalDebitedReal += debitedValue;
-        });
+            let totalNetReal = 0;
+            let totalTaxesReal = 0;
+            let totalDebitedReal = 0;
+            baseCharges.forEach(charge => {
+                totalNetReal += Number(charge.netReal || 0);
+                totalTaxesReal += Number(charge.taxReal || 0);
+                totalDebitedReal += Number(charge.totalDebitedReal || 0);
+            });
 
-        const totals = {
-            totalDebitedReal,
-            totalPendingReal: totalPendingBalanceCents / 100,
-            count: allCharges.length
-        };
+            baseTotals = {
+                totalNetReal: +totalNetReal.toFixed(2),
+                totalTaxesReal: +totalTaxesReal.toFixed(2),
+                totalDebitedReal: +totalDebitedReal.toFixed(2),
+                totalPendingReal,
+                totalPendingWithTaxReal,
+                count: baseCharges.length
+            };
 
-        metaBillingCache = { timestamp: now, data: allCharges, totals };
-        res.json({ success: true, charges: allCharges, totals });
+            metaBillingCache = { timestamp: now, data: baseCharges, totals: baseTotals };
+        }
+
+        const charges = hasDateFilter
+            ? baseCharges.filter(c => isBrtInRange(c.eventTime, sinceDate, untilDate))
+            : baseCharges;
+
+        let filteredTotals = baseTotals;
+        if (hasDateFilter) {
+            let fNet = 0;
+            let fTax = 0;
+            let fDebited = 0;
+            charges.forEach(charge => {
+                fNet += Number(charge.netReal || 0);
+                fTax += Number(charge.taxReal || 0);
+                fDebited += Number(charge.totalDebitedReal || 0);
+            });
+            filteredTotals = {
+                ...baseTotals,
+                totalNetReal: +fNet.toFixed(2),
+                totalTaxesReal: +fTax.toFixed(2),
+                totalDebitedReal: +fDebited.toFixed(2),
+                count: charges.length
+            };
+        }
+
+        res.json({ success: true, charges, totals: filteredTotals, ...(usedCache ? { cached: true } : {}) });
     } catch (err) {
         console.error('[API Proxy Meta Billing Error]:', err?.message);
         res.status(500).json({ success: false, error: err?.message });
