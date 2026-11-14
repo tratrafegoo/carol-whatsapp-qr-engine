@@ -53,12 +53,12 @@ export const FUNNELS_CATALOG = [
     },
     {
         id: 'funil4',
-        name: 'Jornada da Bíblia (Pastor Guilherme)',
+        name: 'Jornada da Bíblia (Guilherme)',
         trigger: 'teste4',
         expectedAmount: 20.00,
         beneficiary: 'Pastor Guilherme',
         whatsappPhone: '551152291989',
-        defaultMessage: 'Olá Pastor Guilherme! Gostaria de receber a Jornada da Bíblia [ref_{{campaign.id}}_{{ad.id}}]'
+        defaultMessage: 'Olá Guilherme! Gostaria de receber a Jornada da Bíblia [ref_{{campaign.id}}_{{ad.id}}]'
     },
     {
         id: 'funil5',
@@ -255,6 +255,7 @@ function extractAdContext(msg, textContent) {
         if (ext.mediaUrl || ext.thumbnailUrl) adData.mediaUrl = ext.mediaUrl || ext.thumbnailUrl;
         if (ext.sourceId && /^\d{6,}$/.test(String(ext.sourceId).trim())) {
             adData.adId = String(ext.sourceId).trim();
+            adData.sourceIdDirect = true;
         }
         if (ext.ctwaClid) {
             adData.ctwaClid = String(ext.ctwaClid).trim();
@@ -283,21 +284,33 @@ function extractAdContext(msg, textContent) {
         adData.ctwaClid = String(contextInfo.ctwaClid).trim();
     }
 
-    // Identificação de tags inseridas no texto de mensagem (Ex: [ref_1202084910284_1202084910285], [ref:1202084910284], [act_1969034740425762])
+    // Identificação de tags/códigos únicos inseridos na mensagem inicial
+    // Suporta: [ref_CAMP_AD], [ref_CAMP_ADSET_AD], [ref_AD], [#AD_ID], [#p3a1-07], [act_123456]
     if (textContent) {
-        const refMatch = textContent.match(/\[(?:ref:?_?|Ref:?\s*|ref\s+)?([0-9a-zA-Z_\-:]+)\]/i);
+        const refMatch = textContent.match(/\[(?:#\s*|ref:?_?|Ref:?\s*|ref\s+)?([#0-9a-zA-Z_\-.:]+)\]/i);
         if (refMatch && refMatch[1]) {
             const rawRef = refMatch[1].trim();
+            const cleanCode = rawRef.replace(/^#+/, '').trim();
             adData.rawTag = rawRef;
-            const accMatch = rawRef.match(/^(?:act_|acc:|conta:)(\d{6,})$/i);
-            const parts = rawRef.split('_');
+            const accMatch = cleanCode.match(/^(?:act_|acc:|conta:)(\d{6,})$/i);
+            const parts = cleanCode.split('_');
             if (accMatch && accMatch[1]) {
                 adData.accountId = `act_${accMatch[1]}`;
-            } else if (parts.length >= 2 && /^\d+$/.test(parts[0]) && /^\d+$/.test(parts[1])) {
+            } else if (parts.length >= 3 && /^\d+$/.test(parts[0]) && /^\d+$/.test(parts[1]) && /^\d+$/.test(parts[2])) {
+                adData.campaignId = parts[0];
+                adData.adsetId = parts[1];
+                adData.adId = parts[2];
+                adData.isCtwa = true;
+            } else if (parts.length === 2 && /^\d+$/.test(parts[0]) && /^\d+$/.test(parts[1])) {
                 adData.campaignId = parts[0];
                 adData.adId = parts[1];
-            } else if (/^\d+$/.test(rawRef)) {
-                adData.campaignId = rawRef;
+                adData.isCtwa = true;
+            } else if (/^\d{6,}$/.test(cleanCode)) {
+                adData.unknownNumericTag = cleanCode;
+                adData.isCtwa = true;
+            } else if (cleanCode && !/^\{\{/.test(cleanCode)) {
+                adData.welcomeCode = cleanCode.toLowerCase();
+                adData.isCtwa = true;
             }
         }
     }
@@ -307,7 +320,7 @@ function extractAdContext(msg, textContent) {
 
 const metaAdLookupCache = new Map();
 const metaHourlyDeliveryCache = new Map();
-let metaCreativeIndexCache = { timestamp: 0, byIgUrl: new Map(), byVideoId: new Map() };
+let metaCreativeIndexCache = { timestamp: 0, lastForceRefreshAt: 0, byIgUrl: new Map(), byVideoId: new Map(), byWelcomeCode: new Map(), accountsById: new Map() };
 let metaCreativeIndexPromise = null;
 
 function getBrtHour(dateInput) {
@@ -441,15 +454,22 @@ async function pickAttributionFromMatches(matches = [], adData = {}, extra = {},
         const uniqueCampaigns = [...new Set(pool.map(m => m.campaignId).filter(Boolean))];
         const uniqueAdsets = [...new Set(pool.map(m => m.adsetId).filter(Boolean))];
         const firstWithCamp = pool.find(m => m.campaignName) || pool[0];
+        const firstWithAdset = pool.find(m => m.adsetName) || pool[0];
         return {
             ...adData,
             ...extra,
-            ...(uniqueBaseAccounts.length === 1 ? { accountId: uniqueBaseAccounts[0] } : {}),
+            ...(uniqueBaseAccounts.length === 1 ? {
+                accountId: uniqueBaseAccounts[0],
+                ...(firstWithCamp?.accountName ? { accountName: firstWithCamp.accountName } : {}),
+            } : {}),
             ...(uniqueCampaigns.length === 1 ? {
                 campaignId: uniqueCampaigns[0],
                 campaignName: firstWithCamp?.campaignName || undefined
             } : {}),
-            ...(uniqueAdsets.length === 1 ? { adsetId: uniqueAdsets[0] } : {}),
+            ...(uniqueAdsets.length === 1 ? {
+                adsetId: uniqueAdsets[0],
+                adsetName: firstWithAdset?.adsetName || undefined,
+            } : {}),
             creativeName: pool[0]?.adName || undefined,
             attributionMethod: 'sourceUrl_single_account',
         };
@@ -515,6 +535,8 @@ async function pickAttributionFromMatches(matches = [], adData = {}, extra = {},
                     const picked = winnerList.length === 1
                         ? winnerList[0]
                         : (winnerList.find(m => m.effectiveStatus === 'ACTIVE') || winnerList[0]);
+                    const firstWithCamp = winnerList.find(m => m.campaignName) || picked;
+                    const firstWithAdset = winnerList.find(m => m.adsetName) || picked;
                     return {
                         ...adData,
                         ...extra,
@@ -524,11 +546,15 @@ async function pickAttributionFromMatches(matches = [], adData = {}, extra = {},
                             effectiveStatus: picked.effectiveStatus,
                         } : {}),
                         accountId: winnerAccounts[0],
+                        ...(firstWithCamp?.accountName ? { accountName: firstWithCamp.accountName } : {}),
                         ...(uniqueCampaigns.length === 1 ? {
                             campaignId: uniqueCampaigns[0],
-                            campaignName: picked?.campaignName || undefined,
+                            campaignName: firstWithCamp?.campaignName || undefined,
                         } : {}),
-                        ...(uniqueAdsets.length === 1 ? { adsetId: uniqueAdsets[0] } : {}),
+                        ...(uniqueAdsets.length === 1 ? {
+                            adsetId: uniqueAdsets[0],
+                            adsetName: firstWithAdset?.adsetName || undefined,
+                        } : {}),
                         attributionMethod: msgMatches.length > 0 ? 'sourceUrl_hourly_msg' : 'sourceUrl_hourly_imp',
                     };
                 }
@@ -557,11 +583,15 @@ async function pickAttributionFromMatches(matches = [], adData = {}, extra = {},
                 ...extra,
                 ...(activeMatches.length === 1 ? picked : {
                     accountId: activeAccounts[0],
+                    ...(picked?.accountName ? { accountName: picked.accountName } : {}),
                     ...(uniqueCampaigns.length === 1 ? {
                         campaignId: uniqueCampaigns[0],
                         campaignName: picked?.campaignName || undefined,
                     } : {}),
-                    ...(uniqueAdsets.length === 1 ? { adsetId: uniqueAdsets[0] } : {}),
+                    ...(uniqueAdsets.length === 1 ? {
+                        adsetId: uniqueAdsets[0],
+                        adsetName: picked?.adsetName || undefined,
+                    } : {}),
                     creativeName: picked?.adName || undefined,
                 }),
                 attributionMethod: 'sourceUrl_live_active',
@@ -578,6 +608,42 @@ async function pickAttributionFromMatches(matches = [], adData = {}, extra = {},
     };
 }
 
+function extractWelcomeCodesFromCreative(creative = {}) {
+    const codes = new Set();
+    const spec = creative?.object_story_spec || {};
+    const rawWelcomeSources = [
+        spec.video_data?.page_welcome_message,
+        spec.link_data?.page_welcome_message,
+    ];
+    for (const rawSrc of rawWelcomeSources) {
+        if (!rawSrc) continue;
+        let textToScan = '';
+        if (typeof rawSrc === 'string') {
+            try {
+                const parsed = JSON.parse(rawSrc);
+                textToScan = String(
+                    parsed?.text_format?.message?.autofill_message?.content ||
+                    parsed?.autofill_message?.content ||
+                    rawSrc
+                );
+            } catch {
+                textToScan = rawSrc;
+            }
+        } else if (typeof rawSrc === 'object') {
+            textToScan = String(rawSrc?.text_format?.message?.autofill_message?.content || rawSrc?.autofill_message?.content || '');
+        }
+        if (!textToScan) continue;
+        const tagMatches = textToScan.matchAll(/\[(?:#\s*|ref:?_?|Ref:?\s*|ref\s+)?([#0-9a-zA-Z_\-.:]+)\]/gi);
+        for (const m of tagMatches) {
+            const cleaned = String(m[1] || '').replace(/^#+/, '').trim().toLowerCase();
+            if (cleaned && !cleaned.includes('{{')) {
+                codes.add(cleaned);
+            }
+        }
+    }
+    return Array.from(codes);
+}
+
 async function fetchAccountAdsPaginated(accId, token) {
     const allAds = [];
     const allowedStatuses = [
@@ -587,7 +653,7 @@ async function fetchAccountAdsPaginated(accId, token) {
     ];
     let nextUrl = `https://graph.facebook.com/v21.0/${accId}/ads`;
     let params = {
-        fields: 'id,name,effective_status,campaign_id,campaign{id,name},adset_id,account_id,creative{id,video_id,instagram_permalink_url,object_story_spec{video_data{video_id}},asset_feed_spec{videos{video_id}}}',
+        fields: 'id,name,effective_status,campaign_id,campaign{id,name},adset_id,adset{id,name},account_id,creative{id,video_id,instagram_permalink_url,object_story_spec{video_data{video_id,page_welcome_message},link_data{page_welcome_message}},asset_feed_spec{videos{video_id}}}',
         filtering: JSON.stringify([{ field: 'effective_status', operator: 'IN', value: allowedStatuses }]),
         limit: 100,
         access_token: token
@@ -607,43 +673,66 @@ async function getMetaCreativeAttributionIndex(forceRefresh = false) {
     if (!forceRefresh && metaCreativeIndexCache.timestamp > 0 && now - metaCreativeIndexCache.timestamp < 10 * 60 * 1000) {
         return metaCreativeIndexCache;
     }
+    if (forceRefresh && metaCreativeIndexCache.lastForceRefreshAt > 0 && now - metaCreativeIndexCache.lastForceRefreshAt < 20 * 1000 && metaCreativeIndexCache.timestamp > 0) {
+        return metaCreativeIndexCache;
+    }
     if (metaCreativeIndexPromise) return metaCreativeIndexPromise;
 
     const token = getMetaAccessToken(false);
     if (!token) return metaCreativeIndexCache;
 
+    if (forceRefresh) metaCreativeIndexCache.lastForceRefreshAt = now;
+
     metaCreativeIndexPromise = (async () => {
         try {
             const bmId = process.env.META_BUSINESS_ID || '2124779294600156';
             const accountsRes = await Promise.allSettled([
-                axios.get(`https://graph.facebook.com/v21.0/${bmId}/client_ad_accounts?fields=id,account_id&limit=100&access_token=${token}`, { timeout: 6000 }),
-                axios.get(`https://graph.facebook.com/v21.0/${bmId}/owned_ad_accounts?fields=id,account_id&limit=100&access_token=${token}`, { timeout: 6000 })
+                axios.get(`https://graph.facebook.com/v21.0/${bmId}/client_ad_accounts?fields=id,account_id,name&limit=100&access_token=${token}`, { timeout: 6000 }),
+                axios.get(`https://graph.facebook.com/v21.0/${bmId}/owned_ad_accounts?fields=id,account_id,name&limit=100&access_token=${token}`, { timeout: 6000 })
             ]);
-            const accountIds = new Set();
+            const accountsById = new Map();
+            let oauthExpiredError = '';
             for (const r of accountsRes) {
                 if (r.status === 'fulfilled') {
                     for (const acc of (r.value.data?.data || [])) {
-                        accountIds.add(acc.id || `act_${acc.account_id}`);
+                        const accId = acc.id || `act_${acc.account_id}`;
+                        accountsById.set(accId, acc.name || accId);
                     }
+                } else if (r.reason?.response?.data?.error?.code === 190) {
+                    oauthExpiredError = r.reason.response.data.error.message || 'Access token expirado (190)';
                 }
+            }
+            if (oauthExpiredError) {
+                sendNtfyEmergencyAlert({
+                    title: '🚨 ALERTA X1: TOKEN META ADS EXPIRADO!',
+                    message: `⚠️ O Access Token da Meta retornou erro 190 (expirado/inválido):\n${oauthExpiredError}\nAtualize o token no MetaHub e nas variáveis do Render!`,
+                    priority: 'max',
+                    tags: 'rotating_light,key,warning',
+                    alertKey: 'meta_token_expired',
+                    cooldownSec: 3600
+                }).catch(() => {});
             }
 
             const byIgUrl = new Map();
             const byVideoId = new Map();
+            const byWelcomeCode = new Map();
             const adsResults = await Promise.allSettled(
-                Array.from(accountIds).map(accId => fetchAccountAdsPaginated(accId, token))
+                Array.from(accountsById.keys()).map(accId => fetchAccountAdsPaginated(accId, token))
             );
 
             for (const res of adsResults) {
                 if (res.status !== 'fulfilled') continue;
                 for (const ad of (res.value || [])) {
+                    const accountId = ad.account_id ? `act_${String(ad.account_id).replace(/^act_/, '')}` : '';
                     const info = {
                         adId: ad.id,
                         adName: ad.name || '',
                         campaignId: ad.campaign_id || ad.campaign?.id || '',
                         campaignName: ad.campaign?.name || '',
-                        adsetId: ad.adset_id || '',
-                        accountId: ad.account_id ? `act_${String(ad.account_id).replace(/^act_/, '')}` : '',
+                        adsetId: ad.adset_id || ad.adset?.id || '',
+                        adsetName: ad.adset?.name || '',
+                        accountId,
+                        accountName: accountsById.get(accountId) || undefined,
                         effectiveStatus: ad.effective_status || ''
                     };
                     const igKey = normalizeInstagramPermalink(ad.creative?.instagram_permalink_url);
@@ -657,11 +746,23 @@ async function getMetaCreativeAttributionIndex(forceRefresh = false) {
                         list.push(info);
                         byVideoId.set(vid, list);
                     }
+                    for (const code of extractWelcomeCodesFromCreative(ad.creative)) {
+                        const list = byWelcomeCode.get(code) || [];
+                        list.push(info);
+                        byWelcomeCode.set(code, list);
+                    }
                 }
             }
 
-            metaCreativeIndexCache = { timestamp: Date.now(), byIgUrl, byVideoId };
-            console.log(`[Atribuição Meta Graph] 📊 Índice atualizado: ${accountIds.size} contas, ${byIgUrl.size} links IG, ${byVideoId.size} vídeos.`);
+            metaCreativeIndexCache = {
+                timestamp: Date.now(),
+                lastForceRefreshAt: metaCreativeIndexCache.lastForceRefreshAt || 0,
+                byIgUrl,
+                byVideoId,
+                byWelcomeCode,
+                accountsById,
+            };
+            console.log(`[Atribuição Meta Graph] 📊 Índice atualizado: ${accountsById.size} contas, ${byIgUrl.size} links IG, ${byVideoId.size} vídeos, ${byWelcomeCode.size} códigos.`);
         } catch (err) {
             console.warn('[Atribuição Meta Graph] Aviso ao indexar criativos:', err?.message);
         } finally {
@@ -673,74 +774,143 @@ async function getMetaCreativeAttributionIndex(forceRefresh = false) {
     return metaCreativeIndexPromise;
 }
 
+async function fetchMetaAdDetails(adId, token) {
+    const cacheKey = `ad:${adId}`;
+    let cached = metaAdLookupCache.get(cacheKey);
+    if (!cached || Date.now() - cached.ts > 6 * 3600 * 1000) {
+        const res = await axios.get(`https://graph.facebook.com/v21.0/${adId}`, {
+            params: {
+                fields: 'id,name,campaign_id,campaign{id,name},adset_id,adset{id,name},account_id',
+                access_token: token
+            },
+            timeout: 5000
+        });
+        const d = res.data || {};
+        const accId = d.account_id ? `act_${String(d.account_id).replace(/^act_/, '')}` : undefined;
+        cached = {
+            ts: Date.now(),
+            data: {
+                adId: d.id || adId,
+                adName: d.name || '',
+                campaignId: d.campaign_id || d.campaign?.id || undefined,
+                campaignName: d.campaign?.name || undefined,
+                adsetId: d.adset_id || d.adset?.id || undefined,
+                adsetName: d.adset?.name || undefined,
+                accountId: accId,
+                accountName: (accId && metaCreativeIndexCache.accountsById?.get(accId)) || undefined,
+            }
+        };
+        metaAdLookupCache.set(cacheKey, cached);
+    }
+    return cached.data;
+}
+
+async function fetchMetaCampaignDetails(campaignId, token) {
+    const cacheKey = `camp:${campaignId}`;
+    let cached = metaAdLookupCache.get(cacheKey);
+    if (!cached || Date.now() - cached.ts > 6 * 3600 * 1000) {
+        const res = await axios.get(`https://graph.facebook.com/v21.0/${campaignId}`, {
+            params: { fields: 'id,name,account_id', access_token: token },
+            timeout: 5000
+        });
+        const d = res.data || {};
+        const accId = d.account_id ? `act_${String(d.account_id).replace(/^act_/, '')}` : undefined;
+        cached = {
+            ts: Date.now(),
+            data: {
+                campaignId: d.id || campaignId,
+                campaignName: d.name || undefined,
+                accountId: accId,
+                accountName: (accId && metaCreativeIndexCache.accountsById?.get(accId)) || undefined,
+            }
+        };
+        metaAdLookupCache.set(cacheKey, cached);
+    }
+    return cached.data;
+}
+
 async function resolveMetaAdAttribution(adData, options = {}) {
     if (!adData || typeof adData !== 'object') return adData;
-    if (adData.campaignId && adData.accountId) return adData;
+    const isAlreadyComplete = Boolean(
+        adData.campaignId &&
+        adData.accountId &&
+        (!adData.adId || (adData.adsetId && adData.adsetName))
+    );
+    if (isAlreadyComplete) return adData;
 
     const token = getMetaAccessToken(false);
-    if (!token) return adData;
 
     try {
+        // 0) Código único discreto ([#...] / [ref_...]) mapeado no MetaHub ou lido direto da Graph API
+        if (adData.welcomeCode) {
+            const codeKey = String(adData.welcomeCode).replace(/^#+/, '').trim().toLowerCase();
+            const registered = store.metaAdCodeMap?.[codeKey];
+            if (registered && registered.accountId && registered.campaignId) {
+                return { ...adData, ...registered, attributionMethod: 'welcome_code_map' };
+            }
+            if (token) {
+                let index = await getMetaCreativeAttributionIndex();
+                let matches = index.byWelcomeCode?.get(codeKey) || [];
+                if (matches.length === 0) {
+                    index = await getMetaCreativeAttributionIndex(true);
+                    matches = index.byWelcomeCode?.get(codeKey) || [];
+                }
+                if (matches.length > 0) {
+                    const active = matches.filter(m => m.effectiveStatus === 'ACTIVE');
+                    const picked = (active.length === 1 ? active[0] : null) || (matches.length === 1 ? matches[0] : active[0] || matches[0]);
+                    return { ...adData, ...picked, attributionMethod: 'welcome_code_graph' };
+                }
+            }
+        }
+
+        if (!token) return adData;
+
+        // 0.5) Tag numérica única sem prefixo explícito: tenta resolver como Ad ID primeiro e depois como Campaign ID
+        if (adData.unknownNumericTag && !adData.adId && !adData.campaignId) {
+            const rawNum = String(adData.unknownNumericTag).trim();
+            try {
+                const asAd = await fetchMetaAdDetails(rawNum, token);
+                if (asAd && asAd.campaignId) {
+                    return { ...adData, ...asAd, attributionMethod: 'tag_ad_id' };
+                }
+            } catch {}
+            try {
+                const asCamp = await fetchMetaCampaignDetails(rawNum, token);
+                if (asCamp && asCamp.campaignId) {
+                    return { ...adData, ...asCamp, attributionMethod: 'tag_campaign_id' };
+                }
+            } catch {}
+        }
+
         // 1) Se já temos o adId exato (via externalAdReply.sourceId ou [ref_camp_ad]), consulta direto
         if (adData.adId && /^\d{6,}$/.test(String(adData.adId))) {
-            const cacheKey = `ad:${adData.adId}`;
-            let cached = metaAdLookupCache.get(cacheKey);
-            if (!cached || Date.now() - cached.ts > 6 * 3600 * 1000) {
-                const res = await axios.get(`https://graph.facebook.com/v21.0/${adData.adId}`, {
-                    params: {
-                        fields: 'id,name,campaign_id,campaign{id,name},adset_id,account_id',
-                        access_token: token
-                    },
-                    timeout: 5000
-                });
-                const d = res.data || {};
-                cached = {
-                    ts: Date.now(),
-                    data: {
-                        adId: d.id || adData.adId,
-                        adName: d.name || '',
-                        campaignId: d.campaign_id || d.campaign?.id || adData.campaignId || undefined,
-                        campaignName: d.campaign?.name || undefined,
-                        adsetId: d.adset_id || undefined,
-                        accountId: d.account_id ? `act_${String(d.account_id).replace(/^act_/, '')}` : undefined
-                    }
-                };
-                metaAdLookupCache.set(cacheKey, cached);
-            }
-            return { ...adData, ...cached.data };
+            const details = await fetchMetaAdDetails(String(adData.adId), token);
+            return {
+                ...adData,
+                ...details,
+                attributionMethod: adData.sourceIdDirect ? 'sourceId_direct' : (adData.attributionMethod || 'ad_id_lookup'),
+            };
         }
 
         // 2) Se temos apenas campaignId (via [ref_camp]), resolve accountId e campaignName
         if (adData.campaignId && !adData.accountId && /^\d{6,}$/.test(String(adData.campaignId))) {
-            const cacheKey = `camp:${adData.campaignId}`;
-            let cached = metaAdLookupCache.get(cacheKey);
-            if (!cached || Date.now() - cached.ts > 6 * 3600 * 1000) {
-                const res = await axios.get(`https://graph.facebook.com/v21.0/${adData.campaignId}`, {
-                    params: { fields: 'id,name,account_id', access_token: token },
-                    timeout: 5000
-                });
-                const d = res.data || {};
-                cached = {
-                    ts: Date.now(),
-                    data: {
-                        campaignId: d.id || adData.campaignId,
-                        campaignName: d.name || undefined,
-                        accountId: d.account_id ? `act_${String(d.account_id).replace(/^act_/, '')}` : undefined
-                    }
-                };
-                metaAdLookupCache.set(cacheKey, cached);
-            }
-            return { ...adData, ...cached.data };
+            const campDetails = await fetchMetaCampaignDetails(String(adData.campaignId), token);
+            return { ...adData, ...campDetails };
         }
 
-        // 3) Se temos sourceUrl (instagram.com/p/... ou fb.me/...), tenta resolver pelo índice da BM
+        // 3) Se temos sourceUrl (instagram.com/p/... ou fb.me/...), tenta resolver pelo índice da BM (com refresh se não achar no cache)
         if (adData.sourceUrl) {
             const srcUrl = String(adData.sourceUrl).trim();
-            const index = await getMetaCreativeAttributionIndex();
+            let index = await getMetaCreativeAttributionIndex();
 
             if (srcUrl.includes('instagram.com/')) {
                 const igKey = normalizeInstagramPermalink(srcUrl);
-                const resolved = await pickAttributionFromMatches(index.byIgUrl.get(igKey) || [], adData, {}, { ...options, token });
+                let igMatches = index.byIgUrl.get(igKey) || [];
+                if (igMatches.length === 0) {
+                    index = await getMetaCreativeAttributionIndex(true);
+                    igMatches = index.byIgUrl.get(igKey) || [];
+                }
+                const resolved = await pickAttributionFromMatches(igMatches, adData, {}, { ...options, token });
                 if (resolved) return resolved;
             } else if (/^https?:\/\/(fb\.me|www\.facebook\.com|facebook\.com|l\.facebook\.com)\//i.test(srcUrl)) {
                 let targetUrl = srcUrl;
@@ -763,8 +933,13 @@ async function resolveMetaAdAttribution(adData, options = {}) {
                     targetUrl.match(/\/(?:reel|videos|watch\/?\?v=)\/?(\d+)/i);
                 if (fbidMatch && fbidMatch[1]) {
                     const videoId = fbidMatch[1];
+                    let vidMatches = index.byVideoId.get(videoId) || [];
+                    if (vidMatches.length === 0) {
+                        index = await getMetaCreativeAttributionIndex(true);
+                        vidMatches = index.byVideoId.get(videoId) || [];
+                    }
                     const resolved = await pickAttributionFromMatches(
-                        index.byVideoId.get(videoId) || [],
+                        vidMatches,
                         adData,
                         { creativeVideoId: videoId },
                         { ...options, token }
@@ -974,14 +1149,32 @@ async function notifyFaceHubWebhook(transactionRecord) {
 }
 
 // ─── NOTIFICAÇÃO PUSH NO CELULAR (NTFY.SH) ───
+function formatAttributionForNtfy(record = {}) {
+    const accId = record.accountId ? `act_${String(record.accountId).replace(/^act_/, '')}` : '';
+    const cachedAccName = accId ? metaCreativeIndexCache.accountsById?.get(accId) : '';
+    const accLabel = record.accountName || cachedAccName || accId || '';
+    const campLabel = record.campaignName || record.campaignId || '';
+    const adsetLabel = record.adsetName || record.adsetId || '';
+    const adLabel = record.adName || record.adId || '';
+    const lines = [];
+    if (accLabel) lines.push(`🏢 Conta: ${accLabel}`);
+    if (campLabel) lines.push(`🎯 Campanha: ${campLabel}`);
+    if (adsetLabel) lines.push(`📂 Conjunto: ${adsetLabel}`);
+    if (adLabel) lines.push(`📢 Anúncio: ${adLabel}`);
+    if (lines.length === 0) lines.push(`🎯 Origem: Orgânico / Direto`);
+    return lines.join('\n');
+}
+
 async function sendNtfyNotification(transactionRecord) {
     const topic = process.env.NTFY_TOPIC || 'gui_vendas_sermoes';
     try {
+        const attrLines = formatAttributionForNtfy(transactionRecord);
         const bodyText = `💰 Nova Venda PIX Aprovada!\n` +
             `💵 Valor: R$ ${Number(transactionRecord.amount || 19.90).toFixed(2).replace('.', ',')}\n` +
             `👤 Lead: ${transactionRecord.pushName || 'Cliente'} (+${transactionRecord.userPhone})\n` +
-            `📖 Funil: ${transactionRecord.funnelName || 'Acervo de Sermões'}\n` +
-            `🎯 Campanha: ${transactionRecord.campaignId || 'Orgânico / Direto'}`;
+            `📖 Funil: ${transactionRecord.funnelName || 'Jornada da Bíblia'}\n` +
+            `${attrLines}\n` +
+            `📡 Meta CAPI: ${transactionRecord.capiStatus || 'PENDING'}`;
 
         await axios.post(`https://ntfy.sh/${topic}`, bodyText, {
             headers: {
@@ -1867,7 +2060,13 @@ function clampEarliestIso(...values) {
     return best || undefined;
 }
 
-function mergeJourneyRecord(target = {}, source = {}) {
+function mergeJourneyRecord(target = {}, source = {}, options = {}) {
+    const forceAttr = Boolean(options.overrideAttribution || source.overrideAttribution);
+    const pickAttr = (field) => {
+        if (source.clearAttribution) return source[field] || undefined;
+        if (forceAttr) return source[field] || target[field] || undefined;
+        return target[field] || source[field] || undefined;
+    };
     const merged = {
         ...target,
         botId: target.botId || source.botId || 'bot_whatsapp_principal',
@@ -1878,11 +2077,14 @@ function mergeJourneyRecord(target = {}, source = {}) {
         userName: (target.userName && target.userName !== 'Cliente') ? target.userName : (source.userName || target.userName || 'Cliente'),
         flowId: (target.flowId && target.flowId !== '__pending__') ? target.flowId : (source.flowId || target.flowId || ''),
         flowName: target.flowName || source.flowName || '',
-        accountId: target.accountId || source.accountId || undefined,
-        campaignId: target.campaignId || source.campaignId || undefined,
-        campaignName: target.campaignName || source.campaignName || undefined,
-        adId: target.adId || source.adId || undefined,
-        adName: target.adName || source.adName || undefined,
+        accountId: pickAttr('accountId'),
+        accountName: pickAttr('accountName'),
+        campaignId: pickAttr('campaignId'),
+        campaignName: pickAttr('campaignName'),
+        adsetId: pickAttr('adsetId'),
+        adsetName: pickAttr('adsetName'),
+        adId: pickAttr('adId'),
+        adName: pickAttr('adName'),
         isCtwa: Boolean(target.isCtwa || source.isCtwa),
         enteredAt: earliestIso(target.enteredAt, source.enteredAt),
         materialDeliveredAt: earliestIso(target.materialDeliveredAt, source.materialDeliveredAt),
@@ -1951,11 +2153,16 @@ function markLeadFunnelStage(botId = 'bot_whatsapp_principal', ctx = {}, stageNa
         flowId: flowId || (groupKey !== '__pending__' ? groupKey : undefined),
         flowName: flowName || undefined,
         accountId: extra.accountId || ctx.accountId || adInfo.accountId || undefined,
+        accountName: extra.accountName || ctx.accountName || adInfo.accountName || undefined,
         campaignId: extra.campaignId || ctx.campaignId || adInfo.campaignId || undefined,
         campaignName: extra.campaignName || ctx.campaignName || adInfo.campaignName || undefined,
+        adsetId: extra.adsetId || ctx.adsetId || adInfo.adsetId || undefined,
+        adsetName: extra.adsetName || ctx.adsetName || adInfo.adsetName || undefined,
         adId: extra.adId || ctx.adId || adInfo.adId || undefined,
         adName: extra.adName || ctx.adName || adInfo.adName || undefined,
         isCtwa: Boolean(ctx.isCtwa || adInfo.isCtwa || adInfo.ctwaClid || adInfo.sourceUrl || adInfo.sourceId),
+        ...(extra.overrideAttribution ? { overrideAttribution: true } : {}),
+        ...(extra.clearAttribution ? { clearAttribution: true } : {}),
     };
 
     if (stageName === 'enteredAt') patch.enteredAt = nowIso;
@@ -1967,7 +2174,7 @@ function markLeadFunnelStage(botId = 'bot_whatsapp_principal', ctx = {}, stageNa
         if (extra.paidAmount) patch.paidAmount = Number(extra.paidAmount);
     }
 
-    record = mergeJourneyRecord(record, patch);
+    record = mergeJourneyRecord(record, patch, { overrideAttribution: Boolean(extra.overrideAttribution) });
     store.funnelLeadJourneys[targetKey] = record;
 
     // Mantem espelho no objeto de sessao (garantido na persistencia do Cloud KV em userSessions)
@@ -1991,15 +2198,20 @@ function markLeadFunnelStage(botId = 'bot_whatsapp_principal', ctx = {}, stageNa
     return record;
 }
 
-function syncLeadJourneyAttribution(botId = 'bot_whatsapp_principal', ctx = {}, adData = {}) {
+function syncLeadJourneyAttribution(botId = 'bot_whatsapp_principal', ctx = {}, adData = {}, options = {}) {
     if (!adData || typeof adData !== 'object') return;
-    if (!adData.accountId && !adData.campaignId && !adData.adId && !adData.isCtwa) return;
+    if (!adData.accountId && !adData.campaignId && !adData.adId && !adData.isCtwa && !options.clearAttribution) return;
     markLeadFunnelStage(botId, { ...ctx, adData }, '', null, {
         accountId: adData.accountId,
+        accountName: adData.accountName,
         campaignId: adData.campaignId,
         campaignName: adData.campaignName,
+        adsetId: adData.adsetId,
+        adsetName: adData.adsetName,
         adId: adData.adId,
         adName: adData.adName,
+        overrideAttribution: Boolean(options.overrideAttribution || adData.attributionCorrectedAt),
+        clearAttribution: Boolean(options.clearAttribution),
     });
 }
 
@@ -2159,8 +2371,11 @@ function buildRuntimeStatePayload(botId = 'bot_whatsapp_principal') {
         capiDispatchedEvents: store.capiDispatchedEvents || {},
         funnelStats: store.funnelStats || {},
         funnelTransactions: Array.isArray(store.funnelTransactions) ? store.funnelTransactions : [],
+        metaAdCodeMap: store.metaAdCodeMap || {},
     };
 }
+
+let consecutiveKvBackupFailures = 0;
 
 function computeRuntimeHash(payload) {
     try {
@@ -2173,6 +2388,7 @@ function computeRuntimeHash(payload) {
             tc: (payload.funnelTransactions || []).length,
             lj: Object.keys(payload.funnelLeadJourneys || {}).length,
             ce: Object.keys(payload.capiDispatchedEvents || {}).length,
+            mc: Object.keys(payload.metaAdCodeMap || {}).length,
             fs: payload.funnelStats || {},
         });
     } catch {
@@ -2193,10 +2409,22 @@ async function flushRuntimeStateBackupNow(botId = 'bot_whatsapp_principal', forc
             { timeout: 8000 }
         );
         lastRuntimeBackupHash = hash;
+        consecutiveKvBackupFailures = 0;
         console.log(`[Cloud KV Runtime] ☁️ Backup salvo: ${Object.keys(payload.userSessions).length} sessões, ${payload.scheduledJobs.length} jobs, ${payload.conversations.length} msgs.`);
         return { success: true, savedAt: payload.savedAt };
     } catch (err) {
-        console.warn('[Cloud KV Runtime] Aviso ao salvar backup runtime:', err?.message);
+        consecutiveKvBackupFailures += 1;
+        console.warn(`[Cloud KV Runtime] Aviso ao salvar backup runtime (falha #${consecutiveKvBackupFailures}):`, err?.message);
+        if (consecutiveKvBackupFailures >= 3) {
+            sendNtfyEmergencyAlert({
+                title: '⚠️ ALERTA X1: FALHA NO BACKUP CLOUDFLARE KV',
+                message: `⚠️ O backup automático de sessões/vendas no Cloudflare KV falhou ${consecutiveKvBackupFailures}x seguidas!\nÚltimo erro: ${err?.message || 'Timeout/Rede'}\nVerifique o Worker ${CLOUD_WORKER_URL}.`,
+                priority: 'high',
+                tags: 'warning,cloud,rotating_light',
+                alertKey: 'cloud_kv_backup_failed',
+                cooldownSec: 600
+            }).catch(() => {});
+        }
         return { success: false, error: err?.message };
     }
 }
@@ -2366,6 +2594,13 @@ function mergeRuntimeState(stateData = {}, options = {}) {
             store.capiDispatchedEvents = {
                 ...(store.capiDispatchedEvents || {}),
                 ...stateData.capiDispatchedEvents,
+            };
+        }
+
+        if (stateData.metaAdCodeMap && typeof stateData.metaAdCodeMap === 'object') {
+            store.metaAdCodeMap = {
+                ...(store.metaAdCodeMap || {}),
+                ...stateData.metaAdCodeMap,
             };
         }
 
@@ -2731,42 +2966,96 @@ async function reconcileUnattributedSessionsAndJourneys(botId = 'bot_whatsapp_pr
     let updatedJourneys = 0;
     let updatedTransactions = 0;
 
+    const correctedLeadIds = new Set();
+
     for (const s of uniqueSessions) {
         if (!s || (s.botId && s.botId !== botId)) continue;
         const sEventMs = new Date(s.adData?.capturedAt || s.journeyStages?.enteredAt || s.updatedAt || 0).getTime() || 0;
-        if (s.adData && (s.adData.sourceUrl || s.adData.sourceId || s.adData.adId || s.adData.campaignId) && (!s.adData.accountId || !s.adData.campaignId)) {
-            const enriched = await resolveMetaAdAttribution({ ...s.adData }, { eventTimeMs: sEventMs });
-            const changed =
-                (enriched.accountId && enriched.accountId !== s.adData.accountId) ||
-                (enriched.campaignId && enriched.campaignId !== s.adData.campaignId) ||
-                (enriched.adId && enriched.adId !== s.adData.adId);
-            if (changed) {
-                s.adData = { ...s.adData, ...enriched };
-                updatedSessions += 1;
-            }
-        } else if (s.adData?.sourceUrl && s.adData.creativeVideoId && s.adData.effectiveStatus && !s.adData.rawTag && !s.adData.sourceId) {
+        let attrOverride = false;
+        let attrCleared = false;
+
+        const hasExplicitAdOrigin = Boolean(
+            s.adData?.rawTag ||
+            s.adData?.welcomeCode ||
+            s.adData?.sourceId ||
+            s.adData?.sourceIdDirect ||
+            (s.adData?.attributionMethod && /^(tag_|message_ref_tag|baileys_source_id|welcome_code)/.test(s.adData.attributionMethod))
+        );
+
+        // 1) Primeiro revalida atribuições heurísticas (permalink/vídeo sem tag nem sourceId direto), pois novas métricas horárias podem desempatar ou corrigir a conta vencedora
+        if (s.adData && !hasExplicitAdOrigin && (s.adData.sourceUrl || s.adData.creativeVideoId) && (s.adData.effectiveStatus || /permalink|video|hourly|ambiguous/i.test(String(s.adData.attributionMethod || '')))) {
             const reverified = await resolveMetaAdAttribution(
                 { sourceUrl: s.adData.sourceUrl, creativeVideoId: s.adData.creativeVideoId },
                 { eventTimeMs: sEventMs }
             );
             if (reverified?.attributionMethod === 'sourceUrl_ambiguous' && s.adData.accountId) {
                 delete s.adData.accountId;
+                delete s.adData.accountName;
                 delete s.adData.campaignId;
                 delete s.adData.campaignName;
                 delete s.adData.adId;
                 delete s.adData.adName;
                 delete s.adData.adsetId;
+                delete s.adData.adsetName;
                 delete s.adData.effectiveStatus;
                 s.adData.attributionMethod = 'sourceUrl_ambiguous';
+                s.adData.attributionCorrectedAt = new Date().toISOString();
+                attrOverride = true;
+                attrCleared = true;
+                updatedSessions += 1;
+                for (const v of collectLeadPhoneVariants(s)) correctedLeadIds.add(v);
+            } else if (
+                reverified?.accountId &&
+                (
+                    reverified.accountId !== s.adData.accountId ||
+                    reverified.accountName !== s.adData.accountName ||
+                    reverified.campaignId !== s.adData.campaignId ||
+                    reverified.adId !== s.adData.adId ||
+                    (reverified.adsetId && reverified.adsetId !== s.adData.adsetId) ||
+                    (reverified.adsetName && reverified.adsetName !== s.adData.adsetName)
+                )
+            ) {
+                s.adData = {
+                    ...s.adData,
+                    accountId: reverified.accountId,
+                    ...(reverified.accountName ? { accountName: reverified.accountName } : {}),
+                    campaignId: reverified.campaignId || s.adData.campaignId,
+                    campaignName: reverified.campaignName || s.adData.campaignName,
+                    adsetId: reverified.adsetId || undefined,
+                    adsetName: reverified.adsetName || undefined,
+                    adId: reverified.adId || undefined,
+                    adName: reverified.adName || undefined,
+                    effectiveStatus: reverified.effectiveStatus || s.adData.effectiveStatus,
+                    attributionMethod: reverified.attributionMethod || s.adData.attributionMethod,
+                    attributionCorrectedAt: new Date().toISOString(),
+                };
+                attrOverride = true;
+                updatedSessions += 1;
+                for (const v of collectLeadPhoneVariants(s)) correctedLeadIds.add(v);
+            }
+        } else if (s.adData && (s.adData.welcomeCode || s.adData.unknownNumericTag || s.adData.sourceUrl || s.adData.sourceId || s.adData.adId || s.adData.campaignId) && (!s.adData.accountId || !s.adData.campaignId || (s.adData.adId && (!s.adData.adsetId || !s.adData.adsetName)))) {
+            const enriched = await resolveMetaAdAttribution({ ...s.adData }, { eventTimeMs: sEventMs });
+            const changed =
+                (enriched.accountId && enriched.accountId !== s.adData.accountId) ||
+                (enriched.accountName && enriched.accountName !== s.adData.accountName) ||
+                (enriched.campaignId && enriched.campaignId !== s.adData.campaignId) ||
+                (enriched.adsetId && enriched.adsetId !== s.adData.adsetId) ||
+                (enriched.adsetName && enriched.adsetName !== s.adData.adsetName) ||
+                (enriched.adId && enriched.adId !== s.adData.adId);
+            if (changed) {
+                s.adData = { ...s.adData, ...enriched };
                 updatedSessions += 1;
             }
         }
-        if (s.adData && (s.adData.accountId || s.adData.campaignId)) {
-            syncLeadJourneyAttribution(botId, s, s.adData);
+        if (s.adData && (s.adData.accountId || s.adData.campaignId || attrCleared)) {
+            syncLeadJourneyAttribution(botId, s, s.adData, {
+                overrideAttribution: attrOverride,
+                clearAttribution: attrCleared,
+            });
         }
     }
 
-    // Reconcilia transações que ainda não possuem accountId ou campaignId completo
+    // Reconcilia transações que ainda não possuem metadados completos OU cuja sessão acabou de ser corrigida por evidência horária/tag
     for (const tx of (store.funnelTransactions || [])) {
         if (!tx || (tx.botId && tx.botId !== botId)) continue;
         const txEventMs = new Date(tx.time || tx.timestamp || 0).getTime() || 0;
@@ -2779,8 +3068,11 @@ async function reconcileUnattributedSessionsAndJourneys(botId = 'bot_whatsapp_pr
             );
             if (reverifiedTx?.attributionMethod === 'sourceUrl_ambiguous') {
                 delete tx.accountId;
+                delete tx.accountName;
                 delete tx.campaignId;
                 delete tx.campaignName;
+                delete tx.adsetId;
+                delete tx.adsetName;
                 delete tx.adId;
                 delete tx.adName;
                 updatedTransactions += 1;
@@ -2788,10 +3080,12 @@ async function reconcileUnattributedSessionsAndJourneys(botId = 'bot_whatsapp_pr
             }
         }
 
-        if (tx.accountId && tx.campaignId) continue;
+        const leadVariants = collectLeadPhoneVariants(tx);
+        const sessionWasCorrected = [...leadVariants].some(v => correctedLeadIds.has(v));
+        if (!sessionWasCorrected && tx.accountId && tx.accountName && tx.campaignId && (!tx.adId || (tx.adsetId && tx.adsetName))) continue;
 
         let resolved = null;
-        if (tx.sourceUrl || tx.adId || tx.campaignId) {
+        if (!sessionWasCorrected && (tx.sourceUrl || tx.adId || tx.campaignId)) {
             resolved = await resolveMetaAdAttribution({
                 sourceUrl: tx.sourceUrl,
                 adId: tx.adId,
@@ -2799,22 +3093,31 @@ async function reconcileUnattributedSessionsAndJourneys(botId = 'bot_whatsapp_pr
                 accountId: tx.accountId,
             }, { eventTimeMs: txEventMs });
         }
-        const leadVariants = collectLeadPhoneVariants(tx);
         for (const s of uniqueSessions) {
             if (!s?.adData) continue;
             const sVariants = collectLeadPhoneVariants(s);
-            if ([...sVariants].some(v => leadVariants.has(v)) && (s.adData.accountId || s.adData.campaignId)) {
-                resolved = { ...(resolved || {}), ...s.adData };
+            if ([...sVariants].some(v => leadVariants.has(v)) && (s.adData.accountId || s.adData.campaignId || sessionWasCorrected)) {
+                resolved = sessionWasCorrected ? { ...s.adData } : { ...(resolved || {}), ...s.adData };
                 break;
             }
         }
-        if (resolved && ((resolved.accountId && !tx.accountId) || (resolved.campaignId && !tx.campaignId))) {
-            if (!tx.accountId && resolved.accountId) tx.accountId = resolved.accountId;
-            if (!tx.campaignId && resolved.campaignId) tx.campaignId = resolved.campaignId;
-            if (!tx.campaignName && resolved.campaignName) tx.campaignName = resolved.campaignName;
-            if (!tx.adId && resolved.adId) tx.adId = resolved.adId;
-            if (!tx.adName && resolved.adName) tx.adName = resolved.adName;
-            updatedTransactions += 1;
+        if (resolved) {
+            let txChanged = false;
+            for (const fKey of ['accountId', 'accountName', 'campaignId', 'campaignName', 'adsetId', 'adsetName', 'adId', 'adName']) {
+                if (sessionWasCorrected) {
+                    if (resolved[fKey] && tx[fKey] !== resolved[fKey]) {
+                        tx[fKey] = resolved[fKey];
+                        txChanged = true;
+                    } else if (!resolved[fKey] && tx[fKey] !== undefined) {
+                        delete tx[fKey];
+                        txChanged = true;
+                    }
+                } else if (!tx[fKey] && resolved[fKey]) {
+                    tx[fKey] = resolved[fKey];
+                    txChanged = true;
+                }
+            }
+            if (txChanged) updatedTransactions += 1;
         }
     }
 
@@ -3906,6 +4209,8 @@ async function startQrSession(botId = 'bot_whatsapp_principal', forceNewQr = fal
             scheduleCloudKvAuthBackup(botId, sessionFolder);
         });
 
+const recentDisconnectTimestamps = new Map();
+
         sock.ev.on('connection.update', async (update) => {
             const { connection, lastDisconnect, qr } = update;
 
@@ -3936,6 +4241,7 @@ async function startQrSession(botId = 'bot_whatsapp_principal', forceNewQr = fal
             }
 
             if (connection === 'open') {
+                recentDisconnectTimestamps.delete(botId);
                 const userJid = sock.user?.id || '';
                 const phoneNumber = userJid ? formatJidPhone(userJid) : '+55';
                 const profileName = sock.user?.name || 'WhatsApp Business';
@@ -3991,6 +4297,20 @@ async function startQrSession(botId = 'bot_whatsapp_principal', forceNewQr = fal
                         cooldownSec: 60
                     }).catch(() => {});
                 } else if (shouldReconnect) {
+                    const nowTs = Date.now();
+                    const prevList = (recentDisconnectTimestamps.get(botId) || []).filter(t => nowTs - t < 120 * 1000);
+                    prevList.push(nowTs);
+                    recentDisconnectTimestamps.set(botId, prevList);
+                    if (prevList.length >= 5) {
+                        sendNtfyEmergencyAlert({
+                            title: '⚠️ ALERTA X1: INSTABILIDADE NA CONEXÃO WHATSAPP',
+                            message: `⚠️ O WhatsApp caiu ${prevList.length} vezes nos últimos 2 minutos (código ${statusCode || '-'}).\nÚltimo detalhe: ${errMessage || 'Reconectando...'}\nFique de olho no painel do Render/QR Code.`,
+                            priority: 'urgent',
+                            tags: 'warning,signal_strength,rotating_light',
+                            alertKey: `wa_reconnect_loop_${botId}`,
+                            cooldownSec: 300
+                        }).catch(() => {});
+                    }
                     const timer = setTimeout(() => {
                         startQrSession(botId, false).catch(console.error);
                     }, 2500);
@@ -7886,7 +8206,7 @@ function findDeployedFlowForTrigger(botId, text) {
             'flow_funil_1': ['parábolas', 'parabolas', 'maria gps'],
             'flow_funil_2': ['acamada', 'acamado', 'cuidados com pessoa'],
             'flow_funil_3': ['500 esboços', '500 esbocos', 'missionária raquel', 'missionaria raquel'],
-            'flow_funil_4': ['jornada da bíblia', 'jornada da biblia', 'pastor guilherme', 'jornada bíblia', 'jornada biblia'],
+            'flow_funil_4': ['jornada da bíblia', 'jornada da biblia', 'pastor guilherme', 'olá guilherme', 'ola guilherme', 'jornada bíblia', 'jornada biblia'],
             'flow_funil_5': ['acervo de serm', 'sermões prontos', 'sermoes prontos', 'vitor bueno'],
             'flow_funil_6': ['flávia', 'flavia', 'devocional pelos filhos - flávia', 'devocional pelos filhos - flavia'],
             'flow_funil_7': ['construtor de palavras', 'alfabetização infantil', 'alfabetizacao', 'pinguim estudioso'],
@@ -8305,7 +8625,7 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
         }
         console.log(`[Atribuição Meta Ads] 🎯 Detectado anúncio para ${userPhone}:`, session.adData);
 
-        if (!session.adData.campaignId || !session.adData.accountId) {
+        if (!session.adData.campaignId || !session.adData.accountId || (session.adData.adId && (!session.adData.adsetId || !session.adData.adsetName))) {
             const adTargetRef = session.adData;
             const liveSessionKey = sessionKey;
             const msgEventMs = Number(msg?.messageTimestamp ? Number(msg.messageTimestamp) * 1000 : 0) || Date.now();
@@ -8324,7 +8644,7 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
                         syncLeadJourneyAttribution(botId, journeyCtx, adTargetRef);
                         saveStore(store);
                         if (enriched.campaignId || enriched.adId) {
-                            console.log(`[Atribuição Meta Graph] ✅ Enriquecido para ${userPhone}: Camp=${enriched.campaignId || '-'} | Ad=${enriched.adId || '-'} | Conta=${enriched.accountId || '-'}`);
+                            console.log(`[Atribuição Meta Graph] ✅ Enriquecido para ${userPhone}: Camp=${enriched.campaignId || '-'} | Conj=${enriched.adsetName || enriched.adsetId || '-'} | Ad=${enriched.adId || '-'} | Conta=${enriched.accountId || '-'}`);
                         }
                     }
                 })
@@ -8751,6 +9071,8 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
         normalizedText.includes('jornada bíblia') || 
         normalizedText.includes('jornada biblia') || 
         normalizedText.includes('pastor guilherme') || 
+        normalizedText.includes('olá guilherme') || 
+        normalizedText.includes('ola guilherme') || 
         normalizedText.startsWith('olá! gostaria de receber a jornada') ||
         normalizedText.startsWith('ola! gostaria de receber a jornada') ||
         normalizedText.startsWith('olá pastor guilherme') ||
@@ -9316,8 +9638,11 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
                 lidDigits: session.lidDigits || undefined,
                 pushName,
                 accountId: adInfo.accountId || null,
+                accountName: adInfo.accountName || null,
                 campaignId: adInfo.campaignId || null,
                 campaignName: adInfo.campaignName || null,
+                adsetId: adInfo.adsetId || null,
+                adsetName: adInfo.adsetName || null,
                 adId: adInfo.adId || null,
                 adName: adInfo.adName || null,
                 adTag: adInfo.rawTag || null,
@@ -9354,8 +9679,11 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
             }, 'paidAt', new Date(transactionRecord.time).toISOString(), {
                 paidAmount: paidValue,
                 accountId: adInfo.accountId || null,
+                accountName: adInfo.accountName || null,
                 campaignId: adInfo.campaignId || null,
                 campaignName: adInfo.campaignName || null,
+                adsetId: adInfo.adsetId || null,
+                adsetName: adInfo.adsetName || null,
                 adId: adInfo.adId || null,
                 adName: adInfo.adName || null,
             });
@@ -9491,6 +9819,33 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
 }
 
 async function resolveMediaBuffer(targetUrl, defaultFilename) {
+    if (targetUrl && /^data:([a-zA-Z0-9/+.-]+);base64,/i.test(targetUrl)) {
+        const match = targetUrl.match(/^data:([a-zA-Z0-9/+.-]+);base64,([\s\S]+)$/i);
+        if (match && match[2]) {
+            const mime = match[1].toLowerCase();
+            const extMap = {
+                'image/jpeg': '.jpg',
+                'image/jpg': '.jpg',
+                'image/png': '.png',
+                'image/webp': '.webp',
+                'application/pdf': '.pdf',
+                'audio/mpeg': '.mp3',
+                'audio/mp3': '.mp3',
+                'audio/ogg': '.ogg',
+                'video/mp4': '.mp4',
+            };
+            const ext = extMap[mime] || '';
+            const rawName = String(defaultFilename || '').trim();
+            const filename = rawName
+                ? (/\.(jpe?g|png|webp|pdf|mp3|ogg|mp4|mov|avi)$/i.test(rawName) ? rawName : `${rawName}${ext}`)
+                : `media${ext || '.bin'}`;
+            const b64Clean = match[2].replace(/\s+/g, '');
+            const buf = Buffer.from(b64Clean, 'base64');
+            if (buf.length > 0) {
+                return { buffer: buf, filename };
+            }
+        }
+    }
     if (targetUrl) {
         const clean = targetUrl.replace(/^\/+/, '');
         const directLocalPath = path.join(__dirname, 'public', clean);
@@ -9711,10 +10066,14 @@ async function executeFromNode(botId, sock, remoteJid, session, nodeId, nodes, e
             const mediaNameHint = String(config.filename || media?.filename || node.title || '');
             const isBonusMedia = /bonus|b[oô]nus/i.test(`${node.nodeId || node.id || ''} ${mediaNameHint}`);
             const isCoverOnly = /capa|cover/i.test(mediaNameHint);
-            if (!session.paid && !isBonusMedia && !isCoverOnly && (media?.buffer || caption)) {
+            const isRecoveryStage = Boolean(session.wasInRecovery || session.hasReceivedPix);
+            const didSendMediaOrCaption = Boolean(media?.buffer || caption);
+            if (!session.paid && !isRecoveryStage && !isBonusMedia && !isCoverOnly && didSendMediaOrCaption) {
                 markLeadFunnelStage(botId, session, 'materialDeliveredAt');
             }
-            store.funnelStats.materialDeliveredCount += 1;
+            if (didSendMediaOrCaption) {
+                store.funnelStats.materialDeliveredCount += 1;
+            }
             saveStore(store);
             break;
         }
@@ -9901,8 +10260,11 @@ async function recordAndFireFunnelConversion(botId, session, paidValue, customLa
         funnelId: session.flowId || 'funil_visual',
         funnelName: session.flowName || customLabel || 'Funil Visual',
         accountId: adInfo.accountId || undefined,
+        accountName: adInfo.accountName || undefined,
         campaignId: adInfo.campaignId || undefined,
         campaignName: adInfo.campaignName || undefined,
+        adsetId: adInfo.adsetId || undefined,
+        adsetName: adInfo.adsetName || undefined,
         adId: adInfo.adId || undefined,
         adName: adInfo.adName || undefined,
         ctwaClid: adInfo.ctwaClid || undefined,
@@ -9940,8 +10302,11 @@ async function recordAndFireFunnelConversion(botId, session, paidValue, customLa
         adData: {
             ...(session.adData || {}),
             accountId: transactionRecord.accountId,
+            accountName: transactionRecord.accountName,
             campaignId: transactionRecord.campaignId,
             campaignName: transactionRecord.campaignName,
+            adsetId: transactionRecord.adsetId,
+            adsetName: transactionRecord.adsetName,
             adId: transactionRecord.adId,
             adName: transactionRecord.adName,
             isCtwa: transactionRecord.isCtwa,
@@ -12027,9 +12392,21 @@ async function checkMetaAdAccountsStatus() {
         console.log(`[Meta Ad Watchdog] ✅ Verificação concluída em ${checkedCount} contas de anúncio da BM ${bmId}.`);
         return { success: true, checkedCount, alertTriggered };
     } catch (err) {
-        const errorDetail = err?.response?.data?.error?.message || err.message;
+        const metaError = err?.response?.data?.error;
+        const errorDetail = metaError?.message || err.message;
+        const errorCode = Number(metaError?.code || 0);
         console.warn(`[Meta Ad Watchdog Warning]: Falha ao consultar Meta Graph API:`, errorDetail);
-        return { success: false, error: errorDetail };
+        if (errorCode === 190 || /access token|session has expired|oauthexception/i.test(String(errorDetail || ''))) {
+            sendNtfyEmergencyAlert({
+                title: '🔑 TOKEN META EXPIRADO OU INVÁLIDO!',
+                message: `O token da Meta Graph API falhou (código ${errorCode || 'auth'}): ${errorDetail}\nSem token válido o watchdog de contas, CAPI e atribuição Meta ficam cegos. Atualize em Configurações & Chaves no MetaHub.`,
+                priority: 'max',
+                tags: 'key,rotating_light,warning',
+                alertKey: 'meta_token_expired',
+                cooldownSec: 1800
+            }).catch(() => {});
+        }
+        return { success: false, error: errorDetail, errorCode };
     }
 }
 
@@ -12067,6 +12444,56 @@ app.post('/api/test/ram-watchdog', async (_req, res) => {
     }
 });
 
+// Registrar códigos discretos ([#codigo]) criados pela Replicadora/Subir Anúncios para atribuição instantânea 100% precisa
+app.post('/api/attribution/register-codes', async (req, res) => {
+    try {
+        const rawEntries = Array.isArray(req.body?.entries) ? req.body.entries : (req.body?.code ? [req.body] : []);
+        if (rawEntries.length === 0) {
+            return res.status(400).json({ success: false, error: 'Envie entries[] ou code para registrar.' });
+        }
+        store.metaAdCodeMap = store.metaAdCodeMap || {};
+        let registeredCount = 0;
+        const registeredCodes = [];
+        for (const entry of rawEntries) {
+            const rawCode = String(entry?.code || '').replace(/^#+/, '').trim().toLowerCase();
+            if (!rawCode) continue;
+            const cleanAccountId = String(entry?.accountId || '').replace(/^act_/, '').trim();
+            store.metaAdCodeMap[rawCode] = {
+                code: rawCode,
+                accountId: cleanAccountId ? `act_${cleanAccountId}` : undefined,
+                accountName: entry?.accountName || undefined,
+                campaignId: entry?.campaignId ? String(entry.campaignId).trim() : undefined,
+                campaignName: entry?.campaignName || undefined,
+                adsetId: entry?.adsetId ? String(entry.adsetId).trim() : undefined,
+                adsetName: entry?.adsetName || undefined,
+                adId: entry?.adId ? String(entry.adId).trim() : undefined,
+                adName: entry?.adName || undefined,
+                updatedAt: new Date().toISOString(),
+            };
+            registeredCount += 1;
+            registeredCodes.push(rawCode);
+        }
+        // Evita crescimento infinito mantendo até 2.000 códigos mais recentes
+        const keys = Object.keys(store.metaAdCodeMap);
+        if (keys.length > 2000) {
+            const sorted = keys.sort((a, b) => String(store.metaAdCodeMap[a]?.updatedAt || '').localeCompare(String(store.metaAdCodeMap[b]?.updatedAt || '')));
+            for (const oldKey of sorted.slice(0, keys.length - 2000)) {
+                delete store.metaAdCodeMap[oldKey];
+            }
+        }
+        saveStore(store);
+        await flushRuntimeStateBackupNow('bot_whatsapp_principal', true).catch(() => {});
+        res.json({ success: true, registeredCount, totalCodes: Object.keys(store.metaAdCodeMap).length, registeredCodes });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err?.message || 'Erro ao registrar códigos de atribuição' });
+    }
+});
+
+app.get('/api/attribution/codes', (_req, res) => {
+    const map = store.metaAdCodeMap || {};
+    res.json({ success: true, total: Object.keys(map).length, codes: map });
+});
+
 // ─── CAPTURA GLOBAL DE EXCEÇÕES E REJEIÇÕES ───
 process.on('uncaughtException', (err) => {
     console.error('[UNCAUGHT EXCEPTION]:', err);
@@ -12082,6 +12509,15 @@ process.on('uncaughtException', (err) => {
 
 process.on('unhandledRejection', (reason) => {
     console.error('[UNHANDLED REJECTION]:', reason);
+    const reasonText = reason?.stack || reason?.message || String(reason || 'Erro desconhecido');
+    sendNtfyEmergencyAlert({
+        title: '⚠️ REJEIÇÃO ASSÍNCRONA NÃO TRATADA (MOTOR)',
+        message: `Ocorreu uma Promise rejeitada sem captura no motor:\n${String(reasonText).slice(0, 320)}`,
+        priority: 'high',
+        tags: 'warning,bug',
+        alertKey: 'unhandled_rejection',
+        cooldownSec: 300
+    }).catch(() => {});
 });
 
 
