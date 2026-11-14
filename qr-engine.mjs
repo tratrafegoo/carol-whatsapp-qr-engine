@@ -1852,6 +1852,21 @@ function earliestIso(a, b) {
     return new Date(a).getTime() <= new Date(b).getTime() ? a : b;
 }
 
+function clampEarliestIso(...values) {
+    let best = null;
+    let bestMs = Infinity;
+    for (const val of values) {
+        if (!val) continue;
+        const ms = new Date(val).getTime();
+        if (!Number.isFinite(ms)) continue;
+        if (ms < bestMs) {
+            bestMs = ms;
+            best = val;
+        }
+    }
+    return best || undefined;
+}
+
 function mergeJourneyRecord(target = {}, source = {}) {
     const merged = {
         ...target,
@@ -1877,24 +1892,28 @@ function mergeJourneyRecord(target = {}, source = {}) {
         paidAmount: Number(target.paidAmount || source.paidAmount || 0) || undefined,
     };
     if (merged.realPhone) merged.canonicalLeadId = normalizePhoneDigits(merged.realPhone);
-    if (!merged.receiptReceivedAt && merged.paidAt) {
-        merged.receiptReceivedAt = merged.paidAt;
+    // Invariante cronológica estrita: enteredAt <= materialDeliveredAt <= pixSentAt <= receiptReceivedAt <= paidAt
+    if (merged.paidAt) {
+        merged.receiptReceivedAt = clampEarliestIso(merged.receiptReceivedAt, merged.paidAt);
     }
-    if (!merged.pixSentAt && (merged.receiptReceivedAt || merged.paidAt)) {
-        merged.pixSentAt = earliestIso(merged.receiptReceivedAt, merged.paidAt);
+    if (merged.pixSentAt || merged.receiptReceivedAt || merged.paidAt) {
+        merged.pixSentAt = clampEarliestIso(merged.pixSentAt, merged.receiptReceivedAt, merged.paidAt);
     }
-    if (!merged.materialDeliveredAt && (merged.pixSentAt || merged.receiptReceivedAt || merged.paidAt)) {
-        merged.materialDeliveredAt = earliestIso(
-            merged.pixSentAt,
-            earliestIso(merged.receiptReceivedAt, merged.paidAt)
-        );
-    }
-    if (!merged.enteredAt) {
-        merged.enteredAt = earliestIso(
+    if (merged.materialDeliveredAt || merged.pixSentAt || merged.receiptReceivedAt || merged.paidAt) {
+        merged.materialDeliveredAt = clampEarliestIso(
             merged.materialDeliveredAt,
-            earliestIso(merged.pixSentAt, earliestIso(merged.receiptReceivedAt, merged.paidAt))
+            merged.pixSentAt,
+            merged.receiptReceivedAt,
+            merged.paidAt
         );
     }
+    merged.enteredAt = clampEarliestIso(
+        merged.enteredAt,
+        merged.materialDeliveredAt,
+        merged.pixSentAt,
+        merged.receiptReceivedAt,
+        merged.paidAt
+    );
     return merged;
 }
 
@@ -2424,6 +2443,7 @@ function mergeRuntimeState(stateData = {}, options = {}) {
         if (options.reconstructMissingSessions) {
             reconstructed = reconstructMissingSessionsFromHistory('bot_whatsapp_principal');
         }
+        consolidateUserSessions('bot_whatsapp_principal');
         backfillFunnelLeadJourneys('bot_whatsapp_principal');
         consolidateFunnelLeadJourneys('bot_whatsapp_principal');
 
@@ -2434,10 +2454,7 @@ function mergeRuntimeState(stateData = {}, options = {}) {
     }
 }
 
-function consolidateFunnelLeadJourneys(botId = 'bot_whatsapp_principal') {
-    const journeys = store.funnelLeadJourneys || {};
-    if (!store.funnelLeadJourneys) store.funnelLeadJourneys = journeys;
-
+function buildLeadIdentityResolver(botId = 'bot_whatsapp_principal') {
     const parent = new Map();
     const explicitRealIds = new Set();
     const find = (x) => {
@@ -2476,7 +2493,7 @@ function consolidateFunnelLeadJourneys(botId = 'bot_whatsapp_principal') {
         if (r && r.length >= 10) explicitRealIds.add(r);
         unionIds([keyPhone, s.realPhone, s.userPhone, s.userJid, s.lidDigits]);
     }
-    for (const [k, j] of Object.entries(journeys)) {
+    for (const [k, j] of Object.entries(store.funnelLeadJourneys || {})) {
         if (!j || (!k.startsWith(`${botId}:`) && j.botId && j.botId !== botId)) continue;
         const r = normalizePhoneDigits(j.realPhone);
         if (r && r.length >= 10) explicitRealIds.add(r);
@@ -2525,6 +2542,132 @@ function consolidateFunnelLeadJourneys(botId = 'bot_whatsapp_principal') {
         return pickPrimaryForRoot.get(find(d)) || d;
     };
 
+    const getClusterMembers = (primaryId) => {
+        const d = normalizePhoneDigits(primaryId);
+        if (!d || !parent.has(d)) return d ? [d] : [];
+        return clusters.get(find(d)) || [d];
+    };
+
+    return { resolvePrimary, getClusterMembers };
+}
+
+function consolidateUserSessions(botId = 'bot_whatsapp_principal') {
+    store.userSessions = store.userSessions || {};
+    const { resolvePrimary, getClusterMembers } = buildLeadIdentityResolver(botId);
+    const groups = new Map();
+
+    for (const [k, s] of Object.entries(store.userSessions)) {
+        if (!s || typeof s !== 'object') continue;
+        if (!k.startsWith(`${botId}:`) && s.botId && s.botId !== botId) continue;
+        const keyPhone = k.includes(':') ? k.split(':').slice(1).join(':') : '';
+        const primary = resolvePrimary(s.realPhone || s.userPhone || s.lidDigits || keyPhone);
+        if (!primary) continue;
+        if (!groups.has(primary)) groups.set(primary, []);
+        groups.get(primary).push({ key: k, sess: s });
+    }
+
+    let consolidatedCount = 0;
+    for (const [primary, entries] of groups.entries()) {
+        const distinctRefs = new Set(entries.map(e => e.sess));
+        const sorted = [...entries].sort((a, b) => {
+            const aPaid = a.sess.paid ? 1 : 0;
+            const bPaid = b.sess.paid ? 1 : 0;
+            if (aPaid !== bPaid) return aPaid - bPaid;
+            return new Date(a.sess.updatedAt || 0).getTime() - new Date(b.sess.updatedAt || 0).getTime();
+        });
+
+        const members = getClusterMembers(primary);
+        const discoveredReal = /^55\d{10,11}$/.test(primary)
+            ? primary
+            : (sorted.map(e => e.sess.realPhone).find(Boolean) || members.find(m => /^55\d{10,11}$/.test(m)) || undefined);
+        const discoveredLid = sorted.map(e => e.sess.lidDigits).find(Boolean)
+            || members.find(m => m.length >= 14 && !/^55\d{10,11}$/.test(m))
+            || undefined;
+
+        const merged = {};
+        let hasPixFlag = false;
+        let paidFlag = false;
+        let capiFlag = false;
+        let recoveryFlag = false;
+        let declinedFlag = false;
+        let rejectedFlag = false;
+        for (const { sess } of sorted) {
+            const prevAd = merged.adData || {};
+            const nextAd = sess.adData || {};
+            const prevStages = merged.journeyStages || {};
+            const nextStages = sess.journeyStages || {};
+            const prevName = merged.userName;
+            Object.assign(merged, sess);
+            hasPixFlag = hasPixFlag || Boolean(sess.hasReceivedPix);
+            paidFlag = paidFlag || Boolean(sess.paid);
+            capiFlag = capiFlag || Boolean(sess.capiFired);
+            recoveryFlag = recoveryFlag || Boolean(sess.wasInRecovery);
+            declinedFlag = declinedFlag || Boolean(sess.declined);
+            rejectedFlag = rejectedFlag || Boolean(sess.rejectedPayment);
+            merged.userName = (sess.userName && sess.userName !== 'Cliente' && sess.userName !== '-')
+                ? sess.userName
+                : (prevName || sess.userName || 'Cliente');
+            const combinedAd = { ...prevAd };
+            for (const [ak, av] of Object.entries(nextAd)) {
+                if (av !== undefined && av !== null && av !== '') {
+                    combinedAd[ak] = av;
+                }
+            }
+            if (Object.keys(combinedAd).length > 0) merged.adData = combinedAd;
+            const mergedStages = {
+                enteredAt: clampEarliestIso(prevStages.enteredAt, nextStages.enteredAt),
+                materialDeliveredAt: clampEarliestIso(prevStages.materialDeliveredAt, nextStages.materialDeliveredAt),
+                pixSentAt: clampEarliestIso(prevStages.pixSentAt, nextStages.pixSentAt),
+                receiptReceivedAt: clampEarliestIso(prevStages.receiptReceivedAt, nextStages.receiptReceivedAt),
+                paidAt: clampEarliestIso(prevStages.paidAt, nextStages.paidAt),
+            };
+            Object.keys(mergedStages).forEach(sk => { if (!mergedStages[sk]) delete mergedStages[sk]; });
+            if (Object.keys(mergedStages).length > 0) merged.journeyStages = mergedStages;
+        }
+        if (hasPixFlag) merged.hasReceivedPix = true;
+        if (paidFlag) merged.paid = true;
+        if (capiFlag) merged.capiFired = true;
+        if (recoveryFlag) merged.wasInRecovery = true;
+        if (declinedFlag) merged.declined = true;
+        if (rejectedFlag && !paidFlag) merged.rejectedPayment = true;
+        merged.botId = merged.botId || botId;
+        if (discoveredReal) merged.realPhone = discoveredReal;
+        if (discoveredLid) merged.lidDigits = discoveredLid;
+        merged.userPhone = merged.realPhone || primary;
+        if (!merged.userJid) {
+            merged.userJid = discoveredLid ? `${discoveredLid}@lid` : `${merged.userPhone}@s.whatsapp.net`;
+        }
+
+        entries.forEach(e => { delete store.userSessions[e.key]; });
+        syncSessionAliases(botId, merged, [...members, primary]);
+        if (distinctRefs.size > 1) consolidatedCount += (distinctRefs.size - 1);
+    }
+
+    if (Array.isArray(store.scheduledJobs) && store.scheduledJobs.length > 0) {
+        const seen = new Set();
+        const cleaned = [];
+        for (const job of store.scheduledJobs) {
+            const jBot = job.botId || botId;
+            const canon = resolvePrimary(job.userPhone || job.remoteJid);
+            const sess = store.userSessions[`${jBot}:${canon}`];
+            if (sess?.paid || sess?.rejectedPayment || sess?.declined) continue;
+            const dedup = `${jBot}:${canon}:${job.targetNodeId || ''}:${Boolean(job.isPixTimeout)}`;
+            if (!seen.has(dedup)) {
+                seen.add(dedup);
+                cleaned.push(job);
+            }
+        }
+        store.scheduledJobs = cleaned;
+    }
+
+    return consolidatedCount;
+}
+
+function consolidateFunnelLeadJourneys(botId = 'bot_whatsapp_principal') {
+    const journeys = store.funnelLeadJourneys || {};
+    if (!store.funnelLeadJourneys) store.funnelLeadJourneys = journeys;
+    const { resolvePrimary, getClusterMembers } = buildLeadIdentityResolver(botId);
+
     let consolidatedCount = 0;
     const rebuilt = {};
     const removals = [];
@@ -2544,7 +2687,7 @@ function consolidateFunnelLeadJourneys(botId = 'bot_whatsapp_principal') {
         }
         const groupKey = resolveJourneyGroupKey(botId, j.flowId, j.flowName);
         const targetKey = `${botId}:${primaryId}:${groupKey}`;
-        const clusterMembers = parent.has(primaryId) ? (clusters.get(find(primaryId)) || [primaryId]) : [primaryId];
+        const clusterMembers = getClusterMembers(primaryId);
         const discoveredReal = j.realPhone || (/^55\d{10,11}$/.test(primaryId) ? primaryId : clusterMembers.find(m => /^55\d{10,11}$/.test(m)) || '');
         const discoveredLid = j.lidDigits || clusterMembers.find(m => m.length >= 14 && !/^55\d{10,11}$/.test(m)) || '';
 
@@ -2560,7 +2703,16 @@ function consolidateFunnelLeadJourneys(botId = 'bot_whatsapp_principal') {
             rebuilt[targetKey] = mergeJourneyRecord(rebuilt[targetKey], normalizedRecord);
             consolidatedCount += 1;
         } else {
-            rebuilt[targetKey] = normalizedRecord;
+            const healed = mergeJourneyRecord({}, normalizedRecord);
+            if (
+                healed.materialDeliveredAt !== j.materialDeliveredAt ||
+                healed.pixSentAt !== j.pixSentAt ||
+                healed.receiptReceivedAt !== j.receiptReceivedAt ||
+                healed.enteredAt !== j.enteredAt
+            ) {
+                consolidatedCount += 1;
+            }
+            rebuilt[targetKey] = healed;
             if (targetKey !== k) consolidatedCount += 1;
         }
         if (targetKey !== k) removals.push(k);
@@ -2666,6 +2818,8 @@ async function reconcileUnattributedSessionsAndJourneys(botId = 'bot_whatsapp_pr
         }
     }
 
+    const consolidatedSessions = consolidateUserSessions(botId);
+    updatedSessions += consolidatedSessions;
     backfillFunnelLeadJourneys(botId);
     updatedJourneys += consolidateFunnelLeadJourneys(botId);
 
@@ -2690,6 +2844,7 @@ async function restoreRuntimeStateFromCloudKv(botId = 'bot_whatsapp_principal') 
         const kvState = res.data?.state;
         if (kvState && typeof kvState === 'object') {
             const summary = mergeRuntimeState(kvState, { reconstructMissingSessions: false });
+            consolidateUserSessions(botId);
             backfillFunnelLeadJourneys(botId);
             consolidateFunnelLeadJourneys(botId);
             saveStore(store);
@@ -2701,6 +2856,7 @@ async function restoreRuntimeStateFromCloudKv(botId = 'bot_whatsapp_principal') 
     } catch (err) {
         console.warn('[Cloud KV Runtime] Aviso ao restaurar estado runtime do KV:', err?.message);
     } finally {
+        consolidateUserSessions(botId);
         backfillFunnelLeadJourneys(botId);
         consolidateFunnelLeadJourneys(botId);
         runtimeStateBootRestored = true;
@@ -8260,11 +8416,33 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
 
             // A) Lead respondeu a um nó de INPUT (ex: "Posso enviar?", "SIM", etc.)
             if (session.waitingFor === 'USER_REPLY') {
-                const isNeg = ['não', 'nao', 'agora não', 'agora nao', 'depois', 'nop', 'cancelar', 'não quero', 'nao quero'].includes(normalizedText);
-                if (isNeg) {
+                const isExplicitDeclineOrDeferral = Boolean(
+                    normalizedText && (
+                        ['não', 'nao', 'agora não', 'agora nao', 'depois', 'nop', 'cancelar', 'não quero', 'nao quero', 'não posso', 'nao posso'].includes(normalizedText) ||
+                        /^(não|nao)[\s.!?,]*$/i.test(normalizedText) ||
+                        /^(não|nao)\s+(obrigad[oa]|precisa|quero|posso|consigo|d[aá]|tenho\s+(dinheiro|interesse|pix|como|tempo))/i.test(normalizedText) ||
+                        /\b(agora\s+n[aã]o|final\s+do\s+m[eê]s|fim\s+do\s+m[eê]s|m[eê]s\s+que\s+vem|semana\s+que\s+vem|sem\s+dinheiro|sem\s+condi[cç][oõ]es|n[aã]o\s+(posso|quero|consigo|vou\s+conseguir|d[aá])|nao\s+(posso|quero|consigo|vou\s+conseguir|da)|fica\s+pra\s+depois|outro\s+dia|outro\s+momento|depois\s+eu\s+(vejo|olho|pe[çc]o|chamo))\b/i.test(normalizedText)
+                    )
+                );
+                if (isExplicitDeclineOrDeferral) {
                     await sendRealisticText(botId, sock, remoteJid, userPhone, 'Sem problemas! Quando desejar receber os materiais, estarei por aqui. Fique com Deus! 🙏');
                     session.waitingFor = null;
+                    session.declined = true;
                     saveStore(store);
+                    return;
+                }
+                const entryAgeMs = Date.now() - (session.enteredFlowAtMs || new Date(session.updatedAt || 0).getTime() || 0);
+                const isDuplicateInitialGreeting = Boolean(
+                    normalizedText &&
+                    entryAgeMs >= 0 &&
+                    entryAgeMs < 120000 &&
+                    (
+                        (session.initialMessageText && normalizedText === session.initialMessageText) ||
+                        ['olá joão! gostaria de receber a jornada da bíblia', 'olá! posso ter mais informações sobre isso?'].includes(normalizedText)
+                    )
+                );
+                if (isDuplicateInitialGreeting) {
+                    console.log(`[Visual Flow] ⏭️ Saudação inicial repetida ignorada em USER_REPLY para ${userPhone}: "${textContent}"`);
                     return;
                 }
                 const emoji = getHumanReactionEmoji(textContent);
@@ -8500,6 +8678,8 @@ async function processIncomingMessageLocked(botId, sock, msg, remoteJid) {
             flowId: visualFlowMatch.flow._id,
             flowName: visualFlowMatch.flow.name,
             currentNodeId: visualFlowMatch.startNode.nodeId,
+            initialMessageText: normalizedText || undefined,
+            enteredFlowAtMs: Date.now(),
             adData: session?.adData || detectedAd || undefined,
             inFlightStartedAt: Date.now(),
             updatedAt: new Date().toISOString()
@@ -10664,12 +10844,20 @@ app.get('/api/funnels/metrics', (req, res) => {
     const uniqueReceiptPhones = new Set();
     const uniquePaidPhones = new Set();
 
+    const TRACKING_FULL_HISTORY_SINCE = '2026-11-12';
+    const hasDateRange = Boolean(range.since || range.until);
     for (const j of filteredJourneys) {
         const leadKey = j.canonicalLeadId || j.realPhone || j.userPhone || j.lidDigits;
         if (!leadKey) continue;
-        if (j.enteredAt && isBrtInRange(j.enteredAt, range)) uniqueEnteredPhones.add(leadKey);
-        if (j.materialDeliveredAt && isBrtInRange(j.materialDeliveredAt, range)) uniqueMaterialPhones.add(leadKey);
-        if (j.pixSentAt && isBrtInRange(j.pixSentAt, range)) uniquePixPhones.add(leadKey);
+        const enteredInRange = Boolean(j.enteredAt && (!hasDateRange || isBrtInRange(j.enteredAt, range)));
+        if (enteredInRange) {
+            uniqueEnteredPhones.add(leadKey);
+            if (j.materialDeliveredAt) uniqueMaterialPhones.add(leadKey);
+            if (j.pixSentAt) uniquePixPhones.add(leadKey);
+        } else if (!hasDateRange) {
+            if (j.materialDeliveredAt) uniqueMaterialPhones.add(leadKey);
+            if (j.pixSentAt) uniquePixPhones.add(leadKey);
+        }
         if (j.receiptReceivedAt && isBrtInRange(j.receiptReceivedAt, range)) uniqueReceiptPhones.add(leadKey);
         if (j.paidAt && isBrtInRange(j.paidAt, range)) uniquePaidPhones.add(leadKey);
     }
@@ -10707,6 +10895,8 @@ app.get('/api/funnels/metrics', (req, res) => {
     const pixSent = uniquePixPhones.size;
     const receipts = uniqueReceiptPhones.size;
     const converted = Math.max(uniquePaidPhones.size, totalSales);
+    const includesPreTrackingPeriod = Boolean(!range.since || range.since < TRACKING_FULL_HISTORY_SINCE);
+    const strictlyPreTrackingPeriod = Boolean(range.until && range.until < TRACKING_FULL_HISTORY_SINCE);
 
     const funnelStats = {
         startedCount: started,
@@ -10719,6 +10909,10 @@ app.get('/api/funnels/metrics', (req, res) => {
         conversionRate: started > 0 ? Number(((converted / started) * 100).toFixed(1)) : 0,
         iaAuditRate: receipts > 0 ? Number(Math.min(100, (converted / receipts) * 100).toFixed(1)) : (converted > 0 ? 100.0 : 0.0),
         uniqueLeadMode: true,
+        cohortMode: true,
+        fullHistorySince: TRACKING_FULL_HISTORY_SINCE,
+        includesPreTrackingPeriod,
+        strictlyPreTrackingPeriod,
         periodRange: range,
         recentConversions: txs.slice(0, 10)
     };
@@ -10739,6 +10933,9 @@ app.get('/api/funnels/metrics', (req, res) => {
                 paid: converted,
                 revenue: Number(totalRevenue.toFixed(2)),
                 iaAuditRate: funnelStats.iaAuditRate,
+                fullHistorySince: TRACKING_FULL_HISTORY_SINCE,
+                includesPreTrackingPeriod,
+                strictlyPreTrackingPeriod,
                 range,
             }
         }
