@@ -1732,6 +1732,42 @@ if (!fs.existsSync(SESSIONS_DIR)) {
 }
 
 // ─── Cloud KV Persistence Helpers (Never lose QR session on container restart) ───
+async function postJsonGzip(url, payload, timeoutMs = 8000) {
+    const gz = zlib.gzipSync(JSON.stringify(payload));
+    return axios.post(url, gz, {
+        headers: {
+            'Content-Type': 'application/json',
+            'Content-Encoding': 'gzip',
+        },
+        timeout: timeoutMs,
+    });
+}
+
+function sanitizeKnownInlineMediaInFlows(flows = []) {
+    if (!Array.isArray(flows)) return flows;
+    const knownRel = 'funil4/ca8bca19-6bea-4f16-84a0-95eb463e2f33.jpeg';
+    const hasFile = fs.existsSync(path.join(__dirname, 'public', knownRel));
+    if (!hasFile) return flows;
+    const cleanData = (fd) => {
+        for (const node of (fd?.nodes || [])) {
+            const cfg = node?.config;
+            if (
+                cfg?.filename === 'ca8bca19-6bea-4f16-84a0-95eb463e2f33.jpeg' &&
+                typeof cfg?.mediaUrl === 'string' &&
+                cfg.mediaUrl.startsWith('data:image/jpeg;base64,')
+            ) {
+                cfg.mediaUrl = knownRel;
+            }
+        }
+    };
+    for (const f of flows) {
+        if (!f || typeof f !== 'object') continue;
+        cleanData(f.draftVersion?.flowData);
+        cleanData(f.publishedVersion?.flowData);
+    }
+    return flows;
+}
+
 async function restoreSessionFromCloudKv(botId, sessionFolder) {
     try {
         const credsPath = path.join(sessionFolder, 'creds.json');
@@ -1788,10 +1824,10 @@ function scheduleCloudKvAuthBackup(botId, sessionFolder) {
             }
             const nextHash = hasher.digest('hex');
             if (nextHash === lastAuthBackupHash) return;
-            await axios.post(
+            await postJsonGzip(
                 `${CLOUD_WORKER_URL}/api/cloud-kv/auth?botId=${encodeURIComponent(botId)}`,
                 { authData: filesMap },
-                { timeout: 8000 }
+                8000
             );
             lastAuthBackupHash = nextHash;
         } catch {}
@@ -2403,10 +2439,10 @@ async function flushRuntimeStateBackupNow(botId = 'bot_whatsapp_principal', forc
         if (!force && hash === lastRuntimeBackupHash) {
             return { skipped: true };
         }
-        await axios.post(
+        await postJsonGzip(
             `${CLOUD_WORKER_URL}/api/cloud-kv/runtime-state?botId=${encodeURIComponent(botId)}`,
             payload,
-            { timeout: 8000 }
+            8000
         );
         lastRuntimeBackupHash = hash;
         consecutiveKvBackupFailures = 0;
@@ -3208,7 +3244,7 @@ function mergeFlowsPreservingNewest(baseFlows = [], candidateFlows = []) {
         }
     }
 
-    return Array.from(mergedMap.values());
+    return sanitizeKnownInlineMediaInFlows(Array.from(mergedMap.values()));
 }
 
 let flowsBackupDebounceTimer = null;
@@ -3218,10 +3254,10 @@ function scheduleCloudKvFlowsBackup(botId = 'bot_whatsapp_principal') {
         try {
             const currentFlows = store.flows?.[botId];
             if (!Array.isArray(currentFlows) || currentFlows.length === 0) return;
-            await axios.post(
+            await postJsonGzip(
                 `${CLOUD_WORKER_URL}/api/cloud-kv/flows?botId=${encodeURIComponent(botId)}`,
                 { flows: currentFlows },
-                { timeout: 8000 }
+                8000
             );
             console.log(`[Cloud KV Flows] ☁️ Backup de ${currentFlows.length} funis salvo na Cloudflare KV (${botId})`);
         } catch {}
@@ -8070,13 +8106,15 @@ function ensureBotVisualFlowsLoaded(botId) {
         try {
             const defFlowsPath = path.join(__dirname, 'default_flows.json');
             if (fs.existsSync(defFlowsPath)) {
-                flows = JSON.parse(fs.readFileSync(defFlowsPath, 'utf-8'));
+                flows = sanitizeKnownInlineMediaInFlows(JSON.parse(fs.readFileSync(defFlowsPath, 'utf-8')));
                 store.flows[botId] = flows;
                 saveStore(store);
             }
         } catch (e) {
             console.warn('[ensureBotVisualFlowsLoaded] Aviso:', e?.message);
         }
+    } else {
+        sanitizeKnownInlineMediaInFlows(flows);
     }
     return flows;
 }
@@ -12551,13 +12589,13 @@ app.listen(PORT, '0.0.0.0', () => {
 });
 
 // ─── Rotina Keep-Alive Anti-Sleep Universal (Render Free Tier) ───
-// Dispara um ping HTTP a cada 4 minutos para a rota /api/health garantindo que o servidor permaneça acordado 24/7
+// Dispara um ping HTTP a cada 8 minutos para a rota /api/health garantindo que o servidor permaneça acordado 24/7
 const RENDER_PING_URL = process.env.RENDER_EXTERNAL_URL ? `${process.env.RENDER_EXTERNAL_URL}/api/health` : 'https://carol-whatsapp-qr-engine.onrender.com/api/health';
 setInterval(async () => {
     try {
         await fetch(RENDER_PING_URL).catch(() => {});
     } catch {}
-}, 3 * 60 * 1000);
+}, 8 * 60 * 1000);
 
 // Backup automático de sessões e conversas ao receber sinal de restart/deploy (SIGTERM/SIGINT)
 let isShuttingDown = false;
